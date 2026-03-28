@@ -1,0 +1,265 @@
+{
+  "run_id": "sample001",
+  "started_at": "2026-03-28T04:30:00Z",
+  "finished_at": "2026-03-28T04:31:04Z",
+  "mode": "balanced",
+  "dry_run": false,
+  "storage_before_bytes": 214748364800,
+  "storage_after_bytes": 209379655680,
+  "storage_reclaimed_bytes": 5368709120,
+  "memory_before_estimate_mb": 812.4,
+  "memory_after_estimate_mb": 774.1,
+  "memory_reclaimed_estimate_mb": 38.3,
+  "processes_scanned": 188,
+  "processes_trimmed": 3,
+  "objects_pruned": 4,
+  "protected_items": [
+    {
+      "label": "claude_vm_bundle",
+      "path": "/Users/example/Library/Application Support/Claude/vm_bundles/claudevm.bundle",
+      "family": "claude",
+      "classification": "PROTECTED_STATE",
+      "size_bytes": 10415295692,
+      "notes": "Claude VM bundle stays protected by default."
+    }
+  ],
+  "manual_review_items": [
+    {
+      "label": "docker_raw",
+      "path": "/Users/example/Library/Containers/com.docker.docker/Data/vms/0/data/Docker.raw",
+      "family": "docker",
+      "classification": "REVIEW_VM",
+      "size_bytes": 26843545600,
+      "notes": "Raw Docker disk image should not be auto-deleted."
+    }
+  ],
+  "family_summaries": {
+    "docker": {
+      "state": "active",
+      "recommended_action": "docker_system_prune",
+      "process_counts": {
+        "total": 7,
+        "active_primary": 2,
+        "active_helper": 2,
+        "background_only": 1,
+        "stale": 2
+      },
+      "inventory_counts": {
+        "running_containers": 1,
+        "exited_containers": 3,
+        "dangling_images": 2,
+        "volumes": 6,
+        "networks": 4
+      },
+      "actions": 3,
+      "bytes_reclaimed": 3221225472,
+      "results": {
+        "planned": 0,
+        "deleted": 1,
+        "blocked": 0,
+        "kept": 0,
+        "skipped": 0,
+        "missing": 0,
+        "failed": 0,
+        "terminated": 2
+      }
+    },
+    "claude": {
+      "state": "active",
+      "recommended_action": "protect_only",
+      "process_counts": {
+        "total": 4,
+        "active_primary": 1,
+        "active_helper": 2,
+        "background_only": 1,
+        "stale": 0
+      },
+      "inventory_counts": {},
+      "actions": 0,
+      "bytes_reclaimed": 0,
+      "results": {
+        "planned": 0,
+        "deleted": 0,
+        "blocked": 0,
+        "kept": 0,
+        "skipped": 0,
+        "missing": 0,
+        "failed": 0,
+        "terminated": 0
+      }
+    },
+    "codex": {
+      "state": "active",
+      "recommended_action": "protect_only",
+      "process_counts": {
+        "total": 6,
+        "active_primary": 1,
+        "active_helper": 4,
+        "background_only": 1,
+        "stale": 0
+      },
+      "inventory_counts": {},
+      "actions": 1,
+      "bytes_reclaimed": 2147483648,
+      "results": {
+        "planned": 0,
+        "deleted": 1,
+        "blocked": 0,
+        "kept": 0,
+        "skipped": 0,
+        "missing": 0,
+        "failed": 0,
+        "terminated": 0
+      }
+    },
+    "system": {
+      "state": "n/a",
+      "recommended_action": "protect_only",
+      "process_counts": {},
+      "inventory_counts": {},
+      "actions": 3,
+      "bytes_reclaimed": 2147483648,
+      "results": {
+        "planned": 0,
+        "deleted": 3,
+        "blocked": 0,
+        "kept": 0,
+        "skipped": 0,
+        "missing": 0,
+        "failed": 0,
+        "terminated": 0
+      }
+    }
+  },
+  "actions": [
+    {
+      "target": "61822",
+      "target_type": "process",
+      "family": "docker",
+      "classification": "STALE_CLI",
+      "result": "terminated",
+      "bytes_reclaimed": 18841600,
+      "reason": "Stale helper or CLI probe process with low activity and no active parent chain.",
+      "details": {
+        "pid": 61822,
+        "args": "docker info",
+        "elapsed_seconds": 811,
+        "apply_allowed": true
+      }
+    },
+    {
+      "target": "61825",
+      "target_type": "process",
+      "family": "docker",
+      "classification": "STALE_CLI",
+      "result": "terminated",
+      "bytes_reclaimed": 21364736,
+      "reason": "Stale helper or CLI probe process with low activity and no active parent chain.",
+      "details": {
+        "pid": 61825,
+        "args": "docker system df -v",
+        "elapsed_seconds": 804,
+        "apply_allowed": true
+      }
+    },
+    {
+      "target": "docker_system_prune",
+      "target_type": "docker",
+      "family": "docker",
+      "classification": "SAFE_CACHE",
+      "result": "deleted",
+      "bytes_reclaimed": 3187671040,
+      "reason": "Prune stopped containers, dangling images, and build cache via Docker daemon.",
+      "details": {
+        "apply_allowed": true,
+        "inventory_counts": {
+          "running_containers": 1,
+          "exited_containers": 3,
+          "dangling_images": 2,
+          "volumes": 6,
+          "networks": 4
+        }
+      }
+    },
+    {
+      "target": "/Users/example/.cache/uv",
+      "target_type": "path",
+      "family": "system",
+      "classification": "SAFE_CACHE",
+      "result": "deleted",
+      "bytes_reclaimed": 2147483648,
+      "reason": "Regenerable uv cache.",
+      "details": {
+        "label": "uv_cache",
+        "apply_allowed": true
+      }
+    }
+  ],
+  "snapshot": {
+    "host_disk_total_bytes": 274877906944,
+    "host_disk_used_bytes": 214748364800,
+    "host_disk_free_bytes": 60129542144,
+    "storage_records": [
+      {
+        "label": "docker_vm_data",
+        "path": "/Users/example/Library/Containers/com.docker.docker/Data/vms",
+        "family": "docker",
+        "classification": "REVIEW_VM",
+        "size_bytes": 27917287424,
+        "notes": "Docker VM storage requires explicit review."
+      },
+      {
+        "label": "uv_cache",
+        "path": "/Users/example/.cache/uv",
+        "family": "system",
+        "classification": "SAFE_CACHE",
+        "size_bytes": 2147483648,
+        "notes": "Regenerable cache or developer artifact."
+      }
+    ],
+    "process_summary": {
+      "docker": {
+        "state": "active",
+        "recommended_action": "docker_system_prune",
+        "process_counts": {
+          "total": 7,
+          "active_primary": 2,
+          "active_helper": 2,
+          "background_only": 1,
+          "stale": 2
+        },
+        "inventory_counts": {
+          "running_containers": 1,
+          "exited_containers": 3,
+          "dangling_images": 2,
+          "volumes": 6,
+          "networks": 4
+        }
+      },
+      "claude": {
+        "state": "active",
+        "recommended_action": "protect_only",
+        "process_counts": {
+          "total": 4,
+          "active_primary": 1,
+          "active_helper": 2,
+          "background_only": 1,
+          "stale": 0
+        },
+        "inventory_counts": {}
+      },
+      "codex": {
+        "state": "active",
+        "recommended_action": "protect_only",
+        "process_counts": {
+          "total": 6,
+          "active_primary": 1,
+          "active_helper": 4,
+          "background_only": 1,
+          "stale": 0
+        },
+        "inventory_counts": {}
+      }
+    }
+  }
+}

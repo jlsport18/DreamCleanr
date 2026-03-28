@@ -19,10 +19,31 @@ class ReportingTests(unittest.TestCase):
                     "target": "/Users/test/.cache/uv",
                     "result": "planned",
                     "bytes_reclaimed": 1234,
+                    "family": "system",
                 }
             ],
             "protected_items": [{"label": "claude_vm_bundle"}],
             "manual_review_items": [{"label": "docker_raw"}],
+            "family_summaries": {
+                "docker": {
+                    "state": "active",
+                    "recommended_action": "docker_system_prune",
+                    "process_counts": {"stale": 2},
+                    "inventory_counts": {"running_containers": 1, "exited_containers": 3},
+                },
+                "claude": {
+                    "state": "active",
+                    "recommended_action": "protect_only",
+                    "process_counts": {"stale": 0},
+                    "inventory_counts": {},
+                },
+                "codex": {
+                    "state": "active",
+                    "recommended_action": "protect_only",
+                    "process_counts": {"stale": 0},
+                    "inventory_counts": {},
+                },
+            },
             "snapshot": {
                 "host_disk_total_bytes": 200 * 1024 ** 3,
                 "host_disk_free_bytes": 20 * 1024 ** 3,
@@ -42,8 +63,10 @@ class ReportingTests(unittest.TestCase):
         }
         html = render_html(report)
         self.assertIn("DreamCleanr", html)
-        self.assertIn("Biggest Wins", html)
-        self.assertIn("Left Alone On Purpose", html)
+        self.assertIn("Family Status", html)
+        self.assertIn("Removed Or Planned", html)
+        self.assertIn("Protected", html)
+        self.assertIn("Manual Review", html)
         self.assertIn("Why It Was Safe", html)
 
 

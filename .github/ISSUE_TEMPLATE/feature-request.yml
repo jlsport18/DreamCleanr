@@ -1,0 +1,30 @@
+name: Feature request
+description: Suggest a new cleanup, reporting, automation, or shell feature.
+title: "[feature] "
+labels: ["enhancement"]
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem
+      description: What operator pain or cleanup gap should this solve?
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposal
+      description: Describe the desired behavior and why it is safe.
+    validations:
+      required: true
+  - type: dropdown
+    id: area
+    attributes:
+      label: Area
+      options:
+        - process forensics
+        - cleanup engine
+        - reporting
+        - automation
+        - release
+        - apple shell

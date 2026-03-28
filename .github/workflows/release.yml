@@ -1,0 +1,42 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install build tooling
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install build
+          python -m pip install -e .
+      - name: Test
+        run: python -m unittest discover -s tests -p "test_*.py" -v
+      - name: Build artifacts
+        run: python -m build
+      - name: Generate sample report
+        run: python -m dreamcleanr report --input reports/sample-cleanup-report.json --html-out dist/sample-cleanup-report.html
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: dreamcleanr-release
+          path: |
+            dist/*
+            reports/sample-cleanup-report.json
+      - name: Publish GitHub release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            dist/*
+            reports/sample-cleanup-report.json

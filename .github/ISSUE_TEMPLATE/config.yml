@@ -1,0 +1,5 @@
+blank_issues_enabled: false
+contact_links:
+  - name: DreamCleanr roadmap
+    url: https://github.com/jlsport18/DreamCleanr/blob/main/ROADMAP.md
+    about: Review the current hardening and product roadmap before filing a new request.

@@ -1,10 +1,19 @@
 from __future__ import annotations
 
 import unittest
+from pathlib import Path
+from tempfile import TemporaryDirectory
 from unittest.mock import patch
 
-from dreamcleanr.core import classify_process_role, classify_processes, parse_elapsed_to_seconds, summarize_family
-from dreamcleanr.models import ProcessRecord
+from dreamcleanr.core import (
+    apply_actions,
+    classify_process_role,
+    classify_processes,
+    parse_elapsed_to_seconds,
+    prune_history_files,
+    summarize_family,
+)
+from dreamcleanr.models import CleanupAction, DockerInventory, ProcessRecord
 
 
 def proc(pid: int, ppid: int, etime: str, cpu: float, rss: int, command: str, args: str) -> ProcessRecord:
@@ -75,6 +84,73 @@ class CoreTests(unittest.TestCase):
         summary = {"claude": summarize_family("claude", processes, by_pid, {99999})}
         self.assertEqual(summary["claude"]["state"], "active")
         self.assertIn("prune_vm", summary["claude"]["blocked_actions"])
+
+    def test_docker_probe_and_interactive_cli_are_separated(self) -> None:
+        probe = proc(36640, 36402, "01:05:11", 0.0, 180, "docker", "docker info")
+        interactive = proc(36641, 36402, "00:01:20", 0.1, 180, "docker", "docker run alpine sh")
+        self.assertEqual(probe.role, "docker_cli_probe")
+        self.assertEqual(interactive.role, "docker_cli")
+
+    def test_codex_crashpad_without_active_root_is_background_only(self) -> None:
+        processes = [
+            proc(
+                2234,
+                1,
+                "00:40:00",
+                0.0,
+                96,
+                "/Applications/Co",
+                "/Applications/Codex.app/Contents/Frameworks/Codex Helper.app/Contents/MacOS/crashpad_handler --database=/Users/test/Library/Application Support/Codex/Crashpad",
+            )
+        ]
+        by_pid = {p.pid: p for p in processes}
+        summary = {"codex": summarize_family("codex", processes, by_pid, {99999})}
+        classify_processes(processes, summary)
+        self.assertEqual(processes[0].classification, "BACKGROUND_ONLY")
+
+    def test_docker_engine_inventory_promotes_active_state_without_primary_process_match(self) -> None:
+        inventory = DockerInventory(
+            engine_available=True,
+            engine_state="reachable",
+            reclaimable_summary={"running_containers": 1, "exited_containers": 2, "dangling_images": 0, "volumes": 1, "networks": 1},
+        )
+        summary = summarize_family("docker", [], {}, {99999}, docker_inventory=inventory)
+        self.assertEqual(summary["state"], "active")
+        self.assertEqual(summary["recommended_action"], "docker_system_prune")
+
+    def test_safe_mode_preview_actions_do_not_apply(self) -> None:
+        snapshot = {
+            "process_summary": {
+                "docker": {"recommended_action": "protect_only"},
+                "claude": {"recommended_action": "protect_only"},
+                "codex": {"recommended_action": "protect_only"},
+            },
+        }
+        actions = [
+            CleanupAction(
+                target="36640",
+                target_type="process",
+                family="docker",
+                classification="STALE_CLI",
+                result="planned",
+                bytes_reclaimed=180 * 1024,
+                reason="preview only",
+                details={"apply_allowed": False},
+            )
+        ]
+        applied = apply_actions(snapshot, actions, dry_run=False)
+        self.assertEqual(applied[0].result, "kept")
+
+    def test_prune_history_files_keeps_most_recent_artifacts(self) -> None:
+        with TemporaryDirectory() as tmpdir:
+            root = Path(tmpdir)
+            for idx in range(4):
+                path = root / f"report-20260328T00000{idx}.json"
+                path.write_text(str(idx), encoding="utf-8")
+            removed = prune_history_files(root, keep=2)
+            remaining = sorted(path.name for path in root.glob("report-*.json"))
+            self.assertEqual(len(removed), 2)
+            self.assertEqual(len(remaining), 2)
 
 
 if __name__ == "__main__":

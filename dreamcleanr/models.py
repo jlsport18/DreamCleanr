@@ -55,11 +55,13 @@ class CleanupAction:
 @dataclass
 class DockerInventory:
     engine_available: bool
+    engine_state: str = "unknown"
     info: Optional[Dict[str, Any]] = None
     containers: List[Dict[str, Any]] = field(default_factory=list)
     dangling_images: List[Dict[str, Any]] = field(default_factory=list)
     volumes: List[Dict[str, Any]] = field(default_factory=list)
     networks: List[Dict[str, Any]] = field(default_factory=list)
+    reclaimable_summary: Dict[str, int] = field(default_factory=dict)
     timed_out_commands: List[str] = field(default_factory=list)
     raw_text: Dict[str, str] = field(default_factory=dict)
 

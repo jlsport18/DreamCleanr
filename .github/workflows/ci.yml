@@ -7,14 +7,19 @@ on:
 jobs:
   test:
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ["3.11", "3.12"]
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with:
-          python-version: "3.12"
+          python-version: ${{ matrix.python-version }}
       - name: Install package
         run: pip install -e .
       - name: Compile
         run: python -m compileall dreamcleanr
       - name: Test
         run: python -m unittest discover -s tests -p "test_*.py" -v
+      - name: Render sample report
+        run: python -m dreamcleanr report --input reports/sample-cleanup-report.json --html-out /tmp/dreamcleanr-sample.html

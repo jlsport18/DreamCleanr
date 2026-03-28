@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "dreamcleanr"
-version = "0.1.0"
+version = "0.2.0"
 description = "Safe AI cleanup for stale helper processes, storage noise, and post-cleanup reporting on macOS."
 readme = "README.md"
 requires-python = ">=3.9"
@@ -12,6 +12,16 @@ authors = [
   { name = "Jonathan Lynch" }
 ]
 dependencies = []
+
+[project.optional-dependencies]
+dev = [
+  "build>=1.2.2",
+]
+
+[project.urls]
+Homepage = "https://github.com/jlsport18/DreamCleanr"
+Issues = "https://github.com/jlsport18/DreamCleanr/issues"
+Repository = "https://github.com/jlsport18/DreamCleanr"
 
 [project.scripts]
 dreamcleanr = "dreamcleanr.cli:main"

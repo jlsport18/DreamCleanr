@@ -104,6 +104,7 @@ def render_html(report: Dict[str, Any]) -> str:
     top_offenders = _top_offenders(snapshot)
     top_actions = _top_actions(actions)
     counts = _group_counts(actions)
+    family_summaries = report.get("family_summaries", {})
 
     used_before = report["storage_before_bytes"]
     used_after = report["storage_after_bytes"]
@@ -114,9 +115,13 @@ def render_html(report: Dict[str, Any]) -> str:
 
     cards = [
         _card(outcome_label, human_bytes(report["storage_reclaimed_bytes"]), largest_label),
+        _card(
+            "Memory Relief",
+            f"{float(report.get('memory_reclaimed_estimate_mb', 0.0)):.1f}MB",
+            f"{int(report.get('processes_trimmed', 0))} stale processes targeted",
+        ),
         _card("Free Space Now", human_bytes(snapshot.get("host_disk_free_bytes", 0)), "Live disk headroom after scan"),
-        _card("Actions", str(len(actions)), f"{counts.get('deleted', 0) + counts.get('terminated', 0)} applied or {counts.get('planned', 0)} planned"),
-        _card("Deferred Risks", str(len(manual_review)), "High-value items left for manual review"),
+        _card("Protected", str(len(protected_items)), f"{len(manual_review)} items still require manual review"),
     ]
 
     rows = []
@@ -147,6 +152,51 @@ def render_html(report: Dict[str, Any]) -> str:
         protected_strip.append(_badge(item["label"], "kept"))
     for item in manual_review[:4]:
         protected_strip.append(_badge(item["label"], "review"))
+
+    family_rows = []
+    for family in ("docker", "claude", "codex"):
+        family_summary = family_summaries.get(family, {})
+        inventory_counts = family_summary.get("inventory_counts", {})
+        process_counts = family_summary.get("process_counts", {})
+        details = []
+        if inventory_counts:
+            details.append(
+                "containers "
+                f"{inventory_counts.get('running_containers', 0)} running / {inventory_counts.get('exited_containers', 0)} stopped"
+            )
+        if process_counts:
+            details.append(f"{process_counts.get('stale', 0)} stale helpers")
+        family_rows.append(
+            '<div class="row">'
+            f'<div class="name">{family.title()}</div>'
+            f'<div class="size">{html.escape(family_summary.get("state", "n/a"))}</div>'
+            '<div class="bar"><span style="width:100%"></span></div>'
+            f'{_badge(family_summary.get("recommended_action", "protect_only").replace("_", " ").title(), "review")}'
+            '</div>'
+            + (f'<div class="subvalue">{" | ".join(html.escape(part) for part in details)}</div>' if details else "")
+        )
+
+    protected_rows = []
+    for item in protected_items[:10]:
+        protected_rows.append(
+            '<div class="row">'
+            f'<div class="name">{html.escape(item["label"])}</div>'
+            f'<div class="size">{human_bytes(item.get("size_bytes", 0))}</div>'
+            '<div class="bar"><span style="width:100%"></span></div>'
+            f'{_badge("Protected", "kept")}'
+            '</div>'
+        )
+
+    manual_rows = []
+    for item in manual_review[:10]:
+        manual_rows.append(
+            '<div class="row">'
+            f'<div class="name">{html.escape(item["label"])}</div>'
+            f'<div class="size">{human_bytes(item.get("size_bytes", 0))}</div>'
+            '<div class="bar"><span style="width:100%"></span></div>'
+            f'{_badge("Manual Review", "review")}'
+            '</div>'
+        )
 
     why_safe = []
     for family in ("docker", "claude", "codex"):
@@ -204,7 +254,12 @@ def render_html(report: Dict[str, Any]) -> str:
     </div>
 
     <div class="section">
-      <h2>What Happened</h2>
+      <h2>Family Status</h2>
+      <div class="stack">{''.join(family_rows) or '<div class="card">No family activity was detected.</div>'}</div>
+    </div>
+
+    <div class="section">
+      <h2>Removed Or Planned</h2>
       <div class="grid">
         {_card('Deleted', str(counts.get('deleted', 0) + counts.get('terminated', 0)), 'Applied removals and terminated stale processes')}
         {_card('Previewed', str(counts.get('planned', 0)), 'Safe opportunities identified in dry run')}
@@ -215,8 +270,14 @@ def render_html(report: Dict[str, Any]) -> str:
     </div>
 
     <div class="section">
-      <h2>Left Alone On Purpose</h2>
+      <h2>Protected</h2>
       <div class="card">{' '.join(protected_strip) or 'No protected items were recorded.'}</div>
+      <div class="stack">{''.join(protected_rows) or '<div class="card">No protected items were recorded.</div>'}</div>
+    </div>
+
+    <div class="section">
+      <h2>Manual Review</h2>
+      <div class="stack">{''.join(manual_rows) or '<div class="card">No manual-review items were recorded.</div>'}</div>
     </div>
 
     <div class="section">

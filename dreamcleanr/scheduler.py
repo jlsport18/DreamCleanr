@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import os
+import subprocess
 import sys
 from pathlib import Path
 from typing import Optional
@@ -20,9 +21,11 @@ def write_launch_agent(
     hour: int,
     minute: int,
     mode: str,
+    retention_count: int,
 ) -> Path:
     plist_path = launch_agent_path()
     plist_path.parent.mkdir(parents=True, exist_ok=True)
+    output_dir.mkdir(parents=True, exist_ok=True)
     stdout_path = output_dir / "launchd.stdout.log"
     stderr_path = output_dir / "launchd.stderr.log"
     python_exe = sys.executable
@@ -45,6 +48,8 @@ def write_launch_agent(
     <string>{mode}</string>
     <string>--output-dir</string>
     <string>{output_dir}</string>
+    <string>--retention-count</string>
+    <string>{retention_count}</string>
     <string>--json-out</string>
     <string>{latest_json}</string>
   </array>
@@ -72,15 +77,15 @@ def write_launch_agent(
 
 
 def install_launch_agent(plist_path: Path) -> None:
-    os.system(f'launchctl bootout "gui/{os.getuid()}" "{plist_path}" >/dev/null 2>&1 || true')
-    os.system(f'launchctl bootstrap "gui/{os.getuid()}" "{plist_path}"')
-    os.system(f'launchctl enable "gui/{os.getuid()}/{LABEL}" >/dev/null 2>&1 || true')
+    subprocess.run(["launchctl", "bootout", f"gui/{os.getuid()}", str(plist_path)], check=False, capture_output=True, text=True)
+    subprocess.run(["launchctl", "bootstrap", f"gui/{os.getuid()}", str(plist_path)], check=True)
+    subprocess.run(["launchctl", "enable", f"gui/{os.getuid()}/{LABEL}"], check=False, capture_output=True, text=True)
 
 
 def uninstall_launch_agent() -> Optional[Path]:
     plist_path = launch_agent_path()
     if plist_path.exists():
-        os.system(f'launchctl bootout "gui/{os.getuid()}" "{plist_path}" >/dev/null 2>&1 || true')
+        subprocess.run(["launchctl", "bootout", f"gui/{os.getuid()}", str(plist_path)], check=False, capture_output=True, text=True)
         plist_path.unlink()
         return plist_path
     return None

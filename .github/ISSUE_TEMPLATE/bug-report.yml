@@ -1,0 +1,24 @@
+name: Bug report
+description: Report a cleanup, scheduling, or classification problem.
+title: "[bug] "
+labels: ["bug"]
+body:
+  - type: textarea
+    id: summary
+    attributes:
+      label: Summary
+      description: What broke, and what did you expect instead?
+    validations:
+      required: true
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: Reproduction
+      description: Include the command you ran and any relevant report JSON/HTML context.
+    validations:
+      required: true
+  - type: textarea
+    id: safety
+    attributes:
+      label: Safety impact
+      description: Did this touch protected Docker, Claude, or Codex state?

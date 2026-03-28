@@ -16,6 +16,10 @@ from .models import CleanupAction, CleanupReport, DockerInventory, ProcessRecord
 
 FAMILIES = ("docker", "claude", "codex")
 REPORT_ROOT = Path.home() / "Library" / "Logs" / "DreamCleanr" / "reports"
+DEFAULT_RETENTION_COUNT = 21
+DEFAULT_LOG_RETENTION_COUNT = 5
+STALE_PROCESS_MIN_ELAPSED_SECONDS = 300
+STALE_PROCESS_MAX_CPU_PERCENT = 1.0
 
 PROTECTED_STATE_PATHS = {
     "codex_home": Path.home() / ".codex",
@@ -57,6 +61,24 @@ CODEX_SUPPORT_CACHE_DIRS = [
     "DawnGraphiteCache",
     "DawnWebGPUCache",
 ]
+
+DOCKER_PROBE_SNIPPETS = (
+    "docker info",
+    "docker ps",
+    "docker system df",
+    "docker image ls",
+    "docker volume ls",
+    "docker network ls",
+    "docker context ls",
+)
+
+TIMESTAMPED_REPORT_GLOBS = (
+    "before-*.json",
+    "after-*.json",
+    "report-*.json",
+    "report-*.html",
+    "failure-*.json",
+)
 
 
 def now_iso() -> str:
@@ -111,6 +133,16 @@ def parse_elapsed_to_seconds(value: str) -> int:
         parts.insert(0, 0)
     hours, minutes, seconds = parts[-3:]
     return days * 86400 + hours * 3600 + minutes * 60 + seconds
+
+
+def has_any_token(text: str, tokens: Iterable[str]) -> bool:
+    lowered = text.lower()
+    return any(token in lowered for token in tokens)
+
+
+def is_docker_probe_command(args: str) -> bool:
+    lowered = args.lower()
+    return any(snippet in lowered for snippet in DOCKER_PROBE_SNIPPETS)
 
 
 def run_command(command: List[str], timeout: int = 5) -> Dict[str, Any]:
@@ -211,9 +243,9 @@ def classify_process_role(record: ProcessRecord) -> None:
         record.role = "probe"
         return
 
-    if any(
-        token in args
-        for token in (
+    if has_any_token(
+        args,
+        (
             "/applications/docker.app/contents/",
             "com.docker.backend",
             "com.docker.virtualization",
@@ -221,7 +253,9 @@ def classify_process_role(record: ProcessRecord) -> None:
             "docker-sandbox daemon",
             "docker-agent.sock",
             "docker.raw",
-        )
+            "com.docker.socket",
+            "com.docker.build",
+        ),
     ):
         record.family = "docker"
         if "com.docker.vmnetd" in args:
@@ -239,26 +273,29 @@ def classify_process_role(record: ProcessRecord) -> None:
         return
     if command == "docker" or args.startswith("docker ") or " docker " in args:
         record.family = "docker"
-        record.role = "docker_cli"
+        record.role = "docker_cli_probe" if is_docker_probe_command(args) else "docker_cli"
         return
     if command.endswith("/zsh") and "docker" in args:
         record.family = "docker"
-        record.role = "shell_docker_probe"
+        record.role = "shell_docker_probe" if is_docker_probe_command(args) else "shell_docker_session"
         return
 
-    if any(
-        token in args
-        for token in (
+    if has_any_token(
+        args,
+        (
             "/applications/codex.app/contents/macos/codex",
             "codex helper",
             "codex helper (renderer)",
             "/resources/codex app-server",
             "openai.chatgpt-",
             "com.openai.codex",
-        )
+            "crashpad_handler",
+        ),
     ):
         record.family = "codex"
-        if "/applications/codex.app/contents/macos/codex" in args:
+        if "crashpad_handler" in args:
+            record.role = "crashpad"
+        elif "/applications/codex.app/contents/macos/codex" in args:
             record.role = "codex_app"
         elif "codex helper (renderer)" in args:
             record.role = "renderer"
@@ -272,20 +309,27 @@ def classify_process_role(record: ProcessRecord) -> None:
             record.role = "codex_helper"
         return
 
-    if any(
-        token in args
-        for token in (
+    if has_any_token(
+        args,
+        (
             "/applications/claude.app/contents/",
             "claudefordesktop",
             "anthropic.claude-code-",
             "/resources/native-binary/claude",
             "claude --output-format",
             "--mcp-config",
-        )
+            "crashpad_handler",
+        ),
     ):
         record.family = "claude"
-        if "/applications/claude.app/contents/" in args:
+        if "crashpad_handler" in args and "claude" in args:
+            record.role = "crashpad"
+        elif "/applications/claude.app/contents/macos/claude" in args:
             record.role = "claude_app"
+        elif "claude helper (renderer)" in args:
+            record.role = "renderer"
+        elif "claude helper" in args:
+            record.role = "helper"
         elif "shipit" in args:
             record.role = "shipit"
         else:
@@ -309,6 +353,7 @@ def summarize_family(
     processes: List[ProcessRecord],
     by_pid: Dict[int, ProcessRecord],
     self_pids: Iterable[int],
+    docker_inventory: Optional[DockerInventory] = None,
 ) -> Dict[str, Any]:
     self_pid_set = set(self_pids)
     matches: List[Dict[str, Any]] = []
@@ -322,9 +367,9 @@ def summarize_family(
         "codex": {"codex_app", "helper", "renderer", "cli_service"},
     }[family]
     weak_roles = {
-        "docker": {"docker_cli", "shell_docker_probe"},
-        "claude": {"shipit"},
-        "codex": {"updater"},
+        "docker": {"docker_cli", "docker_cli_probe", "shell_docker_probe", "shell_docker_session"},
+        "claude": {"shipit", "crashpad"},
+        "codex": {"updater", "crashpad"},
     }[family]
     primary_roles = {
         "docker": {"vmnetd", "backend", "virtualization"},
@@ -375,18 +420,17 @@ def summarize_family(
         paths_present["support_root"] = PROTECTED_STATE_PATHS["codex_support"].exists()
 
     daemon_state = "n/a"
-    if family == "docker":
-        info = run_command(["docker", "info", "--format", "{{json .}}"], timeout=3)
-        if info["ok"]:
-            daemon_state = "reachable"
-        elif info["timed_out"]:
-            daemon_state = "unknown"
-        else:
-            daemon_state = "unreachable"
+    inventory_counts: Dict[str, int] = {}
+    if family == "docker" and docker_inventory is not None:
+        daemon_state = docker_inventory.engine_state
+        inventory_counts = dict(docker_inventory.reclaimable_summary)
 
     if active_primary_pids:
         state = "active"
         confidence = "high"
+    elif family == "docker" and daemon_state == "reachable":
+        state = "active"
+        confidence = "medium"
     elif any(role in weak_roles for role in roles):
         state = "background_only" if family in {"claude", "codex"} else "cli_only"
         confidence = "medium"
@@ -401,7 +445,10 @@ def summarize_family(
         allowed_actions = ["docker_system_prune"]
         blocked_actions = ["raw_vm_delete"]
         recommended_action = "docker_system_prune" if daemon_state == "reachable" else "protect_only"
-        reason = "backend and virtualization processes observed"
+        if active_primary_pids:
+            reason = "backend, virtualization, or daemon-backed engine activity observed"
+        else:
+            reason = "Docker daemon responded even though no primary app process was classified"
     elif family == "docker" and state == "residual_data_only":
         allowed_actions = ["confirm_raw_vm_delete"]
         blocked_actions = []
@@ -460,6 +507,7 @@ def summarize_family(
         "paths_present": paths_present,
         "protected_library_caches": protected_library_caches,
         "active_primary_pids": active_primary_pids,
+        "inventory_counts": inventory_counts,
     }
 
 
@@ -483,7 +531,10 @@ def classify_processes(processes: List[ProcessRecord], family_summaries: Dict[st
         chain = ancestor_chain(record.ppid, by_pid)
         chain_pids = {proc.pid for proc in chain}
         has_active_parent = bool(chain_pids & active_primary_pids[family])
-        stale_signal = record.elapsed_seconds >= 300 and record.cpu_percent <= 1.0
+        stale_signal = (
+            record.elapsed_seconds >= STALE_PROCESS_MIN_ELAPSED_SECONDS
+            and record.cpu_percent <= STALE_PROCESS_MAX_CPU_PERCENT
+        )
 
         if record.role in {"vmnetd", "backend", "virtualization", "claude_app", "vscode_cli", "codex_app", "cli_service"}:
             record.classification = "ACTIVE_PRIMARY"
@@ -491,21 +542,36 @@ def classify_processes(processes: List[ProcessRecord], family_summaries: Dict[st
         elif has_active_parent and state == "active":
             record.classification = "ACTIVE_HELPER"
             record.reasons.append("active parent chain")
-        elif record.role in {"docker_cli", "shell_docker_probe"} and stale_signal:
+        elif record.role in {"docker_cli_probe", "shell_docker_probe"} and stale_signal:
             record.classification = "STALE_CLI"
             record.reasons.append("old docker probe chain with low activity")
-        elif record.role in {"updater", "shipit"} and not has_active_parent and stale_signal:
+        elif record.role in {"updater", "shipit", "crashpad"} and not has_active_parent:
             record.classification = "BACKGROUND_ONLY"
-            record.reasons.append("background updater without active root")
+            record.reasons.append("background updater or crash handler without active root")
         elif record.role in {"helper", "renderer", "docker_helper", "sandbox", "backend_service"} and not has_active_parent and stale_signal:
             record.classification = "STALE_HELPER"
             record.reasons.append("helper without active root and low activity")
+        elif record.role in {"docker_cli", "shell_docker_session"}:
+            record.classification = "BACKGROUND_ONLY"
+            record.reasons.append("interactive or non-probe docker CLI preserved conservatively")
         elif state in {"background_only", "cli_only"}:
             record.classification = "BACKGROUND_ONLY"
             record.reasons.append(f"{family} state is {state}")
         else:
             record.classification = "ACTIVE_HELPER"
             record.reasons.append("conservative protection fallback")
+
+
+def attach_classification_counts(processes: List[ProcessRecord], family_summaries: Dict[str, Dict[str, Any]]) -> None:
+    for family in FAMILIES:
+        family_processes = [process for process in processes if process.family == family]
+        family_summaries[family]["process_counts"] = {
+            "total": len(family_processes),
+            "active_primary": sum(1 for process in family_processes if process.classification == "ACTIVE_PRIMARY"),
+            "active_helper": sum(1 for process in family_processes if process.classification == "ACTIVE_HELPER"),
+            "background_only": sum(1 for process in family_processes if process.classification == "BACKGROUND_ONLY"),
+            "stale": sum(1 for process in family_processes if process.classification in {"STALE_CLI", "STALE_HELPER"}),
+        }
 
 
 def gather_storage_records(family_summaries: Dict[str, Dict[str, Any]]) -> Tuple[List[StorageRecord], List[StorageRecord], List[StorageRecord]]:
@@ -566,7 +632,8 @@ def gather_storage_records(family_summaries: Dict[str, Dict[str, Any]]) -> Tuple
 
 def list_docker_inventory() -> DockerInventory:
     info_result = run_command(["docker", "info", "--format", "{{json .}}"], timeout=3)
-    inventory = DockerInventory(engine_available=info_result["ok"])
+    engine_state = "reachable" if info_result["ok"] else "timed_out" if info_result["timed_out"] else "unreachable"
+    inventory = DockerInventory(engine_available=info_result["ok"], engine_state=engine_state)
     if info_result["timed_out"]:
         inventory.timed_out_commands.append("docker info")
     elif info_result["ok"]:
@@ -602,6 +669,29 @@ def list_docker_inventory() -> DockerInventory:
     )
     inventory.volumes = json_lines(["docker", "volume", "ls", "--format", "{{json .}}"], 4, "volumes")
     inventory.networks = json_lines(["docker", "network", "ls", "--format", "{{json .}}"], 4, "networks")
+    system_df = run_command(["docker", "system", "df", "-v"], timeout=6)
+    if system_df["timed_out"]:
+        inventory.timed_out_commands.append("docker system df")
+    elif system_df["ok"]:
+        inventory.raw_text["system_df"] = system_df["stdout"]
+
+    running_containers = 0
+    exited_containers = 0
+    for row in inventory.containers:
+        state = str(row.get("State", "")).lower()
+        status = str(row.get("Status", "")).lower()
+        if state == "running" or status.startswith("up "):
+            running_containers += 1
+        else:
+            exited_containers += 1
+
+    inventory.reclaimable_summary = {
+        "running_containers": running_containers,
+        "exited_containers": exited_containers,
+        "dangling_images": len(inventory.dangling_images),
+        "volumes": len(inventory.volumes),
+        "networks": len(inventory.networks),
+    }
     return inventory
 
 
@@ -614,12 +704,19 @@ def capture_snapshot(mode: str = "balanced") -> Dict[str, Any]:
         classify_process_role(process)
     by_pid = {process.pid: process for process in processes}
     current_pid = os.getpid()
+    docker_inventory = list_docker_inventory()
     family_summaries = {
-        family: summarize_family(family, processes, by_pid, {current_pid, os.getppid()})
+        family: summarize_family(
+            family,
+            processes,
+            by_pid,
+            {current_pid, os.getppid()},
+            docker_inventory=docker_inventory if family == "docker" else None,
+        )
         for family in FAMILIES
     }
     classify_processes(processes, family_summaries)
-    docker_inventory = list_docker_inventory()
+    attach_classification_counts(processes, family_summaries)
     storage_records, protected_items, manual_review_items = gather_storage_records(family_summaries)
 
     return {
@@ -653,8 +750,12 @@ def family_summary_from_actions(
     summary: Dict[str, Dict[str, Any]] = {}
     for family in ("docker", "claude", "codex", "system"):
         family_actions = [action for action in actions if action.family == family]
+        process_summary = snapshot.get("process_summary", {}).get(family, {})
         summary[family] = {
-            "state": snapshot.get("process_summary", {}).get(family, {}).get("state", "n/a"),
+            "state": process_summary.get("state", "n/a"),
+            "recommended_action": process_summary.get("recommended_action", "protect_only"),
+            "process_counts": process_summary.get("process_counts", {}),
+            "inventory_counts": process_summary.get("inventory_counts", {}),
             "actions": len(family_actions),
             "bytes_reclaimed": sum(action.bytes_reclaimed for action in family_actions),
             "results": {
@@ -681,7 +782,12 @@ def plan_cleanup(snapshot: Dict[str, Any], mode: str = "balanced") -> List[Clean
                     result="planned",
                     bytes_reclaimed=process.rss_kb * 1024,
                     reason="Would terminate stale helper or CLI probe process in balanced or max mode.",
-                    details={"pid": process.pid, "args": process.args, "elapsed_seconds": process.elapsed_seconds},
+                    details={
+                        "pid": process.pid,
+                        "args": process.args,
+                        "elapsed_seconds": process.elapsed_seconds,
+                        "apply_allowed": False,
+                    },
                 )
             )
             continue
@@ -694,7 +800,12 @@ def plan_cleanup(snapshot: Dict[str, Any], mode: str = "balanced") -> List[Clean
                 result="planned",
                 bytes_reclaimed=process.rss_kb * 1024,
                 reason="Stale helper or CLI probe process with low activity and no active parent chain.",
-                details={"pid": process.pid, "args": process.args, "elapsed_seconds": process.elapsed_seconds},
+                details={
+                    "pid": process.pid,
+                    "args": process.args,
+                    "elapsed_seconds": process.elapsed_seconds,
+                    "apply_allowed": True,
+                },
             )
         )
 
@@ -708,6 +819,7 @@ def plan_cleanup(snapshot: Dict[str, Any], mode: str = "balanced") -> List[Clean
                 result="planned",
                 bytes_reclaimed=du_bytes(path),
                 reason=reason,
+                details={"label": label, "apply_allowed": True},
             )
         )
 
@@ -729,6 +841,10 @@ def plan_cleanup(snapshot: Dict[str, Any], mode: str = "balanced") -> List[Clean
                 result="planned",
                 bytes_reclaimed=0,
                 reason="Prune stopped containers, dangling images, and build cache via Docker daemon.",
+                details={
+                    "apply_allowed": True,
+                    "inventory_counts": process_summary["docker"].get("inventory_counts", {}),
+                },
             )
         )
 
@@ -754,6 +870,30 @@ def path_delete(path: Path) -> None:
         shutil.rmtree(path)
     else:
         path.unlink()
+
+
+def prune_history_files(output_dir: Path, keep: int = DEFAULT_RETENTION_COUNT) -> List[str]:
+    removed: List[str] = []
+    if keep < 1 or not output_dir.exists():
+        return removed
+    for pattern in TIMESTAMPED_REPORT_GLOBS:
+        matches = sorted(output_dir.glob(pattern), key=lambda item: item.stat().st_mtime, reverse=True)
+        for path in matches[keep:]:
+            path.unlink(missing_ok=True)
+            removed.append(path.name)
+    return removed
+
+
+def prune_rotated_logs(output_dir: Path, keep: int = DEFAULT_LOG_RETENTION_COUNT) -> List[str]:
+    removed: List[str] = []
+    if keep < 0 or not output_dir.exists():
+        return removed
+    for stem in ("launchd.stdout.log", "launchd.stderr.log"):
+        matches = sorted(output_dir.glob(f"{stem}.*"), key=lambda item: item.stat().st_mtime, reverse=True)
+        for path in matches[keep:]:
+            path.unlink(missing_ok=True)
+            removed.append(path.name)
+    return removed
 
 
 def remove_unprotected_library_caches(protected_basenames: List[str]) -> int:
@@ -810,6 +950,11 @@ def apply_actions(
             continue
 
         try:
+            if not action.details.get("apply_allowed", True):
+                realized.result = "kept"
+                realized.reason = "This action is preview-only in safe mode."
+                applied.append(realized)
+                continue
             if action.target_type == "process":
                 pid = int(action.target)
                 success = terminate_process(pid)
