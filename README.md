@@ -16,6 +16,8 @@ DreamCleanr currently:
 - exposes a local MCP server for Claude, Codex, and VS Code
 - ships with a public launch site under `site/`
 
+Public site: `https://jlsport18.github.io/DreamCleanr/`
+
 ## Install
 
 The easiest local install path is `pipx`:

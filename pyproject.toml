@@ -19,7 +19,7 @@ dev = [
 ]
 
 [project.urls]
-Homepage = "https://github.com/jlsport18/DreamCleanr"
+Homepage = "https://jlsport18.github.io/DreamCleanr/"
 Issues = "https://github.com/jlsport18/DreamCleanr/issues"
 Repository = "https://github.com/jlsport18/DreamCleanr"
 
