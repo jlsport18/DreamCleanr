@@ -120,6 +120,7 @@ DreamCleanr keeps updates simple and GitHub-native:
 
 - `ci.yml`: package and test confidence
 - `pages.yml`: deploy the public site
+- `pages-verify.yml`: verify the public Pages deployment after Pages succeeds
 - `release.yml`: publish versioned release artifacts and install/update scripts
 - `install-smoke.yml`: verify release-asset install, public install script, and upgrade path
 - `ops-health.yml`: verify the live site, latest asset URLs, scripts, and sample report

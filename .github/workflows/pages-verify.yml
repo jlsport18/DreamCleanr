@@ -1,0 +1,63 @@
+name: Pages Verify
+
+on:
+  workflow_dispatch:
+  workflow_run:
+    workflows:
+      - Pages
+    types:
+      - completed
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    if: github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Verify public Pages deployment
+        env:
+          BASE_URL: https://jlsport18.github.io/DreamCleanr
+        run: |
+          set -euo pipefail
+
+          verify_head() {
+            local url="$1"
+            local label="$2"
+            local attempt
+            for attempt in $(seq 1 10); do
+              if curl -fsSLI "$url" >/dev/null; then
+                echo "PASS [$label] $url"
+                return 0
+              fi
+              echo "WAIT [$label] $url (attempt $attempt/10)"
+              sleep 15
+            done
+            echo "FAIL [$label] $url"
+            return 1
+          }
+
+          verify_homepage() {
+            local url="$1"
+            local attempt
+            local homepage=""
+            for attempt in $(seq 1 10); do
+              if homepage="$(curl -fsSL "$url")" \
+                && printf '%s' "$homepage" | grep -q "DreamCleanr" \
+                && printf '%s' "$homepage" | grep -q "releases/latest"; then
+                echo "PASS [homepage] $url"
+                return 0
+              fi
+              echo "WAIT [homepage] $url (attempt $attempt/10)"
+              sleep 15
+            done
+            echo "FAIL [homepage] $url"
+            return 1
+          }
+
+          verify_homepage "$BASE_URL/"
+          verify_head "$BASE_URL/manifest.webmanifest" "manifest"
+          verify_head "$BASE_URL/robots.txt" "robots"
+          verify_head "$BASE_URL/sitemap.xml" "sitemap"

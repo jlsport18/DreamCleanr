@@ -134,5 +134,7 @@ Key files:
 - Tagged releases publish versioned wheel and source artifacts plus install/update scripts
 - Sample output lives in `reports/sample-cleanup-report.json`
 - Deployment architecture guidance lives in `DEPLOYMENT_ARCHITECTURE.md`
+- Final deployment verification and automation map live in `FINAL_DEPLOYMENT_REPORT.md`
 - Monetization guidance lives in `MONETIZATION_PLAN.md`
 - Near-term roadmap lives in `ROADMAP.md`
+- Post-deploy Pages verification lives in `.github/workflows/pages-verify.yml`
