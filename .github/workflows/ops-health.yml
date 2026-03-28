@@ -38,6 +38,11 @@ jobs:
         run: |
           curl -fsSL https://jlsport18.github.io/DreamCleanr/ | grep -q "DreamCleanr"
           curl -fsSL https://jlsport18.github.io/DreamCleanr/ | grep -q "Clean while you sleep"
+          curl -fsSL https://jlsport18.github.io/DreamCleanr/ | grep -q "releases/latest"
+          curl -fsSLI https://github.com/jlsport18/DreamCleanr/releases/latest >/dev/null
+          curl -fsSLI https://github.com/jlsport18/DreamCleanr/releases/latest/download/dreamcleanr-latest-py3-none-any.whl >/dev/null
+          curl -fsSLI https://raw.githubusercontent.com/jlsport18/DreamCleanr/main/scripts/install.sh >/dev/null
+          curl -fsSLI https://raw.githubusercontent.com/jlsport18/DreamCleanr/main/scripts/update.sh >/dev/null
       - name: Build health summary
         run: |
           python - <<'PY'
@@ -54,6 +59,8 @@ jobs:
                   "site_js",
                   "sample_report_render",
                   "live_site_content",
+                  "release_latest_urls",
+                  "install_update_scripts",
               ],
               "status": "healthy",
               "site": "https://jlsport18.github.io/DreamCleanr/",
@@ -68,4 +75,3 @@ jobs:
           path: |
             ops-health-summary.json
             /tmp/dreamcleanr-sample.html
-

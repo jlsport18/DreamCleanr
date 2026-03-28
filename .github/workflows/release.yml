@@ -28,6 +28,18 @@ jobs:
         run: python -m unittest discover -s tests -p "test_*.py" -v
       - name: Build artifacts
         run: python -m build
+      - name: Create stable latest aliases
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          import shutil
+
+          dist = Path("dist")
+          wheel = next(path for path in dist.glob("dreamcleanr-*.whl") if "latest" not in path.name)
+          sdist = next(path for path in dist.glob("dreamcleanr-*.tar.gz") if "latest" not in path.name)
+          shutil.copy2(wheel, dist / "dreamcleanr-latest-py3-none-any.whl")
+          shutil.copy2(sdist, dist / "dreamcleanr-latest.tar.gz")
+          PY
       - name: Generate sample report
         run: python -m dreamcleanr report --input reports/sample-cleanup-report.json --html-out dist/sample-cleanup-report.html
       - name: Upload build artifacts
@@ -43,3 +55,5 @@ jobs:
           files: |
             dist/*
             reports/sample-cleanup-report.json
+            scripts/install.sh
+            scripts/update.sh

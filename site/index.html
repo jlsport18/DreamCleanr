@@ -6,7 +6,7 @@
     <title>DreamCleanr | Clean while you sleep</title>
     <meta
       name="description"
-      content="DreamCleanr is a safe macOS cleanup tool for AI and developer workflows. Reclaim storage, trim stale Docker, Claude, and Codex helper noise, and wake up to a lighter Mac."
+      content="DreamCleanr is a GitHub-first macOS cleanup tool for AI and developer workflows. Reclaim storage, trim stale Docker, Claude, and Codex helper noise, and wake up to a lighter Mac."
     />
     <meta name="robots" content="index,follow" />
     <link rel="canonical" href="https://jlsport18.github.io/DreamCleanr/" />
@@ -15,7 +15,7 @@
     <meta property="og:title" content="DreamCleanr | Clean while you sleep" />
     <meta
       property="og:description"
-      content="A trust-first macOS cleanup tool for Docker, Claude, Codex, and developer-heavy Macs."
+      content="A trust-first, GitHub-first macOS cleanup tool for Docker, Claude, Codex, and developer-heavy Macs."
     />
     <meta property="og:url" content="https://jlsport18.github.io/DreamCleanr/" />
     <meta property="og:image" content="https://jlsport18.github.io/DreamCleanr/logo.svg" />
@@ -23,7 +23,7 @@
     <meta name="twitter:title" content="DreamCleanr | Clean while you sleep" />
     <meta
       name="twitter:description"
-      content="Safe macOS cleanup for AI and developer workflows, with receipts and conservative defaults."
+      content="GitHub-first macOS cleanup for AI and developer workflows, with receipts and conservative defaults."
     />
     <meta name="twitter:image" content="https://jlsport18.github.io/DreamCleanr/logo.svg" />
     <link rel="icon" href="./logo.svg" type="image/svg+xml" />
@@ -38,9 +38,8 @@
         "operatingSystem": "macOS",
         "description": "DreamCleanr is a trust-first macOS cleanup tool for AI and developer workflows. It trims stale helper processes, cleans safe cache noise, protects live Claude, Codex, and Docker state, and generates one-page cleanup receipts.",
         "url": "https://jlsport18.github.io/DreamCleanr/",
-        "downloadUrl": "https://github.com/jlsport18/DreamCleanr/releases/tag/v0.3.0",
+        "downloadUrl": "https://github.com/jlsport18/DreamCleanr/releases/latest/download/dreamcleanr-latest-py3-none-any.whl",
         "slogan": "Clean while you sleep",
-        "softwareVersion": "0.3.0",
         "offers": {
           "@type": "Offer",
           "price": "0",
@@ -73,8 +72,8 @@
           <p class="eyebrow">A moonlit cleanup tool for Claude, Codex, Docker, and developer sprawl</p>
           <h1>Wake up to a quieter machine.</h1>
           <p class="hero-text">
-            DreamCleanr trims stale helper processes, clears safe cache noise, protects live AI state, and runs its
-            balanced cleanup routine at 4 AM so your Mac is lighter by breakfast.
+            DreamCleanr trims stale helper processes, clears safe cache noise, protects live AI state, and keeps the
+            install and update path anchored to stable GitHub releases so the product stays easy to trust.
           </p>
           <div class="hero-actions">
             <a class="button primary" href="#install">Get DreamCleanr</a>
@@ -82,7 +81,7 @@
           </div>
           <ul class="hero-points">
             <li>Preview-first cleanup with protected Claude, Codex, and Docker VM state</li>
-            <li>Local MCP tool support for Claude, Codex, and VS Code</li>
+            <li>Local MCP server support for Claude, Codex, and VS Code</li>
             <li>One-page receipt that shows what was removed, protected, and left for manual review</li>
           </ul>
         </div>
@@ -115,7 +114,7 @@
       <section class="support-strip">
         <div>
           <strong>Launch shape</strong>
-          <span>Python CLI + local MCP server + public install surface</span>
+          <span>GitHub-first CLI + local MCP server + public install and update surface</span>
         </div>
         <div>
           <strong>Device story</strong>
@@ -137,8 +136,8 @@
           <article class="surface">
             <h3>CLI for macOS</h3>
             <p>The fastest path for direct cleanup, receipts, and scheduling on your local machine.</p>
-            <pre><code>pipx install git+https://github.com/jlsport18/DreamCleanr.git</code></pre>
-            <button class="copy" data-copy="pipx install git+https://github.com/jlsport18/DreamCleanr.git">Copy CLI install</button>
+            <pre><code>pipx install https://github.com/jlsport18/DreamCleanr/releases/latest/download/dreamcleanr-latest-py3-none-any.whl</code></pre>
+            <button class="copy" data-copy="pipx install https://github.com/jlsport18/DreamCleanr/releases/latest/download/dreamcleanr-latest-py3-none-any.whl">Copy CLI install</button>
           </article>
 
           <article class="surface">
@@ -178,6 +177,22 @@ args = ["-m", "dreamcleanr.mcp_server"]'>Copy Codex config</button>
   }
 }</code></pre>
             <button class="copy" data-copy='{"servers":{"dreamcleanr":{"command":"python3","args":["-m","dreamcleanr.mcp_server"]}}}'>Copy VS Code MCP config</button>
+          </article>
+        </div>
+        <div class="surface-grid" style="margin-top: 1.5rem;">
+          <article class="surface">
+            <h3>Update DreamCleanr</h3>
+            <p>Keep the latest stable release installed without pinning your setup to a specific tag.</p>
+            <pre><code>curl -fsSL https://raw.githubusercontent.com/jlsport18/DreamCleanr/main/scripts/update.sh | bash</code></pre>
+            <button class="copy" data-copy="curl -fsSL https://raw.githubusercontent.com/jlsport18/DreamCleanr/main/scripts/update.sh | bash">Copy updater</button>
+          </article>
+          <article class="surface">
+            <h3>Checkout refresh</h3>
+            <p>Working from a local clone? Pull the latest code and rebuild the editable environment.</p>
+            <pre><code>git pull --ff-only
+./scripts/bootstrap.sh</code></pre>
+            <button class="copy" data-copy="git pull --ff-only
+./scripts/bootstrap.sh">Copy checkout refresh</button>
           </article>
         </div>
       </section>
@@ -296,8 +311,8 @@ dreamcleanr report --input ~/Library/Logs/DreamCleanr/reports/latest.json</code>
         <p class="eyebrow">DreamCleanr MVP</p>
         <h2>Launch the cleanup you can trust.</h2>
         <p>
-          Install the CLI on your Mac, connect the MCP tool to Claude or Codex, and let the 4 AM routine clear the
-          noise before your first coffee.
+          Install the CLI on your Mac, connect the local MCP server if you want assistant access, and let the balanced
+          routine clear the noise before your first coffee.
         </p>
         <div class="hero-actions">
           <a class="button primary" href="https://github.com/jlsport18/DreamCleanr">Open the repo</a>

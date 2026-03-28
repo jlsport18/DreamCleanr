@@ -5,7 +5,7 @@ REPO="${DREAMCLEANR_REPO:-jlsport18/DreamCleanr}"
 STABLE_WHEEL_NAME="dreamcleanr-latest-py3-none-any.whl"
 
 if ! command -v python3 >/dev/null 2>&1; then
-  echo "python3 is required to install DreamCleanr." >&2
+  echo "python3 is required to update DreamCleanr." >&2
   exit 1
 fi
 
@@ -54,19 +54,15 @@ PY
 }
 
 ASSET_URL="$(resolve_asset_url)"
-echo "Installing DreamCleanr from: $ASSET_URL"
+echo "Updating DreamCleanr from: $ASSET_URL"
 
 if command -v pipx >/dev/null 2>&1; then
-  if pipx install "$ASSET_URL"; then
-    echo "Installed DreamCleanr with pipx."
-    exit 0
-  fi
   pipx install --force "$ASSET_URL"
-  echo "Refreshed DreamCleanr with pipx."
+  echo "Updated DreamCleanr with pipx."
   exit 0
 fi
 
 python3 -m pip install --user --upgrade pip
 python3 -m pip install --user --upgrade "$ASSET_URL"
 
-echo "Installed DreamCleanr with pip. You may need to ensure your user bin directory is on PATH."
+echo "Updated DreamCleanr with pip. You may need to ensure your user bin directory is on PATH."

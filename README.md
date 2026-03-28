@@ -20,13 +20,21 @@ Public site: `https://jlsport18.github.io/DreamCleanr/`
 
 ## Install
 
-The easiest local install path is `pipx`:
+DreamCleanr is GitHub-first. The stable install and update paths are release-based and evergreen.
+
+### Install from the latest stable release
 
 ```bash
-pipx install git+https://github.com/jlsport18/DreamCleanr.git
+pipx install https://github.com/jlsport18/DreamCleanr/releases/latest/download/dreamcleanr-latest-py3-none-any.whl
 ```
 
-If you prefer a repo checkout:
+### One-shot installer
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/jlsport18/DreamCleanr/main/scripts/install.sh | bash
+```
+
+### Local checkout
 
 ```bash
 git clone https://github.com/jlsport18/DreamCleanr.git
@@ -34,15 +42,37 @@ cd DreamCleanr
 ./scripts/bootstrap.sh
 ```
 
-One-shot installer:
+## Update
+
+### One-shot updater
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/jlsport18/DreamCleanr/main/scripts/install.sh | bash
+curl -fsSL https://raw.githubusercontent.com/jlsport18/DreamCleanr/main/scripts/update.sh | bash
+```
+
+### `pipx` update
+
+```bash
+pipx install --force https://github.com/jlsport18/DreamCleanr/releases/latest/download/dreamcleanr-latest-py3-none-any.whl
+```
+
+### `pip` update
+
+```bash
+python3 -m pip install --user --upgrade https://github.com/jlsport18/DreamCleanr/releases/latest/download/dreamcleanr-latest-py3-none-any.whl
+```
+
+### Update a checkout
+
+```bash
+git pull --ff-only
+./scripts/bootstrap.sh
 ```
 
 ## CLI
 
 ```bash
+dreamcleanr --version
 dreamcleanr scan --mode balanced
 dreamcleanr clean --dry-run --mode balanced
 dreamcleanr clean --apply --mode balanced
@@ -103,9 +133,14 @@ Key files:
 ## Release Surface
 
 - CI lives in `.github/workflows/ci.yml`
+- Install smoke verification lives in `.github/workflows/install-smoke.yml`
 - Pages deployment lives in `.github/workflows/pages.yml`
 - Daily operational health checks live in `.github/workflows/ops-health.yml`
+- Weekly governance review lives in `.github/workflows/governance-review.yml`
+- Monthly business and architecture review lives in `.github/workflows/business-review.yml`
 - Tagged releases build a wheel and source distribution, then generate a sample HTML cleanup receipt
-- Pages deployment publishes the public site from `site/`
+- Tagged releases also publish stable evergreen assets such as `dreamcleanr-latest-py3-none-any.whl`
 - Sample output lives in `reports/sample-cleanup-report.json`
+- Deployment architecture guidance lives in `DEPLOYMENT_ARCHITECTURE.md`
+- Monetization guidance lives in `MONETIZATION_PLAN.md`
 - Near-term roadmap lives in `ROADMAP.md`

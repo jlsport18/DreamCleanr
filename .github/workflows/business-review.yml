@@ -1,0 +1,37 @@
+name: Business And Architecture Review
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "0 12 1 * *"
+
+permissions:
+  contents: read
+  issues: write
+  pull-requests: read
+
+jobs:
+  review:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Generate business review
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          python scripts/github_review.py business \
+            --output business-review.md \
+            --post-to-issue \
+            --issue-title "DreamCleanr Business And Architecture Review" \
+            --issue-label governance \
+            --issue-label monetization
+      - name: Upload business artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: dreamcleanr-business-review
+          path: |
+            business-review.md
+            business-review.json

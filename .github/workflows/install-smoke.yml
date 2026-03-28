@@ -1,0 +1,111 @@
+name: Install Smoke
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "15 10 * * 1"
+  release:
+    types:
+      - published
+
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+  DREAMCLEANR_REPO: jlsport18/DreamCleanr
+
+permissions:
+  contents: read
+
+jobs:
+  asset-install:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install from evergreen release asset
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install "https://github.com/jlsport18/DreamCleanr/releases/latest/download/dreamcleanr-latest-py3-none-any.whl"
+      - name: Verify CLI and MCP
+        run: |
+          dreamcleanr --version
+          python -m py_compile "$(python -c 'import dreamcleanr.mcp_server as m; print(m.__file__)')"
+
+  public-install-script:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install pipx
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install pipx
+          echo "$HOME/.local/bin" >> "$GITHUB_PATH"
+      - name: Run public installer
+        run: curl -fsSL https://raw.githubusercontent.com/jlsport18/DreamCleanr/main/scripts/install.sh | bash
+      - name: Verify CLI and MCP
+        run: |
+          dreamcleanr --version
+          python -m py_compile "$(python -c 'import dreamcleanr.mcp_server as m; print(m.__file__)')"
+
+  upgrade-path:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Prepare isolated user install path
+        run: |
+          test_home="$RUNNER_TEMP/dreamcleanr-user"
+          mkdir -p "$test_home/.pyuser/bin"
+          echo "HOME=$test_home" >> "$GITHUB_ENV"
+          echo "PYTHONUSERBASE=$test_home/.pyuser" >> "$GITHUB_ENV"
+          echo "$test_home/.pyuser/bin" >> "$GITHUB_PATH"
+      - name: Resolve previous and latest release wheels
+        id: releases
+        run: |
+          python - <<'PY' >> "$GITHUB_OUTPUT"
+          import json
+          import urllib.request
+
+          with urllib.request.urlopen("https://api.github.com/repos/jlsport18/DreamCleanr/releases?per_page=10") as response:
+              releases = [release for release in json.load(response) if not release.get("draft") and not release.get("prerelease")]
+
+          def wheel_url(release):
+              for asset in release.get("assets", []):
+                  name = asset.get("name", "")
+                  if name.endswith(".whl") and name != "dreamcleanr-latest-py3-none-any.whl":
+                      return asset["browser_download_url"]
+              raise SystemExit(f"No wheel asset found for {release['tag_name']}")
+
+          latest = releases[0]
+          previous = releases[1] if len(releases) > 1 else releases[0]
+          print(f"latest_tag={latest['tag_name']}")
+          print(f"latest_version={latest['tag_name'].removeprefix('v')}")
+          print(f"latest_url={wheel_url(latest)}")
+          print(f"previous_tag={previous['tag_name']}")
+          print(f"previous_version={previous['tag_name'].removeprefix('v')}")
+          print(f"previous_url={wheel_url(previous)}")
+          PY
+      - name: Install previous release
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install --user "${{ steps.releases.outputs.previous_url }}"
+          test "$(python -c 'import dreamcleanr; print(dreamcleanr.__version__)')" = "${{ steps.releases.outputs.previous_version }}"
+      - name: Update to latest release
+        run: |
+          curl -fsSL https://raw.githubusercontent.com/jlsport18/DreamCleanr/main/scripts/update.sh | bash
+          test "$(python -c 'import dreamcleanr; print(dreamcleanr.__version__)')" = "${{ steps.releases.outputs.latest_version }}"
+
+  public-surface:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Verify public site and latest release
+        run: |
+          curl -fsSL https://jlsport18.github.io/DreamCleanr/ | grep -q "DreamCleanr"
+          curl -fsSLI https://github.com/jlsport18/DreamCleanr/releases/latest >/dev/null
+          curl -fsSLI https://github.com/jlsport18/DreamCleanr/releases/latest/download/dreamcleanr-latest-py3-none-any.whl >/dev/null

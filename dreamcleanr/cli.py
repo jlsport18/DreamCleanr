@@ -8,6 +8,7 @@ import webbrowser
 from pathlib import Path
 from typing import Any, Dict
 
+from . import __version__
 from .core import (
     DEFAULT_RETENTION_COUNT,
     build_cleanup_report,
@@ -162,6 +163,7 @@ def command_schedule_uninstall(_: argparse.Namespace) -> int:
 
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(prog="dreamcleanr")
+    parser.add_argument("--version", action="version", version=f"%(prog)s {__version__}")
     subparsers = parser.add_subparsers(dest="command", required=True)
 
     scan = subparsers.add_parser("scan", help="Capture a machine-readable process and storage snapshot.")

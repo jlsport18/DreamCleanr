@@ -1,0 +1,38 @@
+name: Governance Review
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "45 10 * * 1"
+
+permissions:
+  actions: read
+  contents: read
+  issues: write
+  pull-requests: read
+
+jobs:
+  governance:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Generate governance review
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          python scripts/github_review.py governance \
+            --output governance-review.md \
+            --post-to-issue \
+            --issue-title "DreamCleanr Governance Review Tracker" \
+            --issue-label governance \
+            --issue-label maintenance
+      - name: Upload governance artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: dreamcleanr-governance-review
+          path: |
+            governance-review.md
+            governance-review.json
