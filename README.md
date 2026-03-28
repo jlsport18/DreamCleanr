@@ -97,6 +97,7 @@ Key files:
 - Brand assets live in `brand/`
 - Public marketing/download site lives in `site/`
 - MVP launch and operations guidance lives in `LAUNCH_PLAN.md`
+- Market and pricing strategy lives in `MARKET_STRATEGY.md`
 - Privacy and safety guidance live in `PRIVACY.md` and `SECURITY.md`
 
 ## Release Surface

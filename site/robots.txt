@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://jlsport18.github.io/DreamCleanr/sitemap.xml

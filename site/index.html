@@ -6,12 +6,48 @@
     <title>DreamCleanr | Clean while you sleep</title>
     <meta
       name="description"
-      content="DreamCleanr reclaims storage, trims stale AI helper noise, and wakes your Mac up cleaner every morning with a safe 4 AM cleanup routine."
+      content="DreamCleanr is a safe macOS cleanup tool for AI and developer workflows. Reclaim storage, trim stale Docker, Claude, and Codex helper noise, and wake up to a lighter Mac."
     />
+    <meta name="robots" content="index,follow" />
+    <link rel="canonical" href="https://jlsport18.github.io/DreamCleanr/" />
     <meta name="theme-color" content="#0b1021" />
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="DreamCleanr | Clean while you sleep" />
+    <meta
+      property="og:description"
+      content="A trust-first macOS cleanup tool for Docker, Claude, Codex, and developer-heavy Macs."
+    />
+    <meta property="og:url" content="https://jlsport18.github.io/DreamCleanr/" />
+    <meta property="og:image" content="https://jlsport18.github.io/DreamCleanr/logo.svg" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="DreamCleanr | Clean while you sleep" />
+    <meta
+      name="twitter:description"
+      content="Safe macOS cleanup for AI and developer workflows, with receipts and conservative defaults."
+    />
+    <meta name="twitter:image" content="https://jlsport18.github.io/DreamCleanr/logo.svg" />
     <link rel="icon" href="./logo.svg" type="image/svg+xml" />
     <link rel="manifest" href="./manifest.webmanifest" />
     <link rel="stylesheet" href="./styles.css" />
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@type": "SoftwareApplication",
+        "name": "DreamCleanr",
+        "applicationCategory": "UtilitiesApplication",
+        "operatingSystem": "macOS",
+        "description": "DreamCleanr is a trust-first macOS cleanup tool for AI and developer workflows. It trims stale helper processes, cleans safe cache noise, protects live Claude, Codex, and Docker state, and generates one-page cleanup receipts.",
+        "url": "https://jlsport18.github.io/DreamCleanr/",
+        "downloadUrl": "https://github.com/jlsport18/DreamCleanr/releases/tag/v0.3.0",
+        "slogan": "Clean while you sleep",
+        "softwareVersion": "0.3.0",
+        "offers": {
+          "@type": "Offer",
+          "price": "0",
+          "priceCurrency": "USD"
+        }
+      }
+    </script>
   </head>
   <body>
     <div class="noise"></div>
@@ -231,6 +267,27 @@ dreamcleanr report --input ~/Library/Logs/DreamCleanr/reports/latest.json</code>
           <article>
             <h3>Mobile-ready launchpad</h3>
             <p>The public site works on iPhone and iPad today; the native viewer shells are the next product lane.</p>
+          </article>
+        </div>
+      </section>
+
+      <section class="section faq" id="faq">
+        <div class="section-heading">
+          <p class="eyebrow">FAQ</p>
+          <h2>Answers for high-intent searchers.</h2>
+        </div>
+        <div class="safety-grid">
+          <article>
+            <h3>Is DreamCleanr a safe Mac cleaner?</h3>
+            <p>Yes. DreamCleanr is designed around conservative defaults, protected AI state, and receipt-first cleanup so you can see what changed after every run.</p>
+          </article>
+          <article>
+            <h3>Can DreamCleanr help with Docker, Claude, and Codex cleanup on Mac?</h3>
+            <p>That is the main niche. DreamCleanr is built for AI and developer-heavy Macs where stale helpers, cache noise, and workflow clutter build up over time.</p>
+          </article>
+          <article>
+            <h3>Does DreamCleanr auto-delete important files?</h3>
+            <p>No. It protects critical Claude, Codex, and Docker state by default and keeps risky VM storage outside automatic deletion.</p>
           </article>
         </div>
       </section>
