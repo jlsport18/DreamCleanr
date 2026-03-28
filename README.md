@@ -103,6 +103,7 @@ Key files:
 
 - CI lives in `.github/workflows/ci.yml`
 - Pages deployment lives in `.github/workflows/pages.yml`
+- Daily operational health checks live in `.github/workflows/ops-health.yml`
 - Tagged releases build a wheel and source distribution, then generate a sample HTML cleanup receipt
 - Pages deployment publishes the public site from `site/`
 - Sample output lives in `reports/sample-cleanup-report.json`

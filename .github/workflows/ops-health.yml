@@ -1,0 +1,71 @@
+name: Operations Health
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "30 9 * * *"
+
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
+permissions:
+  contents: read
+
+jobs:
+  health:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+      - name: Install package
+        run: pip install -e .
+      - name: Compile
+        run: python -m compileall dreamcleanr
+      - name: Validate MCP module
+        run: python -m py_compile dreamcleanr/mcp_server.py
+      - name: Run tests
+        run: python -m unittest discover -s tests -p "test_*.py" -v
+      - name: Validate site JavaScript
+        run: node --check site/app.js
+      - name: Render sample report
+        run: python -m dreamcleanr report --input reports/sample-cleanup-report.json --html-out /tmp/dreamcleanr-sample.html
+      - name: Check live site
+        run: |
+          curl -fsSL https://jlsport18.github.io/DreamCleanr/ | grep -q "DreamCleanr"
+          curl -fsSL https://jlsport18.github.io/DreamCleanr/ | grep -q "Clean while you sleep"
+      - name: Build health summary
+        run: |
+          python - <<'PY'
+          import json
+          from datetime import datetime, timezone
+          from pathlib import Path
+
+          payload = {
+              "generated_at": datetime.now(timezone.utc).isoformat(),
+              "checks": [
+                  "compile",
+                  "mcp_py_compile",
+                  "unit_tests",
+                  "site_js",
+                  "sample_report_render",
+                  "live_site_content",
+              ],
+              "status": "healthy",
+              "site": "https://jlsport18.github.io/DreamCleanr/",
+          }
+          out = Path("ops-health-summary.json")
+          out.write_text(json.dumps(payload, indent=2), encoding="utf-8")
+          PY
+      - name: Upload health artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: dreamcleanr-ops-health
+          path: |
+            ops-health-summary.json
+            /tmp/dreamcleanr-sample.html
+
