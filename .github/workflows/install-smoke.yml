@@ -23,10 +23,27 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
+      - name: Resolve latest wheel
+        id: latest
+        run: |
+          python - <<'PY' >> "$GITHUB_OUTPUT"
+          import json
+          import urllib.request
+
+          with urllib.request.urlopen("https://api.github.com/repos/jlsport18/DreamCleanr/releases/latest") as response:
+              release = json.load(response)
+
+          for asset in release.get("assets", []):
+              if asset.get("name", "").endswith(".whl"):
+                  print(f"wheel_url={asset['browser_download_url']}")
+                  break
+          else:
+              raise SystemExit("No wheel asset found on latest release")
+          PY
       - name: Install from evergreen release asset
         run: |
           python -m pip install --upgrade pip
-          python -m pip install "https://github.com/jlsport18/DreamCleanr/releases/latest/download/dreamcleanr-latest-py3-none-any.whl"
+          python -m pip install "${{ steps.latest.outputs.wheel_url }}"
       - name: Verify CLI and MCP
         run: |
           dreamcleanr --version
@@ -78,7 +95,7 @@ jobs:
           def wheel_url(release):
               for asset in release.get("assets", []):
                   name = asset.get("name", "")
-                  if name.endswith(".whl") and name != "dreamcleanr-latest-py3-none-any.whl":
+                  if name.endswith(".whl"):
                       return asset["browser_download_url"]
               raise SystemExit(f"No wheel asset found for {release['tag_name']}")
 
@@ -95,11 +112,11 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           python -m pip install --user "${{ steps.releases.outputs.previous_url }}"
-          test "$(python -c 'import dreamcleanr; print(dreamcleanr.__version__)')" = "${{ steps.releases.outputs.previous_version }}"
+          test "$(python -c 'from importlib.metadata import version; print(version(\"dreamcleanr\"))')" = "${{ steps.releases.outputs.previous_version }}"
       - name: Update to latest release
         run: |
           curl -fsSL https://raw.githubusercontent.com/jlsport18/DreamCleanr/main/scripts/update.sh | bash
-          test "$(python -c 'import dreamcleanr; print(dreamcleanr.__version__)')" = "${{ steps.releases.outputs.latest_version }}"
+          test "$(python -c 'from importlib.metadata import version; print(version(\"dreamcleanr\"))')" = "${{ steps.releases.outputs.latest_version }}"
 
   public-surface:
     runs-on: ubuntu-latest
@@ -108,4 +125,19 @@ jobs:
         run: |
           curl -fsSL https://jlsport18.github.io/DreamCleanr/ | grep -q "DreamCleanr"
           curl -fsSLI https://github.com/jlsport18/DreamCleanr/releases/latest >/dev/null
-          curl -fsSLI https://github.com/jlsport18/DreamCleanr/releases/latest/download/dreamcleanr-latest-py3-none-any.whl >/dev/null
+          python - <<'PY'
+          import json
+          import urllib.request
+
+          with urllib.request.urlopen("https://api.github.com/repos/jlsport18/DreamCleanr/releases/latest") as response:
+              release = json.load(response)
+
+          for asset in release.get("assets", []):
+              if asset.get("name", "").endswith(".whl"):
+                  request = urllib.request.Request(asset["browser_download_url"], method="HEAD")
+                  with urllib.request.urlopen(request):
+                      pass
+                  break
+          else:
+              raise SystemExit("No wheel asset found on latest release")
+          PY

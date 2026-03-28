@@ -92,6 +92,11 @@ def fetch_governance_summary(repo: str) -> Dict[str, Any]:
     open_issues = [issue for issue in issues if "pull_request" not in issue]
     stale_issues = [issue for issue in open_issues if days_since(issue["created_at"]) >= 14]
     dependabot_pulls = [pull for pull in pulls if pull.get("user", {}).get("login") == "app/dependabot"]
+    latest_wheel_url = None
+    for asset in latest_release.get("assets", []):
+        if asset.get("name", "").endswith(".whl"):
+            latest_wheel_url = asset["browser_download_url"]
+            break
 
     return {
         "generated_at": datetime.now(timezone.utc).isoformat(),
@@ -122,9 +127,7 @@ def fetch_governance_summary(repo: str) -> Dict[str, Any]:
         "public_surface": {
             "site_status": fetch_site_status("https://jlsport18.github.io/DreamCleanr/"),
             "latest_release_status": fetch_site_status("https://github.com/jlsport18/DreamCleanr/releases/latest"),
-            "latest_asset_status": fetch_site_status(
-                "https://github.com/jlsport18/DreamCleanr/releases/latest/download/dreamcleanr-latest-py3-none-any.whl"
-            ),
+            "latest_asset_status": fetch_site_status(latest_wheel_url) if latest_wheel_url else "missing",
             "install_script_status": fetch_site_status(
                 "https://raw.githubusercontent.com/jlsport18/DreamCleanr/main/scripts/install.sh"
             ),

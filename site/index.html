@@ -38,7 +38,7 @@
         "operatingSystem": "macOS",
         "description": "DreamCleanr is a trust-first macOS cleanup tool for AI and developer workflows. It trims stale helper processes, cleans safe cache noise, protects live Claude, Codex, and Docker state, and generates one-page cleanup receipts.",
         "url": "https://jlsport18.github.io/DreamCleanr/",
-        "downloadUrl": "https://github.com/jlsport18/DreamCleanr/releases/latest/download/dreamcleanr-latest-py3-none-any.whl",
+        "downloadUrl": "https://github.com/jlsport18/DreamCleanr/releases/latest",
         "slogan": "Clean while you sleep",
         "offers": {
           "@type": "Offer",
@@ -136,8 +136,8 @@
           <article class="surface">
             <h3>CLI for macOS</h3>
             <p>The fastest path for direct cleanup, receipts, and scheduling on your local machine.</p>
-            <pre><code>pipx install https://github.com/jlsport18/DreamCleanr/releases/latest/download/dreamcleanr-latest-py3-none-any.whl</code></pre>
-            <button class="copy" data-copy="pipx install https://github.com/jlsport18/DreamCleanr/releases/latest/download/dreamcleanr-latest-py3-none-any.whl">Copy CLI install</button>
+            <pre><code>curl -fsSL https://raw.githubusercontent.com/jlsport18/DreamCleanr/main/scripts/install.sh | bash</code></pre>
+            <button class="copy" data-copy="curl -fsSL https://raw.githubusercontent.com/jlsport18/DreamCleanr/main/scripts/install.sh | bash">Copy installer</button>
           </article>
 
           <article class="surface">
@@ -187,12 +187,10 @@ args = ["-m", "dreamcleanr.mcp_server"]'>Copy Codex config</button>
             <button class="copy" data-copy="curl -fsSL https://raw.githubusercontent.com/jlsport18/DreamCleanr/main/scripts/update.sh | bash">Copy updater</button>
           </article>
           <article class="surface">
-            <h3>Checkout refresh</h3>
-            <p>Working from a local clone? Pull the latest code and rebuild the editable environment.</p>
-            <pre><code>git pull --ff-only
-./scripts/bootstrap.sh</code></pre>
-            <button class="copy" data-copy="git pull --ff-only
-./scripts/bootstrap.sh">Copy checkout refresh</button>
+            <h3>Latest release</h3>
+            <p>Prefer clicking through to the newest published artifacts and release notes? Use the latest release page.</p>
+            <pre><code>https://github.com/jlsport18/DreamCleanr/releases/latest</code></pre>
+            <button class="copy" data-copy="https://github.com/jlsport18/DreamCleanr/releases/latest">Copy release URL</button>
           </article>
         </div>
       </section>

@@ -2,7 +2,6 @@
 set -euo pipefail
 
 REPO="${DREAMCLEANR_REPO:-jlsport18/DreamCleanr}"
-STABLE_WHEEL_NAME="dreamcleanr-latest-py3-none-any.whl"
 
 if ! command -v python3 >/dev/null 2>&1; then
   echo "python3 is required to install DreamCleanr." >&2
@@ -10,7 +9,7 @@ if ! command -v python3 >/dev/null 2>&1; then
 fi
 
 resolve_asset_url() {
-  python3 - "$REPO" "${DREAMCLEANR_ASSET_URL:-}" "$STABLE_WHEEL_NAME" <<'PY'
+  python3 - "$REPO" "${DREAMCLEANR_ASSET_URL:-}" <<'PY'
 import json
 import re
 import sys
@@ -18,7 +17,6 @@ import urllib.request
 
 repo = sys.argv[1]
 override = sys.argv[2]
-stable_name = sys.argv[3]
 
 if override:
     print(override)
@@ -28,19 +26,10 @@ with urllib.request.urlopen(f"https://api.github.com/repos/{repo}/releases/lates
     payload = json.load(response)
 
 assets = payload.get("assets", [])
-preferred_names = [
-    stable_name,
-]
 patterns = [
     re.compile(r"^dreamcleanr-.*-py3-none-any\.whl$"),
     re.compile(r"^dreamcleanr-.*\.tar\.gz$"),
 ]
-
-for preferred in preferred_names:
-    for asset in assets:
-        if asset.get("name") == preferred:
-            print(asset["browser_download_url"])
-            raise SystemExit(0)
 
 for pattern in patterns:
     for asset in assets:

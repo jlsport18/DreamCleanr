@@ -22,16 +22,18 @@ Public site: `https://jlsport18.github.io/DreamCleanr/`
 
 DreamCleanr is GitHub-first. The stable install and update paths are release-based and evergreen.
 
-### Install from the latest stable release
-
-```bash
-pipx install https://github.com/jlsport18/DreamCleanr/releases/latest/download/dreamcleanr-latest-py3-none-any.whl
-```
-
-### One-shot installer
+### Official install path
 
 ```bash
 curl -fsSL https://raw.githubusercontent.com/jlsport18/DreamCleanr/main/scripts/install.sh | bash
+```
+
+The installer resolves the latest stable DreamCleanr wheel from GitHub Releases and uses `pipx` when available, otherwise `pip`.
+
+### Latest release assets
+
+```bash
+open https://github.com/jlsport18/DreamCleanr/releases/latest
 ```
 
 ### Local checkout
@@ -50,17 +52,7 @@ cd DreamCleanr
 curl -fsSL https://raw.githubusercontent.com/jlsport18/DreamCleanr/main/scripts/update.sh | bash
 ```
 
-### `pipx` update
-
-```bash
-pipx install --force https://github.com/jlsport18/DreamCleanr/releases/latest/download/dreamcleanr-latest-py3-none-any.whl
-```
-
-### `pip` update
-
-```bash
-python3 -m pip install --user --upgrade https://github.com/jlsport18/DreamCleanr/releases/latest/download/dreamcleanr-latest-py3-none-any.whl
-```
+The updater resolves the latest stable DreamCleanr wheel from GitHub Releases and applies it through `pipx` or `pip` automatically.
 
 ### Update a checkout
 
@@ -139,7 +131,7 @@ Key files:
 - Weekly governance review lives in `.github/workflows/governance-review.yml`
 - Monthly business and architecture review lives in `.github/workflows/business-review.yml`
 - Tagged releases build a wheel and source distribution, then generate a sample HTML cleanup receipt
-- Tagged releases also publish stable evergreen assets such as `dreamcleanr-latest-py3-none-any.whl`
+- Tagged releases publish versioned wheel and source artifacts plus install/update scripts
 - Sample output lives in `reports/sample-cleanup-report.json`
 - Deployment architecture guidance lives in `DEPLOYMENT_ARCHITECTURE.md`
 - Monetization guidance lives in `MONETIZATION_PLAN.md`

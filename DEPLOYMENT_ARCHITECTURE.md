@@ -24,7 +24,7 @@ DreamCleanr does **not** require a backend, database, user accounts, telemetry s
 - local JSON and HTML cleanup receipts
 - local `launchd` scheduling
 - public GitHub Pages launch site
-- GitHub Releases with versioned and stable latest assets
+- GitHub Releases with versioned downloadable artifacts
 - daily `Operations Health`
 - weekly `Governance Review`
 - monthly `Business And Architecture Review`
@@ -55,7 +55,7 @@ flowchart TD
     B --> H[Business and Architecture Review]
     D --> I[GitHub Pages site]
     E --> J[GitHub Releases]
-    J --> K[Latest stable wheel and tarball]
+    J --> K[Versioned wheel and tarball]
     I --> L[Public install and update docs]
     K --> M[Install and update scripts]
     L --> N[End-user install and update]
@@ -73,7 +73,7 @@ flowchart TD
 | Source, roadmap, support | GitHub repo, issues, PRs | Maintainer | Code, docs, backlog, support queue |
 | Build and test | GitHub Actions | GitHub runners | CI, packaging, install smoke, release checks |
 | Marketing and install site | GitHub Pages | GitHub runners | Public trust and install surface |
-| Downloadable artifacts | GitHub Releases | GitHub runners | Wheel, tarball, sample report, stable latest assets |
+| Downloadable artifacts | GitHub Releases | GitHub runners | Wheel, tarball, sample report, install/update scripts |
 | Daily health | `ops-health.yml` | GitHub runners | Live site, release links, scripts, sample report |
 | Weekly governance | `governance-review.yml` | GitHub runners | Workflow health, issue aging, release freshness, public links |
 | Monthly business review | `business-review.yml` | GitHub runners | Download trend, install friction, roadmap drift, monetization readiness |
@@ -94,15 +94,15 @@ flowchart TD
 2. `ci.yml` validates the package, MCP module, tests, and sample report rendering.
 3. Pushes to `main` update the GitHub Pages site.
 4. A version tag triggers `release.yml`.
-5. `release.yml` builds versioned artifacts, generates the sample report, and publishes stable latest aliases such as `dreamcleanr-latest-py3-none-any.whl`.
+5. `release.yml` builds versioned artifacts, generates the sample report, and publishes install/update scripts alongside the release.
 6. The `release: published` event triggers install smoke verification.
 
 ### Install loop
 
 DreamCleanr supports three official install paths:
 
-1. install the latest stable wheel from `releases/latest/download/dreamcleanr-latest-py3-none-any.whl`
-2. run the public `install.sh`
+1. run the public `install.sh`, which resolves the latest stable wheel from GitHub Releases
+2. open `releases/latest` and install from the current published artifacts
 3. clone the repository and run `./scripts/bootstrap.sh`
 
 ### Update loop
@@ -110,8 +110,8 @@ DreamCleanr supports three official install paths:
 DreamCleanr keeps updates simple and GitHub-native:
 
 1. release a new version tag
-2. keep the stable latest wheel pointing at the newest release
-3. update via the public `update.sh`, direct `pipx install --force ...latest...`, or checkout refresh
+2. keep the install and update scripts pointing at the newest stable release
+3. update via the public `update.sh`, rerun the installer, or use checkout refresh
 4. keep the MCP server entry point stable so local integrations do not need redesign
 
 ## GitHub Operations Plane
@@ -120,7 +120,7 @@ DreamCleanr keeps updates simple and GitHub-native:
 
 - `ci.yml`: package and test confidence
 - `pages.yml`: deploy the public site
-- `release.yml`: publish release artifacts and stable latest aliases
+- `release.yml`: publish versioned release artifacts and install/update scripts
 - `install-smoke.yml`: verify release-asset install, public install script, and upgrade path
 - `ops-health.yml`: verify the live site, latest asset URLs, scripts, and sample report
 - `governance-review.yml`: weekly GitHub hygiene and public-surface review
@@ -130,7 +130,7 @@ DreamCleanr keeps updates simple and GitHub-native:
 
 - repo: code, issues, docs, release notes
 - Pages: install, trust, and launch messaging
-- Releases: wheel, tarball, sample report, stable latest assets
+- Releases: wheel, tarball, sample report, install/update scripts
 
 ## Local Runtime Topology
 
@@ -163,7 +163,7 @@ DreamCleanr stays intentionally cheap to operate:
 
 ## Near-Term Priorities
 
-1. Keep the stable latest release asset and updater scripts as the official evergreen channel.
+1. Keep the install and update scripts as the official evergreen channel.
 2. Preserve receipt compatibility and MCP stability across releases.
 3. Use GitHub review artifacts instead of local operational memory.
 4. Research Homebrew and PyPI next, but do not block the current deployment on them.
