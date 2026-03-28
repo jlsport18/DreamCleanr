@@ -45,7 +45,7 @@ PY
 ASSET_URL="$(resolve_asset_url)"
 echo "Updating DreamCleanr from: $ASSET_URL"
 
-if command -v pipx >/dev/null 2>&1; then
+if [ "${DREAMCLEANR_DISABLE_PIPX:-0}" != "1" ] && command -v pipx >/dev/null 2>&1; then
   pipx install --force "$ASSET_URL"
   echo "Updated DreamCleanr with pipx."
   exit 0
