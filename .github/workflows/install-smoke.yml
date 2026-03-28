@@ -117,7 +117,7 @@ jobs:
         env:
           DREAMCLEANR_DISABLE_PIPX: "1"
         run: |
-          curl -fsSL https://raw.githubusercontent.com/jlsport18/DreamCleanr/main/scripts/update.sh | bash
+          bash scripts/update.sh
           test "$(python -c 'from importlib.metadata import version; print(version("dreamcleanr"))')" = "${{ steps.releases.outputs.latest_version }}"
 
   public-surface:
