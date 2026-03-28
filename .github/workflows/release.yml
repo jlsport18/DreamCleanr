@@ -31,7 +31,7 @@ jobs:
       - name: Generate sample report
         run: python -m dreamcleanr report --input reports/sample-cleanup-report.json --html-out dist/sample-cleanup-report.html
       - name: Upload build artifacts
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: dreamcleanr-release
           path: |
