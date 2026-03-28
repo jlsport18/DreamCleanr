@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>DreamCleanr | Clean while you sleep</title>
+    <meta
+      name="description"
+      content="DreamCleanr reclaims storage, trims stale AI helper noise, and wakes your Mac up cleaner every morning with a safe 4 AM cleanup routine."
+    />
+    <meta name="theme-color" content="#0b1021" />
+    <link rel="icon" href="./logo.svg" type="image/svg+xml" />
+    <link rel="manifest" href="./manifest.webmanifest" />
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <div class="noise"></div>
+    <header class="site-header">
+      <a class="brand" href="#top" aria-label="DreamCleanr home">
+        <img src="./logo.svg" alt="" />
+        <div>
+          <strong>DreamCleanr</strong>
+          <span>Clean while you sleep</span>
+        </div>
+      </a>
+      <nav>
+        <a href="#install">Install</a>
+        <a href="#surfaces">Surfaces</a>
+        <a href="#safety">Safety</a>
+        <a href="#launch">Launch</a>
+      </nav>
+    </header>
+
+    <main id="top">
+      <section class="hero">
+        <div class="hero-copy">
+          <p class="eyebrow">A moonlit cleanup tool for Claude, Codex, Docker, and developer sprawl</p>
+          <h1>Wake up to a quieter machine.</h1>
+          <p class="hero-text">
+            DreamCleanr trims stale helper processes, clears safe cache noise, protects live AI state, and runs its
+            balanced cleanup routine at 4 AM so your Mac is lighter by breakfast.
+          </p>
+          <div class="hero-actions">
+            <a class="button primary" href="#install">Get DreamCleanr</a>
+            <a class="button ghost" href="#report">See the cleanup receipt</a>
+          </div>
+          <ul class="hero-points">
+            <li>Preview-first cleanup with protected Claude, Codex, and Docker VM state</li>
+            <li>Local MCP tool support for Claude, Codex, and VS Code</li>
+            <li>One-page receipt that shows what was removed, protected, and left for manual review</li>
+          </ul>
+        </div>
+        <div class="hero-art">
+          <div class="poster">
+            <img src="./logo.svg" alt="DreamCleanr logo" class="poster-logo" />
+            <div class="poster-card">
+              <span>04:30 EST</span>
+              <strong>Balanced cleanup scheduled</strong>
+              <small>Latest report ready before sunrise</small>
+            </div>
+            <div class="poster-stats">
+              <article>
+                <span>Reclaimed</span>
+                <strong>5.0GB</strong>
+              </article>
+              <article>
+                <span>Protected</span>
+                <strong>Claude VM</strong>
+              </article>
+              <article>
+                <span>Trimmed</span>
+                <strong>3 stale probes</strong>
+              </article>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="support-strip">
+        <div>
+          <strong>Launch shape</strong>
+          <span>Python CLI + local MCP server + public install surface</span>
+        </div>
+        <div>
+          <strong>Device story</strong>
+          <span>Mac-native cleanup, mobile-friendly launchpad, native Apple shells queued next</span>
+        </div>
+        <div>
+          <strong>Maintenance</strong>
+          <span>Static site, GitHub releases, GitHub Actions, no always-on backend required</span>
+        </div>
+      </section>
+
+      <section class="section" id="install">
+        <div class="section-heading">
+          <p class="eyebrow">Install once, sleep better after that</p>
+          <h2>Choose your launch surface.</h2>
+        </div>
+
+        <div class="surface-grid" id="surfaces">
+          <article class="surface">
+            <h3>CLI for macOS</h3>
+            <p>The fastest path for direct cleanup, receipts, and scheduling on your local machine.</p>
+            <pre><code>pipx install git+https://github.com/jlsport18/DreamCleanr.git</code></pre>
+            <button class="copy" data-copy="pipx install git+https://github.com/jlsport18/DreamCleanr.git">Copy CLI install</button>
+          </article>
+
+          <article class="surface">
+            <h3>MCP tool for Claude</h3>
+            <p>Add DreamCleanr as a local tool so Claude can scan and preview cleanup safely.</p>
+            <pre><code>{
+  "mcpServers": {
+    "dreamcleanr": {
+      "command": "python3",
+      "args": ["-m", "dreamcleanr.mcp_server"]
+    }
+  }
+}</code></pre>
+            <button class="copy" data-copy='{"mcpServers":{"dreamcleanr":{"command":"python3","args":["-m","dreamcleanr.mcp_server"]}}}'>Copy Claude MCP config</button>
+          </article>
+
+          <article class="surface">
+            <h3>Tool for Codex</h3>
+            <p>Connect DreamCleanr to Codex through MCP and keep cleanup preview-first.</p>
+            <pre><code>[mcp_servers.dreamcleanr]
+command = "python3"
+args = ["-m", "dreamcleanr.mcp_server"]</code></pre>
+            <button class="copy" data-copy='[mcp_servers.dreamcleanr]
+command = "python3"
+args = ["-m", "dreamcleanr.mcp_server"]'>Copy Codex config</button>
+          </article>
+
+          <article class="surface">
+            <h3>VS Code</h3>
+            <p>Use DreamCleanr as a local MCP server from VS Code’s MCP-aware chat surfaces.</p>
+            <pre><code>{
+  "servers": {
+    "dreamcleanr": {
+      "command": "python3",
+      "args": ["-m", "dreamcleanr.mcp_server"]
+    }
+  }
+}</code></pre>
+            <button class="copy" data-copy='{"servers":{"dreamcleanr":{"command":"python3","args":["-m","dreamcleanr.mcp_server"]}}}'>Copy VS Code MCP config</button>
+          </article>
+        </div>
+      </section>
+
+      <section class="section workflow">
+        <div class="section-heading">
+          <p class="eyebrow">Workflow</p>
+          <h2>One product, three modes of calm.</h2>
+        </div>
+
+        <div class="workflow-tabs" role="tablist" aria-label="DreamCleanr workflow modes">
+          <button class="tab active" data-tab="cli" role="tab" aria-selected="true">CLI</button>
+          <button class="tab" data-tab="mcp" role="tab" aria-selected="false">MCP</button>
+          <button class="tab" data-tab="schedule" role="tab" aria-selected="false">4 AM Auto-clean</button>
+        </div>
+
+        <div class="panels">
+          <article class="panel active" data-panel="cli">
+            <h3>Direct control</h3>
+            <p>Run scans, preview cleanups, apply the balanced routine, and render receipts from the terminal.</p>
+            <pre><code>dreamcleanr scan --mode balanced
+dreamcleanr clean --dry-run --mode balanced
+dreamcleanr clean --apply --mode balanced</code></pre>
+          </article>
+
+          <article class="panel" data-panel="mcp">
+            <h3>AI assistant access</h3>
+            <p>Give Claude, Codex, or VS Code a safe local DreamCleanr tool without exposing destructive cleanup by default.</p>
+            <pre><code>python3 -m dreamcleanr.mcp_server</code></pre>
+          </article>
+
+          <article class="panel" data-panel="schedule">
+            <h3>Sleep mode cleanup</h3>
+            <p>Install the daily balanced-safe launch agent and let DreamCleanr prepare the machine before you wake up.</p>
+            <pre><code>dreamcleanr schedule install --mode balanced
+dreamcleanr report --input ~/Library/Logs/DreamCleanr/reports/latest.json</code></pre>
+          </article>
+        </div>
+      </section>
+
+      <section class="section" id="report">
+        <div class="section-heading">
+          <p class="eyebrow">Receipt-first trust</p>
+          <h2>See exactly what happened.</h2>
+        </div>
+        <div class="receipt">
+          <div class="receipt-screen">
+            <div class="receipt-top">
+              <span>DreamCleanr</span>
+              <span>Balanced • Applied</span>
+            </div>
+            <div class="receipt-metric">
+              <small>Reclaimed</small>
+              <strong>5.0GB</strong>
+            </div>
+            <div class="receipt-grid">
+              <article><small>Memory relief</small><strong>38MB</strong></article>
+              <article><small>Processes trimmed</small><strong>3</strong></article>
+              <article><small>Protected</small><strong>Claude VM</strong></article>
+              <article><small>Manual review</small><strong>Docker raw</strong></article>
+            </div>
+          </div>
+          <div class="receipt-copy">
+            <h3>The receipt is the product.</h3>
+            <p>
+              Every run leaves a one-page HTML summary and canonical JSON output showing the reclaimed space, memory
+              estimate, protected items, and the things DreamCleanr intentionally refused to touch.
+            </p>
+          </div>
+        </div>
+      </section>
+
+      <section class="section" id="safety">
+        <div class="section-heading">
+          <p class="eyebrow">Safety</p>
+          <h2>Low-noise by default, low-risk by design.</h2>
+        </div>
+        <div class="safety-grid">
+          <article>
+            <h3>Protected on purpose</h3>
+            <p>`~/.codex`, `~/.claude`, the Claude VM bundle, and Docker raw VM storage stay outside auto-delete.</p>
+          </article>
+          <article>
+            <h3>Preview-first</h3>
+            <p>Stale helper trimming and storage cleanup always start as a reportable plan before they become action.</p>
+          </article>
+          <article>
+            <h3>Mobile-ready launchpad</h3>
+            <p>The public site works on iPhone and iPad today; the native viewer shells are the next product lane.</p>
+          </article>
+        </div>
+      </section>
+
+      <section class="section final-cta" id="launch">
+        <p class="eyebrow">DreamCleanr MVP</p>
+        <h2>Launch the cleanup you can trust.</h2>
+        <p>
+          Install the CLI on your Mac, connect the MCP tool to Claude or Codex, and let the 4 AM routine clear the
+          noise before your first coffee.
+        </p>
+        <div class="hero-actions">
+          <a class="button primary" href="https://github.com/jlsport18/DreamCleanr">Open the repo</a>
+          <a class="button ghost" href="#install">Copy an install path</a>
+        </div>
+      </section>
+    </main>
+
+    <footer class="site-footer">
+      <span>DreamCleanr</span>
+      <span>Clean while you sleep.</span>
+    </footer>
+
+    <script src="./app.js"></script>
+  </body>
+</html>

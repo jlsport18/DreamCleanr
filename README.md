@@ -1,6 +1,10 @@
 # DreamCleanr
 
-DreamCleanr is a lightweight macOS cleanup tool for AI and developer noise. It is designed to reclaim space and trim stale helper processes without breaking active Docker, Claude, or Codex workflows.
+DreamCleanr is a lightweight macOS cleanup tool for AI and developer noise.
+
+**Slogan:** `Clean while you sleep.`
+
+DreamCleanr is designed to reclaim space, trim stale helper processes, and leave behind a one-page cleanup receipt without breaking active Docker, Claude, or Codex workflows.
 
 DreamCleanr currently:
 
@@ -9,6 +13,8 @@ DreamCleanr currently:
 - prunes safe storage targets while keeping protected AI state and risky VM artifacts out of scheduled cleanup
 - generates a self-contained HTML receipt plus canonical JSON output
 - installs a daily `launchd` job for balanced-safe cleanup with bounded report retention
+- exposes a local MCP server for Claude, Codex, and VS Code
+- ships with a public launch site under `site/`
 
 ## Install
 
@@ -26,6 +32,12 @@ cd DreamCleanr
 ./scripts/bootstrap.sh
 ```
 
+One-shot installer:
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/jlsport18/DreamCleanr/main/scripts/install.sh | bash
+```
+
 ## CLI
 
 ```bash
@@ -35,7 +47,26 @@ dreamcleanr clean --apply --mode balanced
 dreamcleanr report --input ~/Library/Logs/DreamCleanr/reports/latest.json
 dreamcleanr schedule install --mode balanced
 dreamcleanr schedule uninstall
+dreamcleanr-mcp
 ```
+
+## MCP Tool Surfaces
+
+DreamCleanr can run as a local MCP server for AI tools that support local MCP integration.
+
+- Claude config example: `integrations/claude-mcp.json`
+- Codex config example: `integrations/codex-mcp.toml`
+- VS Code config example: `integrations/vscode-mcp.json`
+
+Current MCP tools:
+
+- `scan`
+- `clean_preview`
+- `report_render`
+- `schedule_status`
+- `schedule_preview`
+
+The MCP surface is preview-first. Destructive cleanup is intentionally not exposed by default.
 
 ## Safety defaults
 
@@ -59,9 +90,18 @@ Key files:
 - `latest.html`
 - `latest-failure.json` on runtime errors
 
+## Public Launch Surface
+
+- Brand assets live in `brand/`
+- Public marketing/download site lives in `site/`
+- MVP launch and operations guidance lives in `LAUNCH_PLAN.md`
+- Privacy and safety guidance live in `PRIVACY.md` and `SECURITY.md`
+
 ## Release Surface
 
 - CI lives in `.github/workflows/ci.yml`
+- Pages deployment lives in `.github/workflows/pages.yml`
 - Tagged releases build a wheel and source distribution, then generate a sample HTML cleanup receipt
+- Pages deployment publishes the public site from `site/`
 - Sample output lives in `reports/sample-cleanup-report.json`
 - Near-term roadmap lives in `ROADMAP.md`

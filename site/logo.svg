@@ -1,0 +1,31 @@
+<svg width="512" height="512" viewBox="0 0 512 512" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="sky" x1="80" y1="48" x2="432" y2="464" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#0B1021"/>
+      <stop offset="0.55" stop-color="#17314A"/>
+      <stop offset="1" stop-color="#296267"/>
+    </linearGradient>
+    <linearGradient id="moon" x1="172" y1="116" x2="332" y2="292" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#FFF4C9"/>
+      <stop offset="1" stop-color="#F4BE5A"/>
+    </linearGradient>
+    <linearGradient id="spark" x1="294" y1="272" x2="396" y2="386" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#9EF0DE"/>
+      <stop offset="1" stop-color="#4AC1A4"/>
+    </linearGradient>
+  </defs>
+
+  <rect x="32" y="32" width="448" height="448" rx="112" fill="url(#sky)"/>
+  <circle cx="238" cy="198" r="96" fill="url(#moon)"/>
+  <circle cx="282" cy="176" r="90" fill="#16314A"/>
+
+  <path d="M300 305C318 287 344 286 362 302C380 318 383 345 370 364C357 383 333 395 309 392L242 447C235 453 224 452 218 445C212 438 212 427 219 420L300 305Z" fill="#7DE1C4"/>
+  <path d="M289 315L345 370" stroke="#0D5F58" stroke-width="18" stroke-linecap="round"/>
+  <path d="M247 429L332 344" stroke="#D7A35A" stroke-width="22" stroke-linecap="round"/>
+
+  <path d="M363 128L371 148L391 156L371 164L363 184L355 164L335 156L355 148L363 128Z" fill="#F8F5EA"/>
+  <path d="M133 153L139 167L153 173L139 179L133 193L127 179L113 173L127 167L133 153Z" fill="#F8F5EA" opacity="0.82"/>
+  <path d="M380 250L386 264L400 270L386 276L380 290L374 276L360 270L374 264L380 250Z" fill="url(#spark)"/>
+
+  <path d="M126 373C166 405 214 422 270 422C288 422 304 421 320 418" stroke="#F8F5EA" stroke-opacity="0.35" stroke-width="14" stroke-linecap="round"/>
+</svg>

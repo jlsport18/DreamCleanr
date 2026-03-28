@@ -15,11 +15,18 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: ${{ matrix.python-version }}
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
       - name: Install package
         run: pip install -e .
       - name: Compile
         run: python -m compileall dreamcleanr
+      - name: Validate MCP module
+        run: python -m py_compile dreamcleanr/mcp_server.py
       - name: Test
         run: python -m unittest discover -s tests -p "test_*.py" -v
+      - name: Validate site JavaScript
+        run: node --check site/app.js
       - name: Render sample report
         run: python -m dreamcleanr report --input reports/sample-cleanup-report.json --html-out /tmp/dreamcleanr-sample.html

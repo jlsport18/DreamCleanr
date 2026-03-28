@@ -1,0 +1,16 @@
+{
+  "name": "DreamCleanr",
+  "short_name": "DreamCleanr",
+  "description": "Clean while you sleep. DreamCleanr reclaims storage and trims stale AI helper noise on macOS.",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#08101d",
+  "theme_color": "#0b1021",
+  "icons": [
+    {
+      "src": "./logo.svg",
+      "sizes": "any",
+      "type": "image/svg+xml"
+    }
+  ]
+}

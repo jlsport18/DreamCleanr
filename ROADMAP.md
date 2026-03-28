@@ -8,8 +8,15 @@
 - Add retention, failure reporting, and packaging/release workflows
 - Finish GitHub governance files and milestone planning
 
-## v0.3 Productization
+## v0.3 MVP Launch
+
+- Launch the public site and branded install surface
+- Ship the local MCP server and integration examples for Claude, Codex, and VS Code
+- Publish a tagged public release and keep GitHub as the source of truth
+
+## v0.4 Productization
 
 - Add a macOS menu bar shell on top of the existing JSON + HTML contract
 - Add a lightweight iOS viewer/controller for reports and remote triggers
 - Add richer sample reports and more host-state fixtures
+- Start monetization and market intelligence research once usage instrumentation is approved

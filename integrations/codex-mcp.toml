@@ -1,0 +1,3 @@
+[mcp_servers.dreamcleanr]
+command = "python3"
+args = ["-m", "dreamcleanr.mcp_server"]
