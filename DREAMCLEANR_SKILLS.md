@@ -12,6 +12,9 @@ The installer copies only DreamCleanr skill folders into `${CODEX_HOME:-$HOME/.c
 
 | Skill | Purpose | Trigger phrases | Write boundary | Owner pod | Current docs owned | Status |
 |---|---|---|---|---|---|---|
+| `dreamcleanr-strategy-analysis-operator` | Own the DreamCleanr master-prompt analysis workflow and keep the canonical strategy, roadmap, market, and monetization stack aligned to product truth. | `master prompt`, `strategy refresh`, `product analysis`, `monetization strategy`, `opportunity map`, `90-day roadmap`, `category dominance` | canonical strategy docs and rollups | Strategy Intelligence Pod | `DREAMCLEANR_MASTER_STRATEGY.md`, `MARKET_STRATEGY.md`, `MONETIZATION_PLAN.md`, `ROADMAP.md` | active |
+| `dreamcleanr-commercial-architecture-operator` | Own future-only backend, billing, auth, entitlement, analytics, KPI, and MRR planning without changing the current local-first product model. | `FastAPI`, `Stripe`, `Postgres`, `Redis`, `entitlements`, `analytics ingest`, `feature flags`, `subscriptions`, `MRR`, `backend repo structure` | future-commercial architecture docs only | Commercial Incubation Pod | `COMMERCIAL_BACKEND_ARCHITECTURE.md`, `AUTH_BILLING_ENTITLEMENTS_SPEC.md`, `ANALYTICS_AND_KPI_PLAN.md`, `MRR_ROADMAP.md`, future-commercial docs | active |
+| `dreamcleanr-release-launch-operator` | Own DreamCleanr testing, debugging, commit, PR, release, deploy, and launch execution. | `test`, `debug`, `verify`, `fix`, `polish`, `commit`, `push`, `deploy`, `launch`, `release`, `tag` | release, launch, debug, and deploy-ops docs | Release And Launch Pod | `TEST_AND_DEBUG.md`, `GITHUB_SYNC_AND_RELEASE.md`, `LAUNCH_VERSION_PLAYBOOK.md`, release ops docs | active |
 | `dreamcleanr-toolchain-intelligence-engineer` | Plan and later implement toolchain-aware cleanup intelligence across Docker, Python, Node, local LLM stacks, Hugging Face, Git/LFS, and IDEs. | `project-aware cleanup`, `safe to delete`, `detector registry`, `Hugging Face cache`, `Ollama`, `LM Studio`, `Node`, `Python env`, `workspace awareness`, `shipped vs planned` | strategy docs, specs, later detector/runtime work | Product Moat Pod | `FEATURE_SPECS.md`, `DREAMCLEANR_MASTER_STRATEGY.md`, demo truth rules | active |
 | `dreamcleanr-growth-launch-operator` | Own public copy, pricing surfaces, launch assets, onboarding demo messaging, creator outreach, Product Hunt/HN/Indie Hackers/X playbooks, and conversion messaging. | `landing page`, `pricing page`, `launch plan`, `Product Hunt`, `Hacker News`, `conversion`, `SEO copy`, `waitlist`, `onboarding demo`, `creator outreach`, `A/B copy`, `investor narrative` | site, pricing, launch docs, onboarding docs, README marketing copy | Growth Surface Pod | `GROWTH_LAUNCH_PLAYBOOK.md`, `ONBOARDING_CONVERSION_SPEC.md`, `CREATOR_OUTREACH.md`, `INVESTOR_PITCH_DECK.md`, public site copy | active |
 | `dreamcleanr-native-shell-engineer` | Own the premium macOS shell plan, real future app onboarding, receipt/history browser, paired status model, Figma-ready native surface planning, and iPhone/iPad companion boundary. | `macOS shell`, `SwiftUI`, `receipt browser`, `native companion`, `paired control`, `history contract`, `Figma-ready`, `dashboard`, `settings`, `analytics` | native-shell docs, future `macos/` and `ios/` work, native UX specs | Native Shell Pod | `MACOS_SHELL_PLAN.md`, `FIGMA_READY_UI_BRIEF.md`, native portions of `ONBOARDING_CONVERSION_SPEC.md` | active |
@@ -36,6 +39,9 @@ The installer copies only DreamCleanr skill folders into `${CODEX_HOME:-$HOME/.c
 
 | Pod | Lead skill | Support skills | Subagent lane |
 |---|---|---|---|
+| Strategy Intelligence Pod | `dreamcleanr-strategy-analysis-operator` | `daytrading-market-research-agent`, `daytrading-quant-architect`, `dreamcleanr-toolchain-intelligence-engineer` | `Fermat` |
+| Commercial Incubation Pod | `dreamcleanr-commercial-architecture-operator` | `dreamcleanr-governance-compliance-operator`, `daytrading-quant-architect`, `platform-governance-supervisor` | `Gauss` |
+| Release And Launch Pod | `dreamcleanr-release-launch-operator` | `daytrading-regression-guard`, `dreamcleanr-growth-launch-operator`, `platform-governance-supervisor` | `Kepler` |
 | Skill System Pod | `skill-creator` | `daytrading-task-lock-coordinator`, `platform-governance-supervisor` | `Euler` |
 | Growth Surface Pod | `dreamcleanr-growth-launch-operator` | `daytrading-frontend-design`, `daytrading-creative-brain-ux`, `daytrading-context-orientation-architect` | `Averroes` |
 | Product Moat Pod | `dreamcleanr-toolchain-intelligence-engineer` | `daytrading-quant-architect`, `daytrading-regression-guard` | `Carver` |
@@ -68,6 +74,9 @@ Use this loop for every DreamCleanr slice:
 
 | Work item | Lead skill | Support pod |
 |---|---|---|
+| Canonical master-prompt strategy refreshes | `dreamcleanr-strategy-analysis-operator` | Strategy Intelligence Pod |
+| Future backend, Stripe, auth, analytics, and MRR planning | `dreamcleanr-commercial-architecture-operator` | Commercial Incubation Pod |
+| Test/debug, release, deploy, and launch operations | `dreamcleanr-release-launch-operator` | Release And Launch Pod |
 | Skill bundle and registry maintenance | `skill-creator` | Skill System Pod |
 | Homepage onboarding demo and pricing flow | `dreamcleanr-growth-launch-operator` | Growth Surface Pod |
 | Creator outreach, launch copy, and investor materials | `dreamcleanr-growth-launch-operator` | Market/Pricing Pod |

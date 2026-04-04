@@ -1,0 +1,4 @@
+interface:
+  display_name: "DreamCleanr Strategy Analysis"
+  short_description: "Refresh DreamCleanr strategy and moat docs"
+  default_prompt: "Use $dreamcleanr-strategy-analysis-operator to refresh DreamCleanr's canonical strategy analysis and rollout priorities."

@@ -1,0 +1,4 @@
+interface:
+  display_name: "DreamCleanr Commercial Architecture"
+  short_description: "Plan future billing, auth, and KPI systems"
+  default_prompt: "Use $dreamcleanr-commercial-architecture-operator to plan DreamCleanr's future commercial backend, billing, analytics, and MRR systems."

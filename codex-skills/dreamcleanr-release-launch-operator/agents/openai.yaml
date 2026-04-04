@@ -1,0 +1,4 @@
+interface:
+  display_name: "DreamCleanr Release And Launch"
+  short_description: "Run DreamCleanr release, deploy, and launch ops"
+  default_prompt: "Use $dreamcleanr-release-launch-operator to run DreamCleanr test, release, deploy, and launch operations end to end."
