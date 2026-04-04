@@ -4,6 +4,15 @@ All notable DreamCleanr release-facing changes should be tracked here.
 
 ## [Unreleased]
 
+## [0.3.3] - 2026-04-04
+
+### Added
+
+- repo-owned DreamCleanr operator skills for strategy analysis, future commercial architecture, and release-launch execution
+- test/debug, GitHub sync/release, and versioned launch playbooks
+- future-incubation docs for backend architecture, auth and entitlements, analytics and KPI planning, and MRR modeling
+- expanded launch, onboarding, investor, and Figma-ready operator content
+
 ### Polished
 
 - strengthened compliance and release-readiness surfaces for public distribution
