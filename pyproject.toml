@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "dreamcleanr"
-version = "0.3.2"
+version = "0.3.3"
 description = "DreamCleanr: clean while you sleep with safe macOS cleanup, MCP tools, and one-page receipts."
 readme = "README.md"
 requires-python = ">=3.9"

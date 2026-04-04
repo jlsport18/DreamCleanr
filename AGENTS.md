@@ -18,6 +18,10 @@
 - Feature specs: [FEATURE_SPECS.md](FEATURE_SPECS.md)
 - Growth and launch: [GROWTH_LAUNCH_PLAYBOOK.md](GROWTH_LAUNCH_PLAYBOOK.md)
 - Native shell plan: [MACOS_SHELL_PLAN.md](MACOS_SHELL_PLAN.md)
+- Test and debug playbook: [TEST_AND_DEBUG.md](TEST_AND_DEBUG.md)
+- GitHub sync and release playbook: [GITHUB_SYNC_AND_RELEASE.md](GITHUB_SYNC_AND_RELEASE.md)
+- Launch version playbook: [LAUNCH_VERSION_PLAYBOOK.md](LAUNCH_VERSION_PLAYBOOK.md)
+- Future commercial incubation: [COMMERCIAL_BACKEND_ARCHITECTURE.md](COMMERCIAL_BACKEND_ARCHITECTURE.md), [AUTH_BILLING_ENTITLEMENTS_SPEC.md](AUTH_BILLING_ENTITLEMENTS_SPEC.md), [ANALYTICS_AND_KPI_PLAN.md](ANALYTICS_AND_KPI_PLAN.md), [MRR_ROADMAP.md](MRR_ROADMAP.md)
 - Compliance posture: [COMPLIANCE.md](COMPLIANCE.md), [PRIVACY.md](PRIVACY.md), [SECURITY.md](SECURITY.md), [TERMS.md](TERMS.md)
 
 ## Working Rules
@@ -47,6 +51,10 @@
 
 ## Slice Cadence
 
+- `Slice 0 / Strategy System`
+  - lead: `dreamcleanr-strategy-analysis-operator`
+  - support pod: Strategy Intelligence Pod
+  - surfaces: canonical strategy and rollup docs
 - `Slice 1 / Skill System`
   - lead: `skill-creator`
   - support pod: Skill System Pod
@@ -71,6 +79,14 @@
   - lead: `daytrading-regression-guard`
   - support pod: Governance Pod
   - surfaces: validation, release-surface checks, and sync readiness
+- `Slice 7 / Commercial Incubation`
+  - lead: `dreamcleanr-commercial-architecture-operator`
+  - support pod: Commercial Incubation Pod
+  - surfaces: future-only backend, billing, auth, analytics, and MRR docs
+- `Slice 8 / Release And Launch`
+  - lead: `dreamcleanr-release-launch-operator`
+  - support pod: Release And Launch Pod
+  - surfaces: test/debug docs, GitHub sync docs, release docs, launch docs
 
 ## Current Product Boundaries
 

@@ -39,6 +39,22 @@ These map to the current site language and can seed a Figma variable set later.
 | `accent/gold` | `#F7C46B` | labels and risk-aware highlights |
 | `line/default` | `rgba(255,255,255,0.12)` | borders |
 
+## File Structure
+
+Recommended Figma file pages:
+
+1. `00 Cover`
+2. `01 Foundations`
+3. `02 Components`
+4. `03 Onboarding`
+5. `04 App Dashboard`
+6. `05 Scan Flow`
+7. `06 Paywall`
+8. `07 Settings`
+9. `08 Website Landing`
+10. `09 Marketing Assets`
+11. `10 Prototype`
+
 ## Figma Pages
 
 Create these pages:
@@ -51,6 +67,14 @@ Create these pages:
 6. `Analytics`
 
 ## Frame Structure
+
+### Core frame sizes
+
+- desktop app main: `1440 x 960`
+- modal: `560 x 640`
+- website desktop: `1440 x 4200`
+- website tablet: `834 x 3200`
+- website mobile: `390 x 2800`
 
 ### Page 1: Onboarding
 
@@ -159,6 +183,16 @@ Key modules:
 - trend strip
 - review-required list row
 - code/config snippet card for MCP setup
+
+## Export-Ready Marketing Assets
+
+Prepare reusable frames for:
+
+- X post image `1600 x 900`
+- Product Hunt gallery `1270 x 760`
+- Open Graph `1200 x 630`
+- app screenshot `1440 x 900`
+- comparison chart `1600 x 1200`
 
 ## UX Rules
 

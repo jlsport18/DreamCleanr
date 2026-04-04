@@ -4,6 +4,8 @@ Last updated: `2026-04-04`
 
 This is DreamCleanr's canonical internal strategy document. It replaces drift across older strategy summaries and should be treated as the source of truth for product direction, monetization, and the next native build lane.
 
+This doc is maintained through the repo-owned `$dreamcleanr-strategy-analysis-operator` workflow, which packages DreamCleanr's 12-section master prompt into a reusable strategy-refresh system instead of leaving it as one-off prompt text.
+
 Related phase-2 docs:
 
 - [DREAMCLEANR_SKILLS.md](DREAMCLEANR_SKILLS.md)
@@ -14,6 +16,13 @@ Related phase-2 docs:
 - [FIGMA_READY_UI_BRIEF.md](FIGMA_READY_UI_BRIEF.md)
 - [CREATOR_OUTREACH.md](CREATOR_OUTREACH.md)
 - [INVESTOR_PITCH_DECK.md](INVESTOR_PITCH_DECK.md)
+- [TEST_AND_DEBUG.md](TEST_AND_DEBUG.md)
+- [GITHUB_SYNC_AND_RELEASE.md](GITHUB_SYNC_AND_RELEASE.md)
+- [LAUNCH_VERSION_PLAYBOOK.md](LAUNCH_VERSION_PLAYBOOK.md)
+- [COMMERCIAL_BACKEND_ARCHITECTURE.md](COMMERCIAL_BACKEND_ARCHITECTURE.md)
+- [AUTH_BILLING_ENTITLEMENTS_SPEC.md](AUTH_BILLING_ENTITLEMENTS_SPEC.md)
+- [ANALYTICS_AND_KPI_PLAN.md](ANALYTICS_AND_KPI_PLAN.md)
+- [MRR_ROADMAP.md](MRR_ROADMAP.md)
 - [STRIPE_COMMERCIAL_ARCHITECTURE.md](STRIPE_COMMERCIAL_ARCHITECTURE.md)
 - [CLOUD_ARCHITECTURE_FUTURE.md](CLOUD_ARCHITECTURE_FUTURE.md)
 
@@ -53,6 +62,29 @@ The current implementation baseline is grounded in:
 DreamCleanr should be positioned as:
 
 > The cleanup and optimization layer for AI and developer workflows on macOS.
+
+## Master-Prompt Operating Rule
+
+When DreamCleanr strategy is refreshed, use the 12-section master-prompt flow owned by `$dreamcleanr-strategy-analysis-operator`:
+
+1. product overview
+2. technical strength analysis
+3. weaknesses and technical risks
+4. AI/dev ecosystem gap analysis
+5. opportunity map
+6. feature roadmap
+7. monetization strategy
+8. advertising and affiliate strategy
+9. business development strategy
+10. make-money-at-scale strategy
+11. technical architecture recommendations
+12. execution plan
+
+That workflow must stay grounded in:
+
+- current repo truth
+- current product boundaries
+- explicit separation between shipped, planned, and future-incubation systems
 
 The core value stack is:
 

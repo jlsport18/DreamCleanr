@@ -66,6 +66,14 @@ Do not offer:
 - one sentence on current shipped surfaces
 - one sentence on what is planned next
 
+## Strong creator asks
+
+Ask for angles like:
+
+- `I cleaned my AI-dev Mac and here is what happened`
+- `Docker and cache noise are probably costing you more space than you think`
+- `This tool shows what is safe to delete instead of guessing`
+
 ## Follow-Up Cadence
 
 - initial message

@@ -1,5 +1,11 @@
 # DreamCleanr MVP Launch Plan
 
+Current release-ops companions:
+
+- [TEST_AND_DEBUG.md](TEST_AND_DEBUG.md)
+- [GITHUB_SYNC_AND_RELEASE.md](GITHUB_SYNC_AND_RELEASE.md)
+- [LAUNCH_VERSION_PLAYBOOK.md](LAUNCH_VERSION_PLAYBOOK.md)
+
 ## Decision
 
 DreamCleanr MVP launches as:
@@ -36,6 +42,12 @@ Native iOS/iPad and macOS shell apps remain the next product lane, not a blocker
 - Lead: `daytrading-swarm-harness-engineer`
 - Support: `platform-governance-supervisor`
 - Acceptance: Releases, downloads, and the public site require minimal short-term maintenance after launch.
+
+### Release And Launch Pod
+
+- Lead: `dreamcleanr-release-launch-operator`
+- Support: `daytrading-regression-guard`, `dreamcleanr-growth-launch-operator`
+- Acceptance: Testing, tag, release, deploy, and launch-day comms are documented and repeatable.
 
 ### Market Intelligence Pod
 

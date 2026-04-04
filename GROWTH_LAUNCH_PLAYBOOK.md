@@ -71,6 +71,58 @@ Use [CREATOR_OUTREACH.md](CREATOR_OUTREACH.md) for:
 - future disk-category preview mockups only if clearly labeled as upcoming
 - short animated install/update clip for the site
 
+## Launch content bank
+
+### Short launch tweets
+
+1. `Built a Mac cleanup tool for AI developers because generic cleaners have no idea what Docker, Claude, Codex, and cache noise are doing to your machine.`
+2. `DreamCleanr is built around one idea: reclaim space safely, leave a visible receipt, and keep active AI state out of reckless cleanup.`
+3. `Your Mac probably does not need replacing yet. It probably needs better cleanup logic for developer workflows.`
+
+### Founder launch thread
+
+1. `We built DreamCleanr because AI development quietly destroys local machines.`
+2. `The problem is not just storage. It is hidden storage: Docker layers, stale helpers, cache growth, and AI tooling residue.`
+3. `Most cleaners say “system junk” and stop there. DreamCleanr tries to show what is reclaimable, what is protected, and what still needs a human.`
+4. `Today DreamCleanr is strongest in Docker, Claude, Codex, safe cache cleanup, receipts, MCP, and scheduling.`
+5. `Python, Node, Hugging Face, Ollama, and LM Studio support are next, not secretly shipped already.`
+6. `The long-term goal is simple: make DreamCleanr the first tool an AI developer installs on a new Mac.`
+
+### Product Hunt copy
+
+Tagline options:
+
+- `Trust-first cleanup for AI developer Macs`
+- `Reclaim Docker and cache noise without breaking your workflow`
+- `AI workflow hygiene for macOS`
+
+First comment draft:
+
+> We built DreamCleanr because generic cleaners were blind to the parts of our Macs that actually mattered: Docker sprawl, cache growth, stale helpers, and protected AI state. DreamCleanr shows what is reclaimable, what is protected, and what still needs human review. Today it is strongest in Docker, Claude, Codex, safe cache cleanup, receipts, MCP, and scheduling. We would love feedback on what detector support you want next.
+
+### Paid ad concepts
+
+- Pain:
+  - Headline: `Docker and cache noise are quietly eating your storage`
+  - Body: `DreamCleanr helps AI developers reclaim space safely without touching protected state.`
+- Speed:
+  - Headline: `See reclaimable storage in under a minute`
+  - Body: `Built for Docker, helper residue, safe cache cleanup, and AI-heavy Macs.`
+- Identity:
+  - Headline: `The Mac cleanup tool for AI workflows`
+  - Body: `Generic cleaners miss the developer context that matters. DreamCleanr leads with trust and visibility.`
+
+### Reddit post angle
+
+Title:
+
+- `I built a Mac cleanup tool that actually understands AI-dev mess`
+
+Body angle:
+
+- explain Docker sprawl, cache growth, stale helpers, and why protected-state rules matter
+- ask which detector families people want next
+
 ## Response guidelines
 
 - answer every serious comment with technical depth
@@ -130,3 +182,7 @@ These are later features, not current promises:
 - safe “you reclaimed X GB” card
 - native shell screenshot loop
 - companion status sharing
+
+## Positioning statement
+
+DreamCleanr is the Mac optimization layer built specifically for AI developers, helping reclaim storage, protect dev environments, and keep local workflows fast.

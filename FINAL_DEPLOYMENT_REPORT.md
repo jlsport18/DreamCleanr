@@ -102,6 +102,7 @@ flowchart LR
 - Repository owner and default code owner: `@jlsport18`
 - GitHub repository remains the operational source of truth for docs, releases, backlog, and support intake
 - GitHub Actions runners own build, deploy, release, install-smoke, health, governance, and monthly review automation
+- DreamCleanr operator skills own strategy refresh, future-commercial incubation, and release-launch execution guidance inside the repo
 - End users own local installation, local MCP wiring, local `launchd` scheduling, and receipt review on their own Macs
 - DreamCleanr runtime ownership stays split cleanly between GitHub-operated public surfaces and user-operated local execution
 
