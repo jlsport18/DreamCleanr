@@ -154,5 +154,7 @@ DreamCleanr’s next product phase is:
 - Deployment architecture guidance lives in `DEPLOYMENT_ARCHITECTURE.md`
 - Final deployment verification and automation map live in `FINAL_DEPLOYMENT_REPORT.md`
 - Monetization guidance lives in `MONETIZATION_PLAN.md`
+- Human-readable release notes live in `CHANGELOG.md`
+- Release preparation guidance lives in `RELEASE_CHECKLIST.md`
 - Near-term roadmap lives in `ROADMAP.md`
 - Post-deploy Pages verification lives in `.github/workflows/pages-verify.yml`

@@ -18,9 +18,10 @@ permissions:
 jobs:
   asset-install:
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@v6
         with:
           python-version: "3.12"
       - name: Resolve latest wheel
@@ -51,9 +52,10 @@ jobs:
 
   public-install-script:
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@v6
         with:
           python-version: "3.12"
       - name: Install pipx
@@ -70,9 +72,10 @@ jobs:
 
   upgrade-path:
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@v6
         with:
           python-version: "3.12"
       - name: Prepare isolated user install path
@@ -122,6 +125,7 @@ jobs:
 
   public-surface:
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     steps:
       - name: Verify public site and latest release
         run: |

@@ -13,9 +13,10 @@ permissions:
 jobs:
   review:
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@v6
         with:
           python-version: "3.12"
       - name: Generate business review
@@ -29,7 +30,7 @@ jobs:
             --issue-label governance \
             --issue-label monetization
       - name: Upload business artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: dreamcleanr-business-review
           path: |

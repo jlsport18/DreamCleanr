@@ -14,9 +14,10 @@ permissions:
 jobs:
   release:
     runs-on: ubuntu-latest
+    timeout-minutes: 20
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@v6
         with:
           python-version: "3.12"
       - name: Install build tooling
@@ -31,7 +32,7 @@ jobs:
       - name: Generate sample report
         run: python -m dreamcleanr report --input reports/sample-cleanup-report.json --html-out dist/sample-cleanup-report.html
       - name: Upload build artifacts
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: dreamcleanr-release
           path: |

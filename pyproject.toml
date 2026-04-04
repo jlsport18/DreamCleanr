@@ -8,8 +8,23 @@ version = "0.3.2"
 description = "DreamCleanr: clean while you sleep with safe macOS cleanup, MCP tools, and one-page receipts."
 readme = "README.md"
 requires-python = ">=3.9"
+keywords = ["macos", "cleanup", "docker", "claude", "codex", "mcp", "developer-tools"]
 authors = [
   { name = "Jonathan Lynch" }
+]
+classifiers = [
+  "Development Status :: 4 - Beta",
+  "Environment :: Console",
+  "Intended Audience :: End Users/Desktop",
+  "Operating System :: MacOS :: MacOS X",
+  "Programming Language :: Python :: 3",
+  "Programming Language :: Python :: 3 :: Only",
+  "Programming Language :: Python :: 3.9",
+  "Programming Language :: Python :: 3.10",
+  "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: 3.12",
+  "Topic :: System :: Systems Administration",
+  "Topic :: Utilities",
 ]
 dependencies = []
 
@@ -20,8 +35,10 @@ dev = [
 
 [project.urls]
 Homepage = "https://jlsport18.github.io/DreamCleanr/"
+Documentation = "https://jlsport18.github.io/DreamCleanr/"
 Issues = "https://github.com/jlsport18/DreamCleanr/issues"
 Repository = "https://github.com/jlsport18/DreamCleanr"
+Changelog = "https://github.com/jlsport18/DreamCleanr/blob/main/CHANGELOG.md"
 Privacy = "https://jlsport18.github.io/DreamCleanr/privacy.html"
 Security = "https://jlsport18.github.io/DreamCleanr/security.html"
 Terms = "https://jlsport18.github.io/DreamCleanr/terms.html"
