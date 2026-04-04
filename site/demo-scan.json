@@ -1,0 +1,61 @@
+{
+  "scanSteps": [
+    {
+      "label": "Docker reclaimable layers",
+      "amount": 12.4,
+      "detail": "Checking unused Docker images, exited containers, and safe prune candidates."
+    },
+    {
+      "label": "Safe cache and log noise",
+      "amount": 5.8,
+      "detail": "Reviewing regenerable cache and log surfaces DreamCleanr already handles conservatively."
+    },
+    {
+      "label": "Stale helper residue",
+      "amount": 0.7,
+      "detail": "Finding dormant helper and probe residue that no longer needs to hang around."
+    },
+    {
+      "label": "Protected AI state held back",
+      "amount": 2.9,
+      "detail": "Flagging Claude, Codex, and protected Docker state for visibility without treating it as safe cleanup.",
+      "protected": true
+    }
+  ],
+  "results": {
+    "title": "You could safely reclaim 18.9GB from known-safe surfaces right now.",
+    "summary": "The sample machine surfaces 21.8GB in total, but DreamCleanr holds back 2.9GB of protected AI state instead of pretending everything is safe to delete.",
+    "breakdown": [
+      {
+        "label": "Docker reclaimable",
+        "value": "12.4GB",
+        "note": "Unused images, exited containers, and safe prune candidates."
+      },
+      {
+        "label": "Cache and logs",
+        "value": "5.8GB",
+        "note": "Regenerable developer cache noise and old log buildup."
+      },
+      {
+        "label": "Helper residue",
+        "value": "0.7GB",
+        "note": "Stale helper chains and leftover probes worth cleaning up."
+      },
+      {
+        "label": "Protected AI state",
+        "value": "2.9GB held back",
+        "note": "Visible for context, but intentionally excluded from automatic cleanup."
+      }
+    ]
+  },
+  "firstWin": {
+    "title": "Lead with a real local scan and a visible receipt.",
+    "copy": "The browser demo stops at the sample result. In the actual free product, the first win is a local CLI or MCP scan, a preview-first cleanup, and a one-page receipt you can inspect.",
+    "amount": "5.0GB sample reclaim",
+    "protected": "Claude VM + Docker.raw"
+  },
+  "upgrade": {
+    "title": "Want guided cleanup, richer history, and premium workflows?",
+    "copy": "Keep using free DreamCleanr today, then raise your hand for the one-time premium macOS shell when guided cleanup, presets, and richer local history are ready."
+  }
+}

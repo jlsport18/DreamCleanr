@@ -18,6 +18,10 @@ DreamCleanr currently:
 
 Public site: `https://jlsport18.github.io/DreamCleanr/`
 
+Public pricing page: `https://jlsport18.github.io/DreamCleanr/pricing.html`
+
+Pro early-access path: `https://github.com/jlsport18/DreamCleanr/issues/new?template=pro-interest.yml`
+
 ## Install
 
 DreamCleanr is GitHub-first. The stable install and update paths are release-based and evergreen.
@@ -118,7 +122,23 @@ Key files:
 
 - Brand assets live in `brand/`
 - Public marketing/download site lives in `site/`
+- Public pricing page lives in `site/pricing.html`
+- Homepage demo data lives in `site/demo-scan.json`
 - MVP launch and operations guidance lives in `LAUNCH_PLAN.md`
+- Canonical internal product strategy lives in `DREAMCLEANR_MASTER_STRATEGY.md`
+- Repo guidance lives in `AGENTS.md`
+- Repo-owned skill registry lives in `DREAMCLEANR_SKILLS.md`
+- Repo-owned Codex skills live in `codex-skills/`
+- Skill sync script lives in `scripts/install_codex_skills.sh`
+- Feature specs live in `FEATURE_SPECS.md`
+- Growth and launch execution guidance lives in `GROWTH_LAUNCH_PLAYBOOK.md`
+- Onboarding conversion guidance lives in `ONBOARDING_CONVERSION_SPEC.md`
+- Figma-ready UI guidance lives in `FIGMA_READY_UI_BRIEF.md`
+- Creator outreach guidance lives in `CREATOR_OUTREACH.md`
+- Investor deck draft lives in `INVESTOR_PITCH_DECK.md`
+- Future commercial Stripe guidance lives in `STRIPE_COMMERCIAL_ARCHITECTURE.md`
+- Future optional cloud architecture lives in `CLOUD_ARCHITECTURE_FUTURE.md`
+- Premium shell planning lives in `MACOS_SHELL_PLAN.md`
 - Market and pricing strategy lives in `MARKET_STRATEGY.md`
 - Privacy and safety guidance live in `PRIVACY.md` and `SECURITY.md`
 - Terms and acceptance guidance live in `TERMS.md`
@@ -136,8 +156,10 @@ Key files:
 
 DreamCleanr’s next product phase is:
 
+- a grounded public conversion demo that distinguishes shipped value from future detectors
 - a more polished macOS shell on top of the current local engine
-- stronger compliance and policy surfaces
+- stronger ecosystem-aware cleanup intelligence
+- grounded public conversion surfaces with a free Community tier and future one-time Pro anchor
 - an eventual iPhone and iPad companion app that acts as a premium viewer/controller, not a generic device-wide cleaner
 
 ## Release Surface

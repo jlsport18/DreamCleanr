@@ -1,0 +1,4 @@
+interface:
+  display_name: "DreamCleanr Governance Compliance Operator"
+  short_description: "Own DreamCleanr compliance and governance"
+  default_prompt: "Use $dreamcleanr-governance-compliance-operator to keep DreamCleanr compliant, release-safe, and platform-aligned."

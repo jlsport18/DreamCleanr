@@ -2,6 +2,13 @@
 
 Last updated: `2026-04-04`
 
+Canonical source: [DREAMCLEANR_MASTER_STRATEGY.md](DREAMCLEANR_MASTER_STRATEGY.md)
+
+Supporting docs:
+
+- [MACOS_SHELL_PLAN.md](MACOS_SHELL_PLAN.md)
+- [MONETIZATION_PLAN.md](MONETIZATION_PLAN.md)
+
 ## Decision
 
 DreamCleanr should move toward the App Store only as a `premium companion` to the Mac product, not as a generic iPhone system cleaner.
@@ -62,6 +69,12 @@ Before starting TestFlight or App Store submission, DreamCleanr should have:
 3. public privacy, security, terms, and support URLs
 4. a clear App Store privacy-label draft based on the exact app design
 5. a monetization path that respects App Store payment rules
+
+The build order is fixed:
+
+1. premium macOS shell first
+2. shared receipt/history and pairing contract second
+3. iPhone/iPad companion after the Mac-side premium value is proven
 
 ## Suggested Next Build Sequence
 

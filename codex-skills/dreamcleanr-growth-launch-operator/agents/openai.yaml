@@ -1,0 +1,4 @@
+interface:
+  display_name: "DreamCleanr Growth Launch Operator"
+  short_description: "Shape DreamCleanr launch and conversion work"
+  default_prompt: "Use $dreamcleanr-growth-launch-operator to improve DreamCleanr launch copy, pricing surfaces, and conversion flows."

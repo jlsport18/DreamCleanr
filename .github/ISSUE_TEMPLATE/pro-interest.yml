@@ -1,0 +1,37 @@
+name: Pro early access
+description: Raise your hand for the premium macOS shell and guided cleanup workflows.
+title: "[pro-interest] "
+labels: ["enhancement"]
+body:
+  - type: textarea
+    id: workflow
+    attributes:
+      label: Current workflow
+      description: How are you using DreamCleanr today, or where would you start?
+      placeholder: CLI, MCP, local AI-heavy Mac, Docker-heavy machine, nightly cleanup, receipts...
+    validations:
+      required: true
+  - type: textarea
+    id: premium_value
+    attributes:
+      label: What would make Pro worth it?
+      description: Which premium shell workflows matter most to you?
+      placeholder: Guided cleanup, richer history, presets, disk breakdowns, safer recommendations...
+    validations:
+      required: true
+  - type: dropdown
+    id: role
+    attributes:
+      label: Role
+      options:
+        - Solo AI developer
+        - Indie hacker
+        - Startup engineer
+        - ML engineer
+        - Team lead
+        - Other
+  - type: textarea
+    id: notes
+    attributes:
+      label: Anything else?
+      description: Optional pricing, rollout, or workflow notes.

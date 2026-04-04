@@ -1,35 +1,56 @@
 # DreamCleanr Roadmap
 
-## v0.2 Hardening
+Canonical source: [DREAMCLEANR_MASTER_STRATEGY.md](DREAMCLEANR_MASTER_STRATEGY.md)
 
-- Harden active-vs-stale process classification for Docker, Claude, and Codex
-- Improve Docker inventory separation between active engine state and stale helper noise
-- Polish the self-contained HTML cleanup receipt
-- Add retention, failure reporting, and packaging/release workflows
-- Finish GitHub governance files and milestone planning
+Supporting docs:
 
-## v0.3 MVP Launch
+- [FEATURE_SPECS.md](FEATURE_SPECS.md)
+- [MACOS_SHELL_PLAN.md](MACOS_SHELL_PLAN.md)
+- [GROWTH_LAUNCH_PLAYBOOK.md](GROWTH_LAUNCH_PLAYBOOK.md)
+- [ONBOARDING_CONVERSION_SPEC.md](ONBOARDING_CONVERSION_SPEC.md)
+- [CLOUD_ARCHITECTURE_FUTURE.md](CLOUD_ARCHITECTURE_FUTURE.md)
 
-- Launch the public site and branded install surface
-- Ship the local MCP server and integration examples for Claude, Codex, and VS Code
-- Publish a tagged public release and keep GitHub as the source of truth
+## Current State
 
-## v0.4 Productization
+- GitHub-first CLI, MCP, receipts, scheduling, and compliance surfaces are shipped
+- grounded homepage demo and pricing surfaces are live
+- DreamCleanr is strong in Docker, Claude, Codex, and safe cache cleanup
+- DreamCleanr is still missing broader AI/dev ecosystem awareness
 
-- Add a macOS menu bar shell on top of the existing JSON + HTML contract
-- Add a lightweight iOS viewer/controller for reports and remote triggers
-- Add richer sample reports and more host-state fixtures
-- Start monetization and market intelligence research once usage instrumentation is approved
+## Conversion Surface Now
 
-## v0.5 Compliance And App Store Readiness
+- use the public site to explain the product and collect Pro interest
+- keep the current homepage onboarding flow sample-only
+- reserve the real onboarding funnel for the future premium macOS shell
 
-- Publish public privacy, security, terms, and support pages on the DreamCleanr site
-- Expand local-first compliance posture and retention/deletion disclosures
-- Define the iOS companion product boundary so it aligns with Apple platform rules
-- Prepare App Store privacy-label, support-URL, and EULA readiness without adding backend complexity
+## Next Product Sequence
 
-## v0.6 Premium Companion Phase
+### Phase 1: ecosystem-aware intelligence
 
-- Ship a polished macOS shell that makes DreamCleanr meaningfully easier than the terminal-only path
-- Stabilize shared report/history contracts for native shells
-- Validate whether the iPhone and iPad companion has a defensible premium use case before App Store launch
+- detector registry for Python, Node, local LLM stacks, Hugging Face, Git/LFS, and IDEs
+- artifact-family disk visibility
+- project-aware cleanup safety
+
+### Phase 2: premium macOS shell
+
+- native shell on top of the current local engine
+- real install -> scan -> first win -> upgrade flow
+- richer receipt browsing and trend views
+- guided cleanup and preset workflows
+- one-time Pro packaging only when the shell is real
+
+### Phase 3: iPhone and iPad companion
+
+- companion app for status, receipts, and paired control
+- not a generic device-wide cleaner
+- monetization depends on Mac-side premium value first
+
+### Phase 4: Team pilot
+
+- policy presets
+- admin-friendly exports
+- small-team rollout support
+
+## Architecture Rule
+
+- cloud, billing, and account systems remain future architecture only until the local-first product proves they are necessary

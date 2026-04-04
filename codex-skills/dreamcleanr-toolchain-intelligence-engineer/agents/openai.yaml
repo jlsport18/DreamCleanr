@@ -1,0 +1,4 @@
+interface:
+  display_name: "DreamCleanr Toolchain Intelligence Engineer"
+  short_description: "Plan toolchain-aware cleanup intelligence"
+  default_prompt: "Use $dreamcleanr-toolchain-intelligence-engineer to plan safe, project-aware cleanup intelligence for DreamCleanr."

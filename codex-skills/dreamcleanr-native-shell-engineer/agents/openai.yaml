@@ -1,0 +1,4 @@
+interface:
+  display_name: "DreamCleanr Native Shell Engineer"
+  short_description: "Design DreamCleanr native shell architecture"
+  default_prompt: "Use $dreamcleanr-native-shell-engineer to plan or build the DreamCleanr macOS shell and companion boundaries."
