@@ -20,8 +20,10 @@ Use this checklist before cutting the next DreamCleanr release tag.
 - run `python3 -m unittest discover -s tests -p 'test_*.py' -v`
 - run `python3 -m compileall dreamcleanr tests scripts`
 - run `node --check site/app.js`
-- run `zsh -n scripts/install.sh scripts/update.sh`
+- run `zsh -n scripts/install_codex_skills.sh scripts/install.sh scripts/update.sh`
 - render the sample cleanup report
+- validate all DreamCleanr repo-owned skills with `quick_validate.py`
+- confirm public-copy truth checks pass
 
 ## 4. GitHub Automation
 
@@ -36,6 +38,7 @@ Use this checklist before cutting the next DreamCleanr release tag.
 - create the version tag from the intended commit
 - push the tag and verify `release.yml` publishes the wheel, sdist, sample report, install script, and update script
 - verify the latest release page resolves
+- confirm release notes and launch copy match current shipped capability
 
 ## 6. Post-Release Verification
 

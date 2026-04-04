@@ -17,6 +17,8 @@ Supporting docs:
 - DreamCleanr is strong in Docker, Claude, Codex, and safe cache cleanup
 - DreamCleanr is still missing broader AI/dev ecosystem awareness
 
+This rollup stays subordinate to [DREAMCLEANR_MASTER_STRATEGY.md](DREAMCLEANR_MASTER_STRATEGY.md) and its `$dreamcleanr-strategy-analysis-operator` workflow.
+
 ## Conversion Surface Now
 
 - use the public site to explain the product and collect Pro interest

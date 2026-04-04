@@ -1,30 +1,17 @@
 # DreamCleanr Analytics And KPI Plan
 
-`future incubation track`
+Status: `future incubation track`
 
-This document describes the future analytics surface for DreamCleanr. It is not part of the current GitHub-first, local-first product.
+This plan defines the future analytics model if DreamCleanr later activates commercial cloud services. It does not authorize analytics SDKs or ingestion in the current release.
 
-## Current Product Truth
+## Analytics Principles
 
-DreamCleanr currently ships without a mandatory backend analytics layer.
+- file analysis stays local
+- filenames stay local by default
+- ingest only coarse metadata needed for product and business decisions
+- keep analytics optional and privacy-aligned
 
-That is intentional. The current product should continue to work locally without hosted telemetry.
-
-## Why This Exists
-
-If DreamCleanr later adds cloud features or team workflows, the analytics system should already know what to measure:
-
-- activation
-- retention
-- cleanup effectiveness
-- paid conversion
-- team adoption
-
-## Event Model
-
-Track only coarse, product-useful events.
-
-### Core Events
+## Future Event List
 
 - `scan_started`
 - `scan_completed`
@@ -36,71 +23,56 @@ Track only coarse, product-useful events.
 - `weekly_active_device`
 - `feature_used_auto_optimize`
 
-### Optional Future Events
+## Event Payload Rules
 
-- `onboarding_step_completed`
-- `pro_interest_submitted`
-- `team_invite_sent`
-- `team_policy_applied`
-- `feature_flag_exposed`
+- include user or anonymous install identifier only when needed
+- include device identifier only when needed
+- include coarse numeric or categorical properties
+- avoid project names, filenames, and raw file paths by default
 
-## Analytics Rules
+## Minimum KPI Dashboard
 
-- do not log filenames by default
-- do not upload file contents
-- keep payloads coarse and non-sensitive
-- separate product analytics from support telemetry
-- limit analytics to what is needed for pricing and product decisions
-
-## KPI Dashboard
-
-Future KPI surfaces should answer:
-
-- how many installs activate
-- how much space the product finds
-- how much free cleanup actually happens
-- how often people return
-- where users hit the paywall
-- how many users convert
-- what keeps teams retained
-
-### Minimum Dashboard Views
-
-1. Acquisition
-2. Activation
-3. Cleanup value
-4. Conversion
-5. Retention
-6. Team usage
-
-## Metrics To Track Weekly
+Track weekly:
 
 - installs
-- scan completion percent
+- first scan completion rate
 - average GB found
-- free cleanup percent
-- paywall viewed percent
-- checkout started percent
-- checkout completed percent
+- free cleanup rate
+- paywall viewed rate
+- checkout started rate
+- checkout completed rate
 - monthly to annual mix
 - 30-day paid retention
 - referral rate
 
-## Lifecycle Reporting
+## North-Star Metrics By Stage
 
-If DreamCleanr later adds lifecycle messaging, analytics should support:
+### Early validation
 
-- onboarding completion
-- day 2 nudge
-- day 5 nudge
-- weekly summary
-- upgrade prompt
+- install -> first scan
+- first scan -> result view
+- result view -> first meaningful action
 
-## Non-Goals For The Current Phase
+### Paid validation
 
-- no analytics SDK in the current product
-- no mandatory telemetry
-- no filename logging
-- no content logging
-- no hosted dashboard requirement before the product needs it
+- free -> Pro interest
+- Pro interest -> checkout started
+- checkout started -> paid conversion
 
+### Retention
+
+- weekly active device
+- repeat scan rate
+- repeat cleanup rate
+- paid retention
+
+## Lifecycle Triggers
+
+If lifecycle email is added later, use these trigger surfaces:
+
+- first scan completed
+- free action completed
+- paywall viewed without conversion
+- paid onboarding completed
+
+Current DreamCleanr should not add this infrastructure in the `v0.3.3` release.

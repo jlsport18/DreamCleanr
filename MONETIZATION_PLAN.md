@@ -13,6 +13,8 @@ Supporting docs:
 
 DreamCleanr stays `open-core premium`.
 
+This rollup stays subordinate to [DREAMCLEANR_MASTER_STRATEGY.md](DREAMCLEANR_MASTER_STRATEGY.md) and its `$dreamcleanr-strategy-analysis-operator` workflow.
+
 That means:
 
 - keep the current CLI, MCP, receipts, and scheduling free

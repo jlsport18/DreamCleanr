@@ -1,37 +1,36 @@
 # DreamCleanr Commercial Backend Architecture
 
-`future incubation track`
+Status: `future incubation track`
 
-This document describes the backend and monorepo layout DreamCleanr could adopt later if the product proves recurring cloud, entitlement, or team-management value. It is not the current shipping architecture.
+This document defines a possible future commercial backend and monorepo structure for DreamCleanr. It is not the current shipping architecture.
 
-## Current Product Truth
+## Current Boundary
 
-DreamCleanr currently remains:
+DreamCleanr currently ships as:
 
-- local-first
-- GitHub-first
-- preview-first
-- free at the core
-- one-time Pro later as a premium macOS shell
-- Team later, after repeated demand
+- local CLI
+- local MCP server
+- local receipts
+- local scheduling
+- GitHub-first distribution
 
-No runtime backend work belongs in the current release plan.
+No current runtime dependency exists on:
 
-## Why This Exists
-
-Keep the future option explicit so the repo can later support:
-
+- backend APIs
 - auth
 - billing
-- entitlements
-- analytics ingest
-- feature flags
-- team rollout support
-- optional metadata sync
+- analytics ingestion
+- team dashboards
 
-The architecture only makes sense if those needs become real.
+## Future Commercial Goal
 
-## Recommended Future Monorepo Structure
+If DreamCleanr later proves recurring cloud value, the recommended commercial architecture is:
+
+- local-first desktop client remains the cleanup engine
+- backend handles auth, billing, entitlements, analytics ingest, feature flags, and team lifecycle
+- destructive cleanup stays local on-device
+
+## Recommended Monorepo Layout
 
 ```text
 dreamcleanr/
@@ -50,113 +49,62 @@ dreamcleanr/
 │   └── k8s/
 ├── scripts/
 ├── docs/
-└── .github/workflows/
+└── README.md
 ```
 
-## Future Backend Modules
+## Service Breakdown
 
-### `apps/api`
+### Desktop client
 
-Own:
+- local scan engine
+- local cleanup execution
+- permissions handling
+- receipt/history rendering
+- future API calls for auth, billing, entitlements, and analytics
+
+### API server
 
 - auth
 - billing
 - entitlements
 - analytics ingest
 - feature flags
-- user and device metadata
+- lifecycle APIs
 
-Suggested backend stack later:
-
-- FastAPI
-- PostgreSQL
-- Redis if queueing or caching is needed
-
-### `apps/worker`
-
-Own:
+### Worker
 
 - Stripe webhook post-processing
 - lifecycle emails
-- daily metric aggregation
-- feature-flag sync
+- daily metrics aggregation
+- feature-flag sync jobs
 
-### `apps/desktop`
+### Shared packages
 
-Own:
+- shared schemas
+- analytics event definitions
+- design tokens
 
-- local scan engine
-- permissions
-- cleanup execution
-- UI wrappers for the local engine
+## Recommended Backend Stack
 
-### `apps/web`
+- FastAPI or lightweight Node service
+- PostgreSQL for users, subscriptions, entitlements, analytics metadata, experiments
+- Redis for queues, caching, and worker coordination only if needed
 
-Own:
+## Shipping Order
 
-- marketing site
-- pricing
-- docs
-- waitlist or early-access surfaces
+If this future track is ever activated, ship in this order:
 
-### `packages/shared-schemas`
+1. health
+2. auth
+3. billing checkout
+4. billing portal
+5. Stripe webhook
+6. entitlements
+7. analytics ingest
 
-Own:
+## Hard Incubation Rules
 
-- billing schemas
-- entitlement schemas
-- analytics event schemas
-
-### `packages/analytics-events`
-
-Own:
-
-- canonical event names
-- properties shared by api, worker, and desktop
-
-## First API Ship List
-
-If DreamCleanr ever turns this on, ship these first:
-
-1. `health`
-2. `auth`
-3. `checkout`
-4. `portal`
-5. `webhook`
-6. `entitlements`
-7. `analytics ingest`
-
-Ship order should stay minimal and revenue-oriented.
-
-## Design Rules
-
-- never upload filenames by default
-- keep file contents local
-- upload only aggregate metadata unless opt-in is explicit
-- keep destructive cleanup local on device
-- let the backend decide billing and experiments, not file deletion
-
-## Deployment Shape
-
-Later environments can be split by purpose:
-
-- `dev`
-- `staging`
-- `prod`
-
-Later infrastructure could include:
-
-- Terraform for cloud resources
-- Docker Compose for local emulation
-- Kubernetes only if scale justifies it
-
-## Non-Goals For The Current Phase
-
-- no runtime backend service
-- no auth service
-- no billing service
-- no Stripe SDK
-- no feature-flag system
-- no analytics SDK
-- no team dashboard
-
+- do not replatform the current shipping repo now
+- do not move cleanup execution into the backend
+- do not upload filenames or file contents by default
+- do not make backend work part of the current `v0.3.3` release

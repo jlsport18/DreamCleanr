@@ -9,10 +9,13 @@ Supporting docs:
 - [site/pricing.html](site/pricing.html)
 - [ONBOARDING_CONVERSION_SPEC.md](ONBOARDING_CONVERSION_SPEC.md)
 - [CREATOR_OUTREACH.md](CREATOR_OUTREACH.md)
+- [TEST_AND_DEBUG.md](TEST_AND_DEBUG.md)
 
 ## Decision
 
 DreamCleanr wins as `AI workflow hygiene for macOS`, not as a generic Mac cleaner.
+
+This rollup stays subordinate to [DREAMCLEANR_MASTER_STRATEGY.md](DREAMCLEANR_MASTER_STRATEGY.md) and its `$dreamcleanr-strategy-analysis-operator` workflow.
 
 The category wedge is:
 

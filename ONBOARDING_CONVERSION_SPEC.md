@@ -106,6 +106,25 @@ These are valid headline tests only when the copy still reflects current truth.
 - `Unlock guided cleanup in the premium shell later.`
 - `One broken environment costs more than a trustworthy cleanup workflow.`
 
+### Result-Screen Variants
+
+- `You could safely reclaim meaningful space from known-safe surfaces right now.`
+- `Here is reclaimable space DreamCleanr can surface without touching protected AI state.`
+- `This is the storage you can get back without turning cleanup into a blind bet.`
+
+### Paywall Variants
+
+- `Want guided cleanup, richer history, and premium workflows?`
+- `Unlock one-click guidance and better local visibility in the premium shell later.`
+- `Free users recover space. Pro users recover time.`
+
+### Upgrade CTA Variants
+
+- `Join Pro Early Access`
+- `Unlock Guided Cleanup`
+- `See the Premium Shell Plan`
+- `Recover More With Pro Later`
+
 Do not use:
 
 - `Cancel anytime`
@@ -143,3 +162,22 @@ When the real macOS shell exists, track:
 - Pro interest -> conversion once the shell is live
 
 Until then, the site can track only coarse public-surface behavior if analytics are ever added later.
+
+## Lifecycle Email Sequence
+
+These are later lifecycle messages, not current product behavior.
+
+### Day 0
+
+- Subject: `You've still got storage left to recover`
+- Message angle: remind the user that the first scan surfaced reclaimable space and point them back to safe local cleanup flows
+
+### Day 2
+
+- Subject: `Docker is probably growing again`
+- Message angle: reinforce the ongoing cost of containers, images, and cache growth
+
+### Day 5
+
+- Subject: `Free up more space without touching active projects`
+- Message angle: reinforce project-aware safety as DreamCleanr's long-term differentiator

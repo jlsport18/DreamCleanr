@@ -132,10 +132,17 @@ Key files:
 - Skill sync script lives in `scripts/install_codex_skills.sh`
 - Feature specs live in `FEATURE_SPECS.md`
 - Growth and launch execution guidance lives in `GROWTH_LAUNCH_PLAYBOOK.md`
+- Test and debug guidance lives in `TEST_AND_DEBUG.md`
+- GitHub sync and release guidance lives in `GITHUB_SYNC_AND_RELEASE.md`
+- Versioned launch guidance lives in `LAUNCH_VERSION_PLAYBOOK.md`
 - Onboarding conversion guidance lives in `ONBOARDING_CONVERSION_SPEC.md`
 - Figma-ready UI guidance lives in `FIGMA_READY_UI_BRIEF.md`
 - Creator outreach guidance lives in `CREATOR_OUTREACH.md`
 - Investor deck draft lives in `INVESTOR_PITCH_DECK.md`
+- Future commercial backend architecture lives in `COMMERCIAL_BACKEND_ARCHITECTURE.md`
+- Future auth, billing, and entitlements guidance lives in `AUTH_BILLING_ENTITLEMENTS_SPEC.md`
+- Future analytics and KPI guidance lives in `ANALYTICS_AND_KPI_PLAN.md`
+- Future MRR planning lives in `MRR_ROADMAP.md`
 - Future commercial Stripe guidance lives in `STRIPE_COMMERCIAL_ARCHITECTURE.md`
 - Future optional cloud architecture lives in `CLOUD_ARCHITECTURE_FUTURE.md`
 - Premium shell planning lives in `MACOS_SHELL_PLAN.md`

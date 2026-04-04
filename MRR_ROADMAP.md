@@ -1,144 +1,153 @@
-# DreamCleanr MRR Roadmap
+# DreamCleanr $10k MRR Roadmap
 
-`future incubation track`
+Status: `future incubation track`
 
-This document captures a future recurring-revenue path for DreamCleanr. It does not replace the current canonical monetization plan.
+This document captures a future recurring-revenue pathway if DreamCleanr later activates subscriptions or team billing. It does not replace the current canonical pricing model.
 
-## Current Canonical Monetization
+## Boundary
 
-DreamCleanr currently remains:
+Current canonical model:
 
-- Community free
-- Pro later as a one-time premium macOS shell
-- Team later
+- `Community`: free
+- `Pro`: later one-time premium macOS shell
+- `Team`: later
 
-That is the canonical current direction.
+This roadmap exists so DreamCleanr can evaluate a recurring layer later without losing the current product strategy.
 
-## Why This Exists
+## Revenue Math
 
-Keep the future revenue path explicit in case DreamCleanr later proves recurring cloud, team, or automation value.
+At `$19/month`:
 
-## Revenue Model Options To Model Later
+- `526` active Pro users is approximately `$9,994 MRR`
 
-### Pro
+Example blended path:
 
-- monthly
-- yearly
+- `400` monthly Pro users at `$19` = `$7,600 MRR`
+- `16` team seats at `$49` = `$784 MRR`
+- `130` annual users recognized monthly at roughly `$1,614`
 
-### Team
+Approximate total:
 
-- per seat
-- annual pilot packages
+- `$9,998 MRR`
 
-### Optional Future Services
+## Phase 1: 0 To 25 Paying Users
 
-- hosted automation
-- team policy management
-- metadata sync
-- premium reporting
+Goals:
 
-## $10k MRR Path
-
-One example path:
-
-- 400 Pro monthly users at `$19` = `$7,600`
-- 16 Team seats at `$49` = `$784`
-- annual revenue recognized monthly from 130 yearly Pro users = roughly `$1,614`
-
-Total is roughly `$9,998` MRR.
-
-This is a future model, not a current pricing commitment.
-
-## Phase Plan
-
-### Phase 1: 0 to 25 paying users
-
-Goal:
-
-- validate activation and conversion
+- validate activation
+- validate conversion
 
 Targets:
 
-- 300 installs
-- 40% first scan
-- 20% free cleanup
-- 8 to 12% paid conversion after the first result or paywall
+- `300` installs
+- `40%` first-scan completion
+- `20%` first meaningful free action
+- `8-12%` paid conversion after the first strong result
 
-### Phase 2: 25 to 100 paying users
+Actions:
 
-Goal:
+- founder-led outreach
+- Product Hunt waitlist
+- direct creator DMs
+- weekly iteration
+
+## Phase 2: 25 To 100 Paying Users
+
+Goals:
 
 - prove repeatable acquisition
 
 Actions:
 
-- Product Hunt
-- founder-led launch
-- creator outreach
-- annual discount
-- referral reward
+- Product Hunt launch
+- public scan-result storytelling
+- referral reward experiments
+- annual discount experiments
+- activation instrumentation
 
-### Phase 3: 100 to 250 paying users
+## Phase 3: 100 To 250 Paying Users
 
-Goal:
+Goals:
 
-- improve retention and broaden reach
+- improve retention
+- broaden reach
 
-Ship:
+Likely feature unlocks:
 
 - auto optimize
 - weekly cleanup summary
 - project protection
-- better LLM cache support
-- more detailed storage visualizations
+- stronger LLM cache support
+- better storage visualizations
 
-### Phase 4: 250 to 526+ paying users
+## Phase 4: 250 To 526+ Paying Users
 
-Goal:
+Goals:
 
-- scale consistent inbound
+- scale inbound
+- layer in creator and referral channels
 
-Channels:
+Likely channels:
 
-- search intent pages
+- search-intent landing pages
 - creator partnerships
 - referral program
 - newsletter sponsorships
-- co-marketing
+- integration co-marketing
+
+## Best Channels By Speed
+
+### Fastest
+
+- X founder-led build-in-public
+- Product Hunt
+- direct creator outreach
+- targeted Reddit posts
+
+### Strongest long-term
+
+- SEO content
+- comparison pages
+- tutorial videos
+- affiliate program
+
+## Conversion Targets
+
+Reasonable early targets:
+
+- install -> first scan: `45%`
+- first scan -> result view: `85%`
+- result view -> free action: `35%`
+- free action -> paywall click: `18%`
+- paywall click -> checkout complete: `35%`
 
 ## Lifecycle Email Sequence
 
-### Email 1: Day 0
+### Day 0
 
-- subject: `You still have storage left to recover`
-- message: show the first scan result and invite the user to finish the job safely
+Subject: `You've still got storage left to recover`
 
-### Email 2: Day 2
+Angle:
 
-- subject: `Docker is probably growing again`
-- message: remind the user about containers, images, and model files
+- remind the user their first scan surfaced reclaimable space
+- invite them back into the product flow
 
-### Email 3: Day 5
+### Day 2
 
-- subject: `Free up more space without touching active projects`
-- message: explain project-aware cleanup and premium convenience
+Subject: `Docker is probably growing again`
 
-## KPI Inputs For Revenue Planning
+Angle:
 
-- installs
-- first scan completion
-- free cleanup execution
-- paywall clickthrough
-- paid conversion
-- 30-day retention
-- annual mix
-- referral rate
-- team trial to paid conversion
+- remind the user that containers, images, and model files accumulate quickly
 
-## Non-Goals For The Current Phase
+### Day 5
 
-- no live subscription-first pricing
-- no Stripe runtime work
-- no forced backend dependency
-- no public claim that the current product is already SaaS-based
+Subject: `Free up more space without touching active projects`
 
+Angle:
+
+- reinforce environment-aware safety as the differentiator
+
+## Rule
+
+Do not reuse this roadmap as live public pricing guidance until DreamCleanr intentionally adopts a recurring commercial layer.

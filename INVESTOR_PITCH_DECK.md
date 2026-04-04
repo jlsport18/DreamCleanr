@@ -7,6 +7,10 @@ This is the markdown draft for a future presentation deck. It is grounded in cur
 DreamCleanr  
 `AI workflow hygiene for macOS`
 
+Positioning statement:
+
+> DreamCleanr is the Mac optimization layer built specifically for AI developers, helping reclaim storage, protect dev environments, and keep local workflows fast.
+
 ## 2. Problem
 
 - AI-heavy and developer-heavy Macs accumulate Docker sprawl, cache growth, stale helpers, and broken disk headroom
