@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>DreamCleanr Privacy Policy</title>
+    <meta
+      name="description"
+      content="DreamCleanr privacy policy for the local-first cleanup tool and future Apple companion surfaces."
+    />
+    <meta name="robots" content="index,follow" />
+    <link rel="canonical" href="https://jlsport18.github.io/DreamCleanr/privacy.html" />
+    <link rel="icon" href="./logo.svg" type="image/svg+xml" />
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body class="docs-page">
+    <div class="noise"></div>
+    <header class="site-header">
+      <a class="brand" href="./index.html" aria-label="DreamCleanr home">
+        <img src="./logo.svg" alt="" />
+        <div>
+          <strong>DreamCleanr</strong>
+          <span>Clean while you sleep</span>
+        </div>
+      </a>
+      <nav>
+        <a href="./index.html#install">Install</a>
+        <a href="./terms.html">Terms</a>
+        <a href="./security.html">Security</a>
+        <a href="./support.html">Support</a>
+      </nav>
+    </header>
+
+    <main>
+      <section class="section prose">
+        <p class="eyebrow">Policy</p>
+        <h1>Privacy Policy</h1>
+        <div class="policy-card">
+          <p>
+            DreamCleanr is built to be local-first. The current product inspects cleanup candidates on your device,
+            writes receipts on your device, and avoids a mandatory hosted account or analytics layer by default.
+          </p>
+
+          <h2>What DreamCleanr may access</h2>
+          <ul>
+            <li>local process metadata</li>
+            <li>selected cache, log, and storage paths</li>
+            <li>optional local schedule state through <code>launchd</code></li>
+            <li>optional Docker CLI metadata when Docker is installed</li>
+            <li>local DreamCleanr receipt files</li>
+          </ul>
+
+          <h2>What DreamCleanr does not upload by default</h2>
+          <ul>
+            <li>process inventories to a DreamCleanr backend</li>
+            <li>cleanup reports to a DreamCleanr backend</li>
+            <li>credentials, tokens, or protected session history</li>
+            <li><code>~/.codex</code>, <code>~/.claude</code>, or protected application support data</li>
+          </ul>
+
+          <h2>Limited network activity</h2>
+          <p>
+            When you use install and update paths, DreamCleanr may contact GitHub-hosted release surfaces so it can
+            resolve the latest stable version. Those requests are governed by the relevant platform’s own terms.
+          </p>
+
+          <h2>Retention and choices</h2>
+          <p>
+            DreamCleanr writes receipts locally under
+            <code>~/Library/Logs/DreamCleanr/reports</code>. You can remove those files, uninstall the schedule, and
+            uninstall DreamCleanr at any time.
+          </p>
+
+          <h2>Future iPhone and iPad companion</h2>
+          <p>
+            If DreamCleanr launches a native Apple companion app later, this policy will be updated to reflect the
+            exact data categories and App Store privacy declarations for that build.
+          </p>
+        </div>
+      </section>
+    </main>
+
+    <footer class="site-footer">
+      <div>
+        <span>DreamCleanr</span>
+        <span>Clean while you sleep.</span>
+      </div>
+      <nav aria-label="Policy and support">
+        <a href="./index.html">Home</a>
+        <a href="./security.html">Security</a>
+        <a href="./terms.html">Terms</a>
+        <a href="./support.html">Support</a>
+      </nav>
+    </footer>
+  </body>
+</html>

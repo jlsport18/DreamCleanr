@@ -22,6 +22,10 @@ dev = [
 Homepage = "https://jlsport18.github.io/DreamCleanr/"
 Issues = "https://github.com/jlsport18/DreamCleanr/issues"
 Repository = "https://github.com/jlsport18/DreamCleanr"
+Privacy = "https://jlsport18.github.io/DreamCleanr/privacy.html"
+Security = "https://jlsport18.github.io/DreamCleanr/security.html"
+Terms = "https://jlsport18.github.io/DreamCleanr/terms.html"
+Support = "https://jlsport18.github.io/DreamCleanr/support.html"
 
 [project.scripts]
 dreamcleanr = "dreamcleanr.cli:main"

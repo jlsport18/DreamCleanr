@@ -121,6 +121,24 @@ Key files:
 - MVP launch and operations guidance lives in `LAUNCH_PLAN.md`
 - Market and pricing strategy lives in `MARKET_STRATEGY.md`
 - Privacy and safety guidance live in `PRIVACY.md` and `SECURITY.md`
+- Terms and acceptance guidance live in `TERMS.md`
+- Compliance posture lives in `COMPLIANCE.md`
+- iOS and App Store readiness guidance lives in `IOS_APP_STORE_READINESS.md`
+
+## Public Policy URLs
+
+- Privacy: `https://jlsport18.github.io/DreamCleanr/privacy.html`
+- Security: `https://jlsport18.github.io/DreamCleanr/security.html`
+- Terms: `https://jlsport18.github.io/DreamCleanr/terms.html`
+- Support: `https://jlsport18.github.io/DreamCleanr/support.html`
+
+## Next Product Phase
+
+DreamCleanr’s next product phase is:
+
+- a more polished macOS shell on top of the current local engine
+- stronger compliance and policy surfaces
+- an eventual iPhone and iPad companion app that acts as a premium viewer/controller, not a generic device-wide cleaner
 
 ## Release Surface
 

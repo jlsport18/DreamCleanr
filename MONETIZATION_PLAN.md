@@ -16,7 +16,7 @@ That means:
 | Package | Default price | Contents | Launch gate |
 |---|---:|---|---|
 | Community | Free | CLI, local MCP, scheduled cleanup, JSON and HTML receipts, GitHub install/update path | Shipped now |
-| Pro | `$29` intro / `$49` standard one-time | macOS shell, guided setup, richer receipt browsing, integration helpers | Only after a real convenience layer ships |
+| Pro | `$29` intro / `$49` standard one-time | macOS shell, guided setup, richer receipt browsing, integration helpers, eventual iPhone/iPad companion access | Only after a real convenience layer ships |
 | Team Pilot | `$199/year` up to 5 Macs | policy presets, rollout guidance, admin-friendly exports, bounded support | Only after Pro is stable and governance stays healthy for a full monthly cycle |
 
 ## What Stays Free
@@ -86,8 +86,13 @@ Primary goal:
 Preferred delivery:
 
 - paid macOS shell or companion installer
+- optional iPhone/iPad companion only after the Mac-side premium value is already clear
 - merchant-of-record checkout instead of custom billing
 - downloadable local software, not a hosted dashboard
+
+If DreamCleanr later unlocks digital features directly inside an iPhone or iPad app, that build should use App Store-compliant in-app purchase instead of a separate licensing workaround.
+
+For App Store planning, DreamCleanr should assume Apple Developer Program enrollment and App Store economics are part of the launch cost model. The current Apple Developer Program is `99 USD` per membership year, and Apple’s App Store Small Business Program currently advertises a reduced `15%` commission on paid apps and in-app purchases for eligible developers.
 
 ### Phase 3: selective Team offering
 

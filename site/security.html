@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>DreamCleanr Security Policy</title>
+    <meta
+      name="description"
+      content="DreamCleanr security policy covering safe-use, disclosure, and conservative cleanup principles."
+    />
+    <meta name="robots" content="index,follow" />
+    <link rel="canonical" href="https://jlsport18.github.io/DreamCleanr/security.html" />
+    <link rel="icon" href="./logo.svg" type="image/svg+xml" />
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body class="docs-page">
+    <div class="noise"></div>
+    <header class="site-header">
+      <a class="brand" href="./index.html" aria-label="DreamCleanr home">
+        <img src="./logo.svg" alt="" />
+        <div>
+          <strong>DreamCleanr</strong>
+          <span>Clean while you sleep</span>
+        </div>
+      </a>
+      <nav>
+        <a href="./index.html#safety">Safety</a>
+        <a href="./privacy.html">Privacy</a>
+        <a href="./terms.html">Terms</a>
+        <a href="./support.html">Support</a>
+      </nav>
+    </header>
+
+    <main>
+      <section class="section prose">
+        <p class="eyebrow">Policy</p>
+        <h1>Security Policy</h1>
+        <div class="policy-card">
+          <p>
+            DreamCleanr is designed around conservative, preview-first cleanup. The current supported delivery surfaces
+            are GitHub Releases, GitHub Pages, and the local runtime on your machine.
+          </p>
+
+          <h2>Supported security surfaces</h2>
+          <ul>
+            <li>latest tagged release</li>
+            <li>the current <code>main</code> branch when it is ahead of the latest release</li>
+          </ul>
+
+          <h2>How to report a vulnerability</h2>
+          <p>Do not open a public issue for credential leaks, destructive cleanup bugs, or protected-state bypasses.</p>
+          <p>
+            Use GitHub Security Advisories if available, or contact the maintainer privately through an appropriate
+            sensitive-reporting path.
+          </p>
+
+          <h2>Safety principles</h2>
+          <ul>
+            <li>preview-first behavior stays the default</li>
+            <li>protected Claude, Codex, and Docker VM state stays outside default auto-delete</li>
+            <li>new cleanup targets require regression coverage before release</li>
+            <li>install and update paths should remain stable and inspectable</li>
+          </ul>
+        </div>
+      </section>
+    </main>
+
+    <footer class="site-footer">
+      <div>
+        <span>DreamCleanr</span>
+        <span>Clean while you sleep.</span>
+      </div>
+      <nav aria-label="Policy and support">
+        <a href="./index.html">Home</a>
+        <a href="./privacy.html">Privacy</a>
+        <a href="./terms.html">Terms</a>
+        <a href="./support.html">Support</a>
+      </nav>
+    </footer>
+  </body>
+</html>
