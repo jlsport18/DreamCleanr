@@ -18,6 +18,11 @@ COMMENT_MARKERS = {
     "governance": "<!-- dreamcleanr-review:governance -->",
     "business": "<!-- dreamcleanr-review:business -->",
 }
+COMMENT_HEADINGS = {
+    "governance": "# DreamCleanr Governance Review",
+    "business": "# DreamCleanr Business And Architecture Review",
+}
+BOT_LOGINS = {"github-actions", "github-actions[bot]"}
 
 
 def iso_to_datetime(value: str) -> datetime:
@@ -113,6 +118,19 @@ def issue_comment_update_request(
     )
 
 
+def issue_comment_delete_request(
+    repo: str,
+    comment_id: int,
+    token: str,
+) -> Any:
+    return api_request(
+        repo,
+        f"/issues/comments/{comment_id}",
+        token=token,
+        method="DELETE",
+    )
+
+
 def ensure_issue(repo: str, token: Optional[str], title: str, labels: Iterable[str]) -> Optional[int]:
     if not token:
         return None
@@ -152,6 +170,31 @@ def upsert_issue_comment(
         if marker in comment.get("body", ""):
             return issue_comment_update_request(repo, int(comment["id"]), token, marked_body)
     return issue_comment_request(repo, issue_number, token, marked_body)
+
+
+def comment_author_login(comment: Dict[str, Any]) -> str:
+    user = comment.get("user") or {}
+    author = comment.get("author") or {}
+    return str(user.get("login") or author.get("login") or "")
+
+
+def cleanup_superseded_issue_comments(
+    repo: str,
+    issue_number: int,
+    token: str,
+    marker: str,
+    heading: str,
+) -> None:
+    comments = issue_comments_request(repo, issue_number, token)
+    for comment in comments:
+        body = comment.get("body", "")
+        if marker in body:
+            continue
+        if not body.startswith(heading):
+            continue
+        if comment_author_login(comment) not in BOT_LOGINS:
+            continue
+        issue_comment_delete_request(repo, int(comment["id"]), token)
 
 
 def fetch_site_status(url: str) -> str:
@@ -390,7 +433,9 @@ def main(argv: Optional[List[str]] = None) -> int:
         issue_number = ensure_issue(args.repo, token, args.issue_title, args.issue_label)
         if issue_number is not None:
             marker = COMMENT_MARKERS[args.mode]
+            heading = COMMENT_HEADINGS[args.mode]
             upsert_issue_comment(args.repo, issue_number, token, marker, markdown)
+            cleanup_superseded_issue_comments(args.repo, issue_number, token, marker, heading)
 
     return 0
 

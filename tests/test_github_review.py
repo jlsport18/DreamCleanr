@@ -118,6 +118,32 @@ class GithubReviewTests(unittest.TestCase):
             ),
         )
 
+    def test_cleanup_superseded_issue_comments_deletes_old_bot_entries(self) -> None:
+        calls: list[tuple[str, str, dict | None]] = []
+
+        def fake_api_request(repo: str, path: str, *, token=None, method="GET", body=None):
+            calls.append((path, method, body))
+            if path == "/issues/11/comments?per_page=100":
+                return [
+                    {"id": 10, "body": "# DreamCleanr Governance Review\n\nold", "user": {"login": "github-actions"}},
+                    {"id": 11, "body": "<!-- dreamcleanr-review:governance -->\n\n# DreamCleanr Governance Review\n\ncurrent", "user": {"login": "github-actions"}},
+                    {"id": 12, "body": "# DreamCleanr Governance Review\n\nmanual", "user": {"login": "jlsport18"}},
+                ]
+            return {"ok": True}
+
+        with patch.object(github_review, "api_request", side_effect=fake_api_request):
+            github_review.cleanup_superseded_issue_comments(
+                "jlsport18/DreamCleanr",
+                11,
+                "token",
+                "<!-- dreamcleanr-review:governance -->",
+                "# DreamCleanr Governance Review",
+            )
+
+        self.assertIn(("/issues/comments/10", "DELETE", None), calls)
+        self.assertNotIn(("/issues/comments/11", "DELETE", None), calls)
+        self.assertNotIn(("/issues/comments/12", "DELETE", None), calls)
+
 
 if __name__ == "__main__":
     unittest.main()
