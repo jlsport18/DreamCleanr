@@ -30,8 +30,28 @@ body:
         - ML engineer
         - Team lead
         - Other
+  - type: dropdown
+    id: team_context
+    attributes:
+      label: Buying context
+      description: Is this primarily a solo or small-team use case?
+      options:
+        - Solo / personal machine
+        - Small team / shared standards
+        - Evaluating both
+  - type: dropdown
+    id: price_signal
+    attributes:
+      label: Price sensitivity
+      description: Which range feels realistic for the later one-time Pro shell?
+      options:
+        - Under $25
+        - $25-$49
+        - $50-$99
+        - $100+
+        - Not sure yet
   - type: textarea
     id: notes
     attributes:
       label: Anything else?
-      description: Optional pricing, rollout, or workflow notes.
+      description: Optional pricing, rollout, workflow, or team-policy notes.

@@ -39,6 +39,7 @@ Preferred PR flow:
 - `main` is the shipping branch
 - GitHub Pages deploys from `main`
 - version tags are cut from merged `main`
+- recurring governance and business tracker issues stay open and should be labeled `tracker`
 
 Do not tag from a feature branch.
 
@@ -73,6 +74,7 @@ After tag:
 - verify `Install Smoke`
 - verify `Operations Health`
 - verify `releases/latest`
+- rerun governance and business review workflows so tracker-excluded queue counts stay current
 
 ## Hotfix Rule
 

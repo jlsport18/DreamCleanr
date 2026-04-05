@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>DreamCleanr MCP Setup | Claude, Codex, and VS Code</title>
+    <meta
+      name="description"
+      content="Set up DreamCleanr as a local MCP tool for Claude, Codex, and VS Code with grounded, preview-first configs."
+    />
+    <link rel="canonical" href="https://jlsport18.github.io/DreamCleanr/mcp-setup.html" />
+    <meta name="robots" content="index,follow" />
+    <meta name="theme-color" content="#0b1021" />
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="DreamCleanr MCP Setup" />
+    <meta
+      property="og:description"
+      content="Copy-paste DreamCleanr MCP configs for Claude, Codex, and VS Code. Keep cleanup preview-first and local."
+    />
+    <meta property="og:url" content="https://jlsport18.github.io/DreamCleanr/mcp-setup.html" />
+    <meta property="og:image" content="https://jlsport18.github.io/DreamCleanr/logo.svg" />
+    <link rel="icon" href="./logo.svg" type="image/svg+xml" />
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <div class="noise"></div>
+    <header class="site-header">
+      <a class="brand" href="./index.html" aria-label="DreamCleanr home">
+        <img src="./logo.svg" alt="" />
+        <div>
+          <strong>DreamCleanr</strong>
+          <span>Clean while you sleep</span>
+        </div>
+      </a>
+      <nav>
+        <a href="./index.html#install">Install</a>
+        <a href="./mcp-setup.html">MCP Setup</a>
+        <a href="./pricing.html">Pricing</a>
+        <a href="./faq.html">FAQ</a>
+        <a href="./privacy.html">Privacy</a>
+      </nav>
+    </header>
+
+    <main>
+      <section class="section">
+        <div class="section-heading">
+          <p class="eyebrow">MCP Setup</p>
+          <h1 class="pricing-title">Local MCP setup for Claude, Codex, and VS Code.</h1>
+          <p>
+            DreamCleanr already ships a local MCP server. The MCP surface stays preview-first: you can scan, inspect,
+            render reports, and preview scheduled cleanup without exposing destructive cleanup by default.
+          </p>
+        </div>
+
+        <div class="support-strip">
+          <div>
+            <strong>Local-first</strong>
+            <span>The MCP server runs on your Mac through `python3 -m dreamcleanr.mcp_server`.</span>
+          </div>
+          <div>
+            <strong>Preview-first</strong>
+            <span>`scan`, `clean_preview`, `report_render`, and schedule tools ship now.</span>
+          </div>
+          <div>
+            <strong>No fake browser magic</strong>
+            <span>The site demo is a demo. Real MCP scans happen locally after install.</span>
+          </div>
+        </div>
+      </section>
+
+      <section class="section">
+        <div class="section-heading">
+          <p class="eyebrow">Start here</p>
+          <h2>Install once, then paste the client config you need.</h2>
+        </div>
+
+        <div class="surface-grid">
+          <article class="surface">
+            <h3>1. Install DreamCleanr</h3>
+            <p>Use the GitHub-first install path so the local CLI and MCP module are available on your Mac.</p>
+            <pre><code>curl -fsSL https://raw.githubusercontent.com/jlsport18/DreamCleanr/main/scripts/install.sh | bash</code></pre>
+            <button class="copy" data-copy="curl -fsSL https://raw.githubusercontent.com/jlsport18/DreamCleanr/main/scripts/install.sh | bash">Copy installer</button>
+          </article>
+          <article class="surface">
+            <h3>2. Verify the local entrypoint</h3>
+            <p>Before wiring a client, make sure DreamCleanr is installed and the MCP entrypoint resolves locally.</p>
+            <pre><code>dreamcleanr --version
+python3 -m dreamcleanr.mcp_server</code></pre>
+            <p>If the second command starts the local server without import errors, the client configs below are the right shape.</p>
+          </article>
+        </div>
+      </section>
+
+      <section class="section">
+        <div class="section-heading">
+          <p class="eyebrow">Client configs</p>
+          <h2>Copy the config that matches your client.</h2>
+        </div>
+
+        <div class="surface-grid">
+          <article class="surface">
+            <h3>Claude</h3>
+            <p>Reference file: <a href="https://github.com/jlsport18/DreamCleanr/blob/main/integrations/claude-mcp.json">`integrations/claude-mcp.json`</a></p>
+            <pre><code>{
+  "mcpServers": {
+    "dreamcleanr": {
+      "command": "python3",
+      "args": ["-m", "dreamcleanr.mcp_server"]
+    }
+  }
+}</code></pre>
+            <button class="copy" data-copy='{"mcpServers":{"dreamcleanr":{"command":"python3","args":["-m","dreamcleanr.mcp_server"]}}}'>Copy Claude config</button>
+          </article>
+
+          <article class="surface">
+            <h3>Codex</h3>
+            <p>Reference file: <a href="https://github.com/jlsport18/DreamCleanr/blob/main/integrations/codex-mcp.toml">`integrations/codex-mcp.toml`</a></p>
+            <pre><code>[mcp_servers.dreamcleanr]
+command = "python3"
+args = ["-m", "dreamcleanr.mcp_server"]</code></pre>
+            <button class="copy" data-copy='[mcp_servers.dreamcleanr]
+command = "python3"
+args = ["-m", "dreamcleanr.mcp_server"]'>Copy Codex config</button>
+          </article>
+
+          <article class="surface">
+            <h3>VS Code</h3>
+            <p>Reference file: <a href="https://github.com/jlsport18/DreamCleanr/blob/main/integrations/vscode-mcp.json">`integrations/vscode-mcp.json`</a></p>
+            <pre><code>{
+  "servers": {
+    "dreamcleanr": {
+      "command": "python3",
+      "args": ["-m", "dreamcleanr.mcp_server"]
+    }
+  }
+}</code></pre>
+            <button class="copy" data-copy='{"servers":{"dreamcleanr":{"command":"python3","args":["-m","dreamcleanr.mcp_server"]}}}'>Copy VS Code config</button>
+          </article>
+
+          <article class="surface">
+            <h3>What you get over MCP today</h3>
+            <ul class="pill-list">
+              <li>`scan`</li>
+              <li>`clean_preview`</li>
+              <li>`report_render`</li>
+              <li>`schedule_status`</li>
+              <li>`schedule_preview`</li>
+            </ul>
+            <p>Destructive cleanup is intentionally not exposed as a default MCP action.</p>
+          </article>
+        </div>
+      </section>
+
+      <section class="section">
+        <div class="section-heading">
+          <p class="eyebrow">Troubleshooting</p>
+          <h2>Keep the setup path grounded.</h2>
+        </div>
+
+        <div class="comparison-grid">
+          <article class="comparison-card">
+            <span class="card-kicker">If the config does not load</span>
+            <h3>Check the local Python path first.</h3>
+            <ul class="pill-list">
+              <li>Confirm `dreamcleanr --version` works in the same shell environment.</li>
+              <li>Confirm `python3 -m dreamcleanr.mcp_server` launches without import errors.</li>
+              <li>Re-run the public installer or updater if the module is missing.</li>
+            </ul>
+          </article>
+          <article class="comparison-card">
+            <span class="card-kicker">If you want more context</span>
+            <h3>Use the FAQ and pricing plan next.</h3>
+            <p>DreamCleanr keeps the MCP setup local and free today, while the premium shell remains a later one-time upgrade.</p>
+            <div class="hero-actions">
+              <a class="button ghost" href="./faq.html">Read the FAQ</a>
+              <a class="button ghost" href="./pricing.html">See pricing</a>
+            </div>
+          </article>
+        </div>
+      </section>
+    </main>
+
+    <footer class="site-footer">
+      <div>
+        <strong>DreamCleanr</strong>
+        <span>Clean while you sleep.</span>
+      </div>
+      <nav>
+        <a href="./index.html">Home</a>
+        <a href="./faq.html">FAQ</a>
+        <a href="./compare-cleanmymac.html">Comparison</a>
+        <a href="https://github.com/jlsport18/DreamCleanr/releases/latest">Latest release</a>
+        <a href="./support.html">Support</a>
+      </nav>
+    </footer>
+
+    <script src="./app.js"></script>
+  </body>
+</html>

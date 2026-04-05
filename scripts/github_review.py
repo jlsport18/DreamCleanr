@@ -11,6 +11,10 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Dict, Iterable, List, Optional
 
+TRACKER_LABEL = "tracker"
+INSTALL_QUEUE_LABELS = {"distribution", "launch", "maintenance"}
+MONETIZATION_QUEUE_LABELS = {"monetization", "market-research"}
+
 
 def iso_to_datetime(value: str) -> datetime:
     return datetime.fromisoformat(value.replace("Z", "+00:00"))
@@ -81,6 +85,18 @@ def fetch_site_status(url: str) -> str:
             return str(response.status)
     except urllib.error.HTTPError as exc:
         return str(exc.code)
+
+
+def issue_label_names(issue: Dict[str, Any]) -> set[str]:
+    return {label["name"] for label in issue.get("labels", [])}
+
+
+def issue_has_any_label(issue: Dict[str, Any], names: set[str]) -> bool:
+    return bool(issue_label_names(issue) & names)
+
+
+def is_tracker_issue(issue: Dict[str, Any]) -> bool:
+    return TRACKER_LABEL in issue_label_names(issue)
 
 
 def fetch_governance_summary(repo: str) -> Dict[str, Any]:
@@ -155,21 +171,27 @@ def fetch_business_summary(repo: str) -> Dict[str, Any]:
         )
 
     open_issues = [issue for issue in issues if "pull_request" not in issue]
+    tracker_issues = [issue for issue in open_issues if is_tracker_issue(issue)]
+    actionable_issues = [issue for issue in open_issues if not is_tracker_issue(issue)]
     install_friction = [
         issue
-        for issue in open_issues
-        if any(label["name"] in {"distribution", "launch", "maintenance"} for label in issue.get("labels", []))
+        for issue in actionable_issues
+        if issue_has_any_label(issue, INSTALL_QUEUE_LABELS)
     ]
     monetization = [
         issue
-        for issue in open_issues
-        if any(label["name"] in {"monetization", "market-research"} for label in issue.get("labels", []))
+        for issue in actionable_issues
+        if issue_has_any_label(issue, MONETIZATION_QUEUE_LABELS)
     ]
 
     return {
         "generated_at": datetime.now(timezone.utc).isoformat(),
         "release_downloads": release_downloads,
         "total_downloads": total_downloads,
+        "trackers": {
+            "count": len(tracker_issues),
+            "titles": [issue["title"] for issue in tracker_issues[:10]],
+        },
         "install_friction": {
             "count": len(install_friction),
             "titles": [issue["title"] for issue in install_friction[:10]],
@@ -228,6 +250,7 @@ def render_business_markdown(summary: Dict[str, Any]) -> str:
         f"- Total release-asset downloads: `{summary['total_downloads']}`",
         f"- Open install/distribution issues: `{summary['install_friction']['count']}`",
         f"- Open monetization issues: `{summary['monetization_queue']['count']}`",
+        f"- Recurring tracker threads excluded: `{summary['trackers']['count']}`",
         "",
         "## Release Trend",
         "",
@@ -239,6 +262,11 @@ def render_business_markdown(summary: Dict[str, Any]) -> str:
     lines.extend(["", "## Install Friction Queue", ""])
     if summary["install_friction"]["titles"]:
         lines.extend([f"- {title}" for title in summary["install_friction"]["titles"]])
+    else:
+        lines.append("- None")
+    lines.extend(["", "## Tracker Threads", ""])
+    if summary["trackers"]["titles"]:
+        lines.extend([f"- {title}" for title in summary["trackers"]["titles"]])
     else:
         lines.append("- None")
     lines.extend(["", "## Monetization Queue", ""])

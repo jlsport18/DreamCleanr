@@ -16,7 +16,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
       - uses: actions/setup-python@v6
         with:
           python-version: "3.12"
@@ -40,6 +40,9 @@ jobs:
           curl -fsSL https://jlsport18.github.io/DreamCleanr/ | grep -q "DreamCleanr"
           curl -fsSL https://jlsport18.github.io/DreamCleanr/ | grep -q "Clean while you sleep"
           curl -fsSL https://jlsport18.github.io/DreamCleanr/ | grep -q "releases/latest"
+          curl -fsSL https://jlsport18.github.io/DreamCleanr/mcp-setup.html | grep -q "Claude"
+          curl -fsSL https://jlsport18.github.io/DreamCleanr/faq.html | grep -q "DreamCleanr FAQ"
+          curl -fsSL https://jlsport18.github.io/DreamCleanr/compare-cleanmymac.html | grep -q "DreamCleanr vs CleanMyMac"
           curl -fsSLI https://github.com/jlsport18/DreamCleanr/releases/latest >/dev/null
           curl -fsSLI https://raw.githubusercontent.com/jlsport18/DreamCleanr/main/scripts/install.sh >/dev/null
           curl -fsSLI https://raw.githubusercontent.com/jlsport18/DreamCleanr/main/scripts/update.sh >/dev/null

@@ -32,6 +32,7 @@ Use this checklist before cutting the next DreamCleanr release tag.
 - confirm `Pages Verify` is green after site changes
 - confirm `Operations Health` is green on the intended head
 - confirm `Install Smoke` is green if install/update surfaces changed
+- confirm recurring tracker issues are labeled `tracker` and excluded from actionable queue counts
 
 ## 5. Release Cut
 
@@ -47,3 +48,4 @@ Use this checklist before cutting the next DreamCleanr release tag.
 - verify raw `scripts/install.sh` and `scripts/update.sh` return `200`
 - verify the latest wheel asset resolves
 - verify the release notes read cleanly for public users
+- rerun governance and business review workflows so queue counts reflect the just-published release

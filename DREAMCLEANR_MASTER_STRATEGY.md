@@ -1,6 +1,6 @@
 # DreamCleanr Master Strategy
 
-Last updated: `2026-04-04`
+Last updated: `2026-04-05`
 
 This is DreamCleanr's canonical internal strategy document. It replaces drift across older strategy summaries and should be treated as the source of truth for product direction, monetization, and the next native build lane.
 
@@ -19,6 +19,7 @@ Related phase-2 docs:
 - [TEST_AND_DEBUG.md](TEST_AND_DEBUG.md)
 - [GITHUB_SYNC_AND_RELEASE.md](GITHUB_SYNC_AND_RELEASE.md)
 - [LAUNCH_VERSION_PLAYBOOK.md](LAUNCH_VERSION_PLAYBOOK.md)
+- [MARKET_RESEARCH_MEMO.md](MARKET_RESEARCH_MEMO.md)
 - [COMMERCIAL_BACKEND_ARCHITECTURE.md](COMMERCIAL_BACKEND_ARCHITECTURE.md)
 - [AUTH_BILLING_ENTITLEMENTS_SPEC.md](AUTH_BILLING_ENTITLEMENTS_SPEC.md)
 - [ANALYTICS_AND_KPI_PLAN.md](ANALYTICS_AND_KPI_PLAN.md)
@@ -371,6 +372,7 @@ Build DreamCleanr around four durable layers:
 
 1. Keep [FEATURE_SPECS.md](FEATURE_SPECS.md) current as the engineering-facing moat and detector roadmap.
 2. Use [GROWTH_LAUNCH_PLAYBOOK.md](GROWTH_LAUNCH_PLAYBOOK.md), [ONBOARDING_CONVERSION_SPEC.md](ONBOARDING_CONVERSION_SPEC.md), and the public pricing page to keep conversion surfaces grounded.
+   Use the public MCP setup, FAQ, and comparison pages as the distribution and search-intent follow-through.
 3. Define project-aware safety signals before expanding cleanup surfaces.
 4. Build toward the premium shell through [MACOS_SHELL_PLAN.md](MACOS_SHELL_PLAN.md), [FIGMA_READY_UI_BRIEF.md](FIGMA_READY_UI_BRIEF.md), and a shared receipt/history contract.
 5. Keep Community free while validating premium willingness-to-pay through shell prototypes and install behavior.

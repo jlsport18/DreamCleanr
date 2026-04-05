@@ -7,6 +7,9 @@ Related docs:
 - [ONBOARDING_CONVERSION_SPEC.md](ONBOARDING_CONVERSION_SPEC.md)
 - [CREATOR_OUTREACH.md](CREATOR_OUTREACH.md)
 - [site/pricing.html](site/pricing.html)
+- [site/mcp-setup.html](site/mcp-setup.html)
+- [site/faq.html](site/faq.html)
+- [site/compare-cleanmymac.html](site/compare-cleanmymac.html)
 
 ## Core launch message
 
@@ -23,6 +26,7 @@ Public launch language must stay honest:
 - the homepage onboarding flow is a truthful demo, not a live browser scan
 - keep sample numbers labeled as sample numbers
 - reserve the real install -> scan -> upgrade path for the future macOS shell
+- use the MCP setup, FAQ, and comparison pages as the grounded follow-on surfaces for install, trust, and search intent
 
 ## Future-only language guardrail
 

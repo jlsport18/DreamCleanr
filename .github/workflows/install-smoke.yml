@@ -20,7 +20,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
       - uses: actions/setup-python@v6
         with:
           python-version: "3.12"
@@ -49,12 +49,30 @@ jobs:
         run: |
           dreamcleanr --version
           python -m py_compile "$(python -c 'import dreamcleanr.mcp_server as m; print(m.__file__)')"
+      - name: Validate documented MCP configs
+        run: |
+          python - <<'PY'
+          import json
+          import tomllib
+          from pathlib import Path
+
+          claude = json.loads(Path("integrations/claude-mcp.json").read_text(encoding="utf-8"))
+          vscode = json.loads(Path("integrations/vscode-mcp.json").read_text(encoding="utf-8"))
+          codex = tomllib.loads(Path("integrations/codex-mcp.toml").read_text(encoding="utf-8"))
+
+          assert claude["mcpServers"]["dreamcleanr"]["command"] == "python3"
+          assert claude["mcpServers"]["dreamcleanr"]["args"] == ["-m", "dreamcleanr.mcp_server"]
+          assert vscode["servers"]["dreamcleanr"]["command"] == "python3"
+          assert vscode["servers"]["dreamcleanr"]["args"] == ["-m", "dreamcleanr.mcp_server"]
+          assert codex["mcp_servers"]["dreamcleanr"]["command"] == "python3"
+          assert codex["mcp_servers"]["dreamcleanr"]["args"] == ["-m", "dreamcleanr.mcp_server"]
+          PY
 
   public-install-script:
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
       - uses: actions/setup-python@v6
         with:
           python-version: "3.12"
@@ -69,12 +87,27 @@ jobs:
         run: |
           dreamcleanr --version
           python -m py_compile "$(python -c 'import dreamcleanr.mcp_server as m; print(m.__file__)')"
+      - name: Validate documented MCP configs
+        run: |
+          python - <<'PY'
+          import json
+          import tomllib
+          from pathlib import Path
+
+          claude = json.loads(Path("integrations/claude-mcp.json").read_text(encoding="utf-8"))
+          vscode = json.loads(Path("integrations/vscode-mcp.json").read_text(encoding="utf-8"))
+          codex = tomllib.loads(Path("integrations/codex-mcp.toml").read_text(encoding="utf-8"))
+
+          assert claude["mcpServers"]["dreamcleanr"]["args"] == ["-m", "dreamcleanr.mcp_server"]
+          assert vscode["servers"]["dreamcleanr"]["args"] == ["-m", "dreamcleanr.mcp_server"]
+          assert codex["mcp_servers"]["dreamcleanr"]["args"] == ["-m", "dreamcleanr.mcp_server"]
+          PY
 
   upgrade-path:
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
       - uses: actions/setup-python@v6
         with:
           python-version: "3.12"
@@ -130,6 +163,9 @@ jobs:
       - name: Verify public site and latest release
         run: |
           curl -fsSL https://jlsport18.github.io/DreamCleanr/ | grep -q "DreamCleanr"
+          curl -fsSLI https://jlsport18.github.io/DreamCleanr/mcp-setup.html >/dev/null
+          curl -fsSLI https://jlsport18.github.io/DreamCleanr/faq.html >/dev/null
+          curl -fsSLI https://jlsport18.github.io/DreamCleanr/compare-cleanmymac.html >/dev/null
           curl -fsSLI https://github.com/jlsport18/DreamCleanr/releases/latest >/dev/null
           python - <<'PY'
           import json

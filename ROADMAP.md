@@ -24,6 +24,7 @@ This rollup stays subordinate to [DREAMCLEANR_MASTER_STRATEGY.md](DREAMCLEANR_MA
 ## Conversion Surface Now
 
 - use the public site to explain the product and collect Pro interest
+- use the public MCP setup, FAQ, and comparison pages to reduce install friction and capture search intent
 - keep the current homepage onboarding flow sample-only
 - reserve the real onboarding funnel for the future premium macOS shell
 

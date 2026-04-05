@@ -58,6 +58,9 @@ jobs:
           }
 
           verify_homepage "$BASE_URL/"
+          verify_head "$BASE_URL/mcp-setup.html" "mcp-setup"
+          verify_head "$BASE_URL/faq.html" "faq"
+          verify_head "$BASE_URL/compare-cleanmymac.html" "comparison"
           verify_head "$BASE_URL/manifest.webmanifest" "manifest"
           verify_head "$BASE_URL/robots.txt" "robots"
           verify_head "$BASE_URL/sitemap.xml" "sitemap"

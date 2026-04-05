@@ -7,8 +7,12 @@ Supporting docs:
 - [GROWTH_LAUNCH_PLAYBOOK.md](GROWTH_LAUNCH_PLAYBOOK.md)
 - [site/index.html](site/index.html)
 - [site/pricing.html](site/pricing.html)
+- [site/mcp-setup.html](site/mcp-setup.html)
+- [site/faq.html](site/faq.html)
+- [site/compare-cleanmymac.html](site/compare-cleanmymac.html)
 - [ONBOARDING_CONVERSION_SPEC.md](ONBOARDING_CONVERSION_SPEC.md)
 - [CREATOR_OUTREACH.md](CREATOR_OUTREACH.md)
+- [MARKET_RESEARCH_MEMO.md](MARKET_RESEARCH_MEMO.md)
 - [TEST_AND_DEBUG.md](TEST_AND_DEBUG.md)
 
 ## Decision
@@ -92,6 +96,7 @@ Low hosting cost means DreamCleanr can grow patiently and profitably if it finds
 - keep the homepage onboarding demo explicit about sample behavior
 - reduce install friction for Claude, Codex, and VS Code
 - keep all public copy grounded in what ships today
+- publish dedicated MCP setup, FAQ, and comparison pages so search and distribution surfaces are real instead of implied
 
 ### Phase 2
 

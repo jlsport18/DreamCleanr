@@ -22,6 +22,12 @@ Public site: `https://jlsport18.github.io/DreamCleanr/`
 
 Public pricing page: `https://jlsport18.github.io/DreamCleanr/pricing.html`
 
+Public MCP setup guide: `https://jlsport18.github.io/DreamCleanr/mcp-setup.html`
+
+Public FAQ: `https://jlsport18.github.io/DreamCleanr/faq.html`
+
+Public comparison page: `https://jlsport18.github.io/DreamCleanr/compare-cleanmymac.html`
+
 Pro early-access path: `https://github.com/jlsport18/DreamCleanr/issues/new?template=pro-interest.yml`
 
 ## Install
@@ -88,6 +94,7 @@ DreamCleanr can run as a local MCP server for AI tools that support local MCP in
 - Claude config example: `integrations/claude-mcp.json`
 - Codex config example: `integrations/codex-mcp.toml`
 - VS Code config example: `integrations/vscode-mcp.json`
+- public setup guide: `site/mcp-setup.html`
 
 Current MCP tools:
 
@@ -132,6 +139,9 @@ Team/admin export surfaces:
 - Brand assets live in `brand/`
 - Public marketing/download site lives in `site/`
 - Public pricing page lives in `site/pricing.html`
+- Public MCP setup page lives in `site/mcp-setup.html`
+- Public FAQ page lives in `site/faq.html`
+- Public comparison page lives in `site/compare-cleanmymac.html`
 - Homepage demo data lives in `site/demo-scan.json`
 - MVP launch and operations guidance lives in `LAUNCH_PLAN.md`
 - Canonical internal product strategy lives in `DREAMCLEANR_MASTER_STRATEGY.md`
@@ -156,6 +166,7 @@ Team/admin export surfaces:
 - Future optional cloud architecture lives in `CLOUD_ARCHITECTURE_FUTURE.md`
 - Premium shell planning lives in `MACOS_SHELL_PLAN.md`
 - Market and pricing strategy lives in `MARKET_STRATEGY.md`
+- Source-backed competitor packaging memo lives in `MARKET_RESEARCH_MEMO.md`
 - Privacy and safety guidance live in `PRIVACY.md` and `SECURITY.md`
 - Terms and acceptance guidance live in `TERMS.md`
 - Compliance posture lives in `COMPLIANCE.md`
@@ -167,6 +178,9 @@ Team/admin export surfaces:
 - Security: `https://jlsport18.github.io/DreamCleanr/security.html`
 - Terms: `https://jlsport18.github.io/DreamCleanr/terms.html`
 - Support: `https://jlsport18.github.io/DreamCleanr/support.html`
+- FAQ: `https://jlsport18.github.io/DreamCleanr/faq.html`
+- Comparison: `https://jlsport18.github.io/DreamCleanr/compare-cleanmymac.html`
+- MCP setup: `https://jlsport18.github.io/DreamCleanr/mcp-setup.html`
 
 ## Next Product Phase
 

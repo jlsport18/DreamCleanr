@@ -15,7 +15,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
       - uses: actions/setup-python@v6
         with:
           python-version: "3.12"
@@ -27,6 +27,7 @@ jobs:
             --output business-review.md \
             --post-to-issue \
             --issue-title "DreamCleanr Business And Architecture Review" \
+            --issue-label tracker \
             --issue-label governance \
             --issue-label monetization
       - name: Upload business artifact

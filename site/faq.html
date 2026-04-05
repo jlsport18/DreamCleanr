@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>DreamCleanr FAQ</title>
+    <meta
+      name="description"
+      content="Grounded answers about what DreamCleanr cleans today, how the local MCP server works, and what is still coming next."
+    />
+    <link rel="canonical" href="https://jlsport18.github.io/DreamCleanr/faq.html" />
+    <meta name="robots" content="index,follow" />
+    <meta name="theme-color" content="#0b1021" />
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="DreamCleanr FAQ" />
+    <meta
+      property="og:description"
+      content="Get grounded answers about DreamCleanr's current cleanup surface, protected state, MCP setup, and pricing direction."
+    />
+    <meta property="og:url" content="https://jlsport18.github.io/DreamCleanr/faq.html" />
+    <meta property="og:image" content="https://jlsport18.github.io/DreamCleanr/logo.svg" />
+    <link rel="icon" href="./logo.svg" type="image/svg+xml" />
+    <link rel="stylesheet" href="./styles.css" />
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@type": "FAQPage",
+        "mainEntity": [
+          {
+            "@type": "Question",
+            "name": "What does DreamCleanr clean today?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "DreamCleanr ships trust-first cleanup for Docker-aware noise, safe regenerable caches, stale helper and probe residue, receipts, scheduling, and a local preview-first MCP server."
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "Does the browser demo scan my files?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "No. The homepage demo is a sample flow only. Real DreamCleanr scans happen locally through the CLI or MCP server after install."
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "Does DreamCleanr delete Claude VM or Docker.raw automatically?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "No. DreamCleanr keeps Claude VM state, Docker raw VM storage, and protected Claude and Codex support roots out of default auto-delete."
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "Does DreamCleanr already clean Python, Node, Hugging Face, Ollama, and LM Studio artifacts?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "Not yet. DreamCleanr exposes read-only detector visibility for those ecosystems today, but guided cleanup for those surfaces is still coming next."
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "How does the MCP setup work?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "DreamCleanr runs as a local MCP server through python3 -m dreamcleanr.mcp_server and integrates with Claude, Codex, and VS Code using copy-pasteable local configs."
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "When does Pro become available?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "Pro remains a later one-time premium macOS shell. The current product keeps the CLI, MCP server, receipts, and scheduling free while the premium shell is still in early-access planning."
+            }
+          }
+        ]
+      }
+    </script>
+  </head>
+  <body>
+    <div class="noise"></div>
+    <header class="site-header">
+      <a class="brand" href="./index.html" aria-label="DreamCleanr home">
+        <img src="./logo.svg" alt="" />
+        <div>
+          <strong>DreamCleanr</strong>
+          <span>Clean while you sleep</span>
+        </div>
+      </a>
+      <nav>
+        <a href="./index.html#install">Install</a>
+        <a href="./mcp-setup.html">MCP Setup</a>
+        <a href="./pricing.html">Pricing</a>
+        <a href="./faq.html">FAQ</a>
+        <a href="./privacy.html">Privacy</a>
+      </nav>
+    </header>
+
+    <main>
+      <section class="section">
+        <div class="section-heading">
+          <p class="eyebrow">FAQ</p>
+          <h1 class="pricing-title">DreamCleanr FAQ</h1>
+          <p>
+            These answers stay grounded in what ships today: local cleanup, receipts, MCP, scheduling, and protected
+            AI state. Future detector families stay labeled as coming next.
+          </p>
+        </div>
+      </section>
+
+      <section class="section">
+        <div class="faq-list">
+          <details class="faq-item" open>
+            <summary>What does DreamCleanr clean today?</summary>
+            <p>DreamCleanr currently focuses on Docker-aware cleanup, safe regenerable cache noise, stale helper and probe residue, receipts, scheduling, and preview-first MCP integration.</p>
+          </details>
+          <details class="faq-item">
+            <summary>Does the browser demo scan my files?</summary>
+            <p>No. The homepage demo is a sample flow. Real scans happen locally after install through the CLI or the local MCP server.</p>
+          </details>
+          <details class="faq-item">
+            <summary>Does DreamCleanr auto-delete Claude VM or Docker.raw?</summary>
+            <p>No. DreamCleanr protects the Claude VM bundle, Docker raw VM storage, and protected Claude and Codex support roots by default.</p>
+          </details>
+          <details class="faq-item">
+            <summary>What is still coming next?</summary>
+            <p>Python, Node, Hugging Face, Ollama, and LM Studio detector support is still coming next. The current product exposes visibility for those surfaces, but it does not market guided cleanup for them as already shipped.</p>
+          </details>
+          <details class="faq-item">
+            <summary>How does MCP integration work?</summary>
+            <p>DreamCleanr runs as a local MCP server through <code>python3 -m dreamcleanr.mcp_server</code> and publishes copy-pasteable configs for Claude, Codex, and VS Code.</p>
+          </details>
+          <details class="faq-item">
+            <summary>What is the pricing direction?</summary>
+            <p>Community stays free. Pro remains a later one-time premium macOS shell, and Team remains a later pilot. There is no live subscription checkout in the current product.</p>
+          </details>
+        </div>
+      </section>
+
+      <section class="section">
+        <div class="comparison-grid">
+          <article class="comparison-card">
+            <span class="card-kicker">Next step</span>
+            <h3>Need the client configs?</h3>
+            <p>Use the dedicated MCP setup guide for local Claude, Codex, and VS Code integration.</p>
+            <a class="button ghost" href="./mcp-setup.html">Open MCP setup</a>
+          </article>
+          <article class="comparison-card">
+            <span class="card-kicker">Fit check</span>
+            <h3>Need a cleaner comparison?</h3>
+            <p>Use the grounded comparison page when you want to understand where DreamCleanr fits against broader consumer cleanup tools.</p>
+            <a class="button ghost" href="./compare-cleanmymac.html">See the comparison</a>
+          </article>
+        </div>
+      </section>
+    </main>
+
+    <footer class="site-footer">
+      <div>
+        <strong>DreamCleanr</strong>
+        <span>Clean while you sleep.</span>
+      </div>
+      <nav>
+        <a href="./index.html">Home</a>
+        <a href="./mcp-setup.html">MCP Setup</a>
+        <a href="./compare-cleanmymac.html">Comparison</a>
+        <a href="./pricing.html">Pricing</a>
+        <a href="./support.html">Support</a>
+      </nav>
+    </footer>
+  </body>
+</html>

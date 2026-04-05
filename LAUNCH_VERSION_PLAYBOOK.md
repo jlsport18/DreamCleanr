@@ -65,10 +65,14 @@ After pushing `v0.3.4`:
 
 - homepage returns `200`
 - pricing page returns `200`
+- MCP setup page returns `200`
+- FAQ page returns `200`
+- comparison page returns `200`
 - `releases/latest` returns `200`
 - wheel asset resolves
 - install and update scripts resolve
 - release notes read cleanly for public users
+- governance and business review workflows are rerun after release so tracker issues stay excluded from actionable queue counts
 
 ## Hotfix Loop
 

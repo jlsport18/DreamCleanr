@@ -5,6 +5,7 @@ Canonical source: [DREAMCLEANR_MASTER_STRATEGY.md](DREAMCLEANR_MASTER_STRATEGY.m
 Supporting docs:
 
 - [site/pricing.html](site/pricing.html)
+- [MARKET_RESEARCH_MEMO.md](MARKET_RESEARCH_MEMO.md)
 - [MACOS_SHELL_PLAN.md](MACOS_SHELL_PLAN.md)
 - [COMMERCIAL_BACKEND_ARCHITECTURE.md](COMMERCIAL_BACKEND_ARCHITECTURE.md)
 - [AUTH_BILLING_ENTITLEMENTS_SPEC.md](AUTH_BILLING_ENTITLEMENTS_SPEC.md)
@@ -33,6 +34,17 @@ That means:
 | Community | Free | Trust-building and distribution engine |
 | Pro | `$29` intro / `$49` standard one-time | Premium macOS shell and convenience layer |
 | Team Pilot | `$199/year` up to 5 Macs | Policy and rollout value for small teams |
+
+## Recommended Packaging Boundaries
+
+| Surface | Community | Pro | Team Pilot |
+|---|---|---|---|
+| CLI cleanup engine | Included | Included | Included |
+| Local MCP server | Included | Included | Included |
+| Receipts and scheduling | Included | Included | Included |
+| Premium macOS shell | No | Yes | Yes |
+| Guided cleanup and richer history | No | Yes | Yes |
+| Team exports and policy packs | No | No | Yes |
 
 ## Monetization Rules
 
@@ -76,3 +88,18 @@ Bad paid lanes right now:
 - live subscription-first Pro
 - public Stripe checkout before the premium shell exists
 - forcing a backend dependency into the current local-first product
+
+## Smallest Trustworthy Experiment Set
+
+Run low-complexity experiments before any harder monetization move:
+
+1. static-site CTA tests on the homepage, pricing page, FAQ, MCP setup page, and comparison page
+2. GitHub Pro-interest issue capture with workflow, premium-value, team-context, and price-sensitivity fields
+3. packaging-message tests around `free core`, `one-time Pro later`, and `Team later if demand repeats`
+
+Do not introduce:
+
+- live checkout
+- hosted accounts
+- subscription gating on the core engine
+- backend analytics just to justify pricing

@@ -19,6 +19,9 @@ All notable DreamCleanr release-facing changes should be tracked here.
 - aligned README, roadmap, feature specs, and strategy docs with shipped detector visibility and project-signal safety
 - clarified native-shell and companion README guidance around the shared summary contract
 - refreshed release-playbook references for the next patch release
+- upgraded GitHub Actions checkout usage to `actions/checkout@v6` and tightened review workflow queue counting around recurring tracker issues
+- added public MCP setup, FAQ, and comparison pages to reduce install friction and strengthen search-intent surfaces
+- expanded GitHub-first monetization research and Pro-interest demand capture without introducing live checkout
 
 ### Verified
 
