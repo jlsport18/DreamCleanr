@@ -19,7 +19,7 @@ Recommended commit shapes:
 - `skills: add DreamCleanr operator-system roles`
 - `docs: add operator playbooks and incubation specs`
 - `strategy: integrate master prompt and launch system`
-- `release: prepare 0.3.3 operator-system release`
+- `release: prepare 0.3.4 engine-and-apple release`
 
 ## PR And Merge Rules
 

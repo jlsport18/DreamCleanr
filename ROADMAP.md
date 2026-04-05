@@ -15,7 +15,9 @@ Supporting docs:
 - GitHub-first CLI, MCP, receipts, scheduling, and compliance surfaces are shipped
 - grounded homepage demo and pricing surfaces are live
 - DreamCleanr is strong in Docker, Claude, Codex, and safe cache cleanup
-- DreamCleanr is still missing broader AI/dev ecosystem awareness
+- read-only detector visibility has started for Python, Node, local LLM stacks, Hugging Face, Git/LFS, and IDE roots
+- active project signals have started for Git-backed Python, Node, Git/LFS, and IDE workspaces
+- guided cleanup across that broader AI/dev ecosystem is still missing
 
 This rollup stays subordinate to [DREAMCLEANR_MASTER_STRATEGY.md](DREAMCLEANR_MASTER_STRATEGY.md) and its `$dreamcleanr-strategy-analysis-operator` workflow.
 
@@ -29,7 +31,7 @@ This rollup stays subordinate to [DREAMCLEANR_MASTER_STRATEGY.md](DREAMCLEANR_MA
 
 ### Phase 1: ecosystem-aware intelligence
 
-- detector registry for Python, Node, local LLM stacks, Hugging Face, Git/LFS, and IDEs
+- expand the new detector registry for Python, Node, local LLM stacks, Hugging Face, Git/LFS, and IDEs
 - artifact-family disk visibility
 - project-aware cleanup safety
 
@@ -56,3 +58,4 @@ This rollup stays subordinate to [DREAMCLEANR_MASTER_STRATEGY.md](DREAMCLEANR_MA
 ## Architecture Rule
 
 - cloud, billing, and account systems remain future architecture only until the local-first product proves they are necessary
+- richer onboarding, Figma, launch, and MRR systems remain modular planning surfaces until each one becomes a real product or launch slice

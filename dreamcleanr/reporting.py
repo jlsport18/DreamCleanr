@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import csv
 import html
 import json
 from pathlib import Path
@@ -91,6 +92,130 @@ def _group_counts(actions: List[Dict[str, Any]]) -> Dict[str, int]:
     return counts
 
 
+def build_receipt_summary(report: Dict[str, Any]) -> Dict[str, Any]:
+    snapshot = report.get("snapshot", {})
+    family_summary = {}
+    for family, details in report.get("family_summaries", {}).items():
+        family_summary[family] = {
+            "state": details.get("state", "n/a"),
+            "recommended_action": details.get("recommended_action", "protect_only"),
+            "stale": details.get("process_counts", {}).get("stale", 0),
+            "bytes_reclaimed": details.get("bytes_reclaimed", 0),
+        }
+    detector_overview = []
+    for finding in snapshot.get("detector_findings", []):
+        detector_overview.append(
+            {
+                "key": finding.get("key"),
+                "title": finding.get("title"),
+                "total_bytes": finding.get("total_bytes", 0),
+                "path_count": finding.get("path_count", 0),
+                "safety_state": finding.get("safety_state", "visibility_only"),
+                "active_project_count": finding.get("active_project_count", 0),
+            }
+        )
+    top_storage_targets = []
+    for item in sorted(snapshot.get("storage_records", []), key=lambda record: record.get("size_bytes", 0), reverse=True)[:5]:
+        top_storage_targets.append(
+            {
+                "label": item.get("label"),
+                "family": item.get("family"),
+                "classification": item.get("classification"),
+                "size_bytes": item.get("size_bytes", 0),
+            }
+        )
+    return {
+        "summary_version": 1,
+        "run_id": report.get("run_id"),
+        "finished_at": report.get("finished_at"),
+        "mode": report.get("mode"),
+        "dry_run": report.get("dry_run", True),
+        "storage_reclaimed_bytes": report.get("storage_reclaimed_bytes", 0),
+        "free_space_bytes": snapshot.get("host_disk_free_bytes", 0),
+        "processes_trimmed": report.get("processes_trimmed", 0),
+        "objects_pruned": report.get("objects_pruned", 0),
+        "family_overview": family_summary,
+        "detector_overview": detector_overview,
+        "project_summary": snapshot.get("project_summary", {"active_project_count": 0, "toolchain_counts": {}}),
+        "project_signals": snapshot.get("project_signals", [])[:10],
+        "top_storage_targets": top_storage_targets,
+    }
+
+
+def build_team_export(report: Dict[str, Any]) -> Dict[str, Any]:
+    summary = build_receipt_summary(report)
+    detectors = summary.get("detector_overview", [])
+    project_summary = summary.get("project_summary", {})
+    policy_flags = {
+        "preview_first_required": True,
+        "active_project_count": project_summary.get("active_project_count", 0),
+        "families_needing_review": [
+            family
+            for family, details in summary.get("family_overview", {}).items()
+            if details.get("recommended_action") not in {"protect_only", "docker_system_prune"}
+        ],
+        "detectors_guarded_by_projects": [
+            detector["key"]
+            for detector in detectors
+            if detector.get("safety_state") == "guarded_by_active_projects"
+        ],
+    }
+    return {
+        "export_version": 1,
+        "generated_from_run_id": summary.get("run_id"),
+        "generated_at": summary.get("finished_at"),
+        "mode": summary.get("mode"),
+        "dry_run": summary.get("dry_run", True),
+        "storage_reclaimed_bytes": summary.get("storage_reclaimed_bytes", 0),
+        "free_space_bytes": summary.get("free_space_bytes", 0),
+        "project_summary": project_summary,
+        "family_overview": summary.get("family_overview", {}),
+        "detector_overview": detectors,
+        "top_storage_targets": summary.get("top_storage_targets", []),
+        "policy_flags": policy_flags,
+    }
+
+
+def write_team_csv(export: Dict[str, Any], output_path: Path) -> None:
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+    with output_path.open("w", encoding="utf-8", newline="") as handle:
+        writer = csv.DictWriter(
+            handle,
+            fieldnames=["section", "key", "label", "value", "notes"],
+        )
+        writer.writeheader()
+        for family, details in export.get("family_overview", {}).items():
+            writer.writerow(
+                {
+                    "section": "family",
+                    "key": family,
+                    "label": details.get("state", "n/a"),
+                    "value": details.get("bytes_reclaimed", 0),
+                    "notes": details.get("recommended_action", "protect_only"),
+                }
+            )
+        for detector in export.get("detector_overview", []):
+            writer.writerow(
+                {
+                    "section": "detector",
+                    "key": detector.get("key"),
+                    "label": detector.get("title"),
+                    "value": detector.get("total_bytes", 0),
+                    "notes": detector.get("safety_state", "visibility_only"),
+                }
+            )
+        for target in export.get("top_storage_targets", []):
+            writer.writerow(
+                {
+                    "section": "storage_target",
+                    "key": target.get("label"),
+                    "label": target.get("classification"),
+                    "value": target.get("size_bytes", 0),
+                    "notes": target.get("family", "system"),
+                }
+            )
+
+
 def render_html(report: Dict[str, Any]) -> str:
     snapshot = report["snapshot"]
     actions = report["actions"]
@@ -105,6 +230,8 @@ def render_html(report: Dict[str, Any]) -> str:
     top_actions = _top_actions(actions)
     counts = _group_counts(actions)
     family_summaries = report.get("family_summaries", {})
+    detector_findings = list(snapshot.get("detector_findings", []))
+    project_signals = list(snapshot.get("project_signals", []))
 
     used_before = report["storage_before_bytes"]
     used_after = report["storage_after_bytes"]
@@ -212,6 +339,52 @@ def render_html(report: Dict[str, Any]) -> str:
 
     raw_actions = json.dumps(actions, indent=2)
     raw_snapshot = json.dumps(snapshot.get("process_summary", {}), indent=2)
+    detector_cards = []
+    for finding in detector_findings:
+        safety_suffix = (
+            f" · {int(finding.get('active_project_count', 0))} active project signals"
+            if int(finding.get("active_project_count", 0)) > 0
+            else ""
+        )
+        detector_cards.append(
+            '<div class="card">'
+            f'<div class="label">{html.escape(finding.get("title", finding.get("key", "Detector")))}</div>'
+            f'<div class="value">{human_bytes(int(finding.get("total_bytes", 0)))}</div>'
+            f'<div class="subvalue">{int(finding.get("path_count", 0))} observed roots · {html.escape(finding.get("safety_state", "visibility_only").replace("_", " "))}{html.escape(safety_suffix)}</div>'
+            f'<div class="subvalue">{html.escape(finding.get("notes", ""))}</div>'
+            '</div>'
+        )
+    detector_section = (
+        '<div class="section">'
+        '<h2>Observed Developer Surfaces</h2>'
+        f'<div class="grid">{"".join(detector_cards)}</div>'
+        '</div>'
+        if detector_cards
+        else ""
+    )
+    project_rows = []
+    for signal in project_signals[:8]:
+        project_rows.append(
+            '<div class="row">'
+            f'<div class="name">{html.escape(signal.get("root", ""))}</div>'
+            f'<div class="size">{int(signal.get("source_process_count", 0))} refs</div>'
+            '<div class="bar"><span style="width:100%"></span></div>'
+            f'{_badge(", ".join(signal.get("toolchains", [])) or "git", "review")}'
+            '</div>'
+            + (
+                f'<div class="subvalue">{html.escape(", ".join(signal.get("markers", [])))}</div>'
+                if signal.get("markers")
+                else ""
+            )
+        )
+    project_section = (
+        '<div class="section">'
+        '<h2>Active Project Signals</h2>'
+        f'<div class="stack">{"".join(project_rows)}</div>'
+        '</div>'
+        if project_rows
+        else ""
+    )
 
     return f"""<!DOCTYPE html>
 <html lang="en">
@@ -257,6 +430,10 @@ def render_html(report: Dict[str, Any]) -> str:
       <h2>Family Status</h2>
       <div class="stack">{''.join(family_rows) or '<div class="card">No family activity was detected.</div>'}</div>
     </div>
+
+    {detector_section}
+
+    {project_section}
 
     <div class="section">
       <h2>Removed Or Planned</h2>

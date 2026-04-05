@@ -4,6 +4,28 @@ All notable DreamCleanr release-facing changes should be tracked here.
 
 ## [Unreleased]
 
+## [0.3.4] - 2026-04-05
+
+### Added
+
+- detector visibility for Python, Node, Hugging Face, Ollama, LM Studio, Git/LFS, and IDE support roots in receipts and MCP scan output
+- active Git-backed project signals to keep future cleanup logic conservative around live Python, Node, Git/LFS, and IDE workspaces
+- `latest-summary.json` and timestamped `summary-*.json` receipt-summary artifacts for future Apple-native consumers
+- `dreamcleanr export` admin-friendly JSON and CSV exports for the future Team pilot lane
+- a buildable Apple Swift package with shared receipt-summary models, a macOS shell prototype, and companion-facing SwiftUI views under `apple/`
+
+### Polished
+
+- aligned README, roadmap, feature specs, and strategy docs with shipped detector visibility and project-signal safety
+- clarified native-shell and companion README guidance around the shared summary contract
+- refreshed release-playbook references for the next patch release
+
+### Verified
+
+- Python test suite passes with detector, export, and reporting coverage
+- `swift build --package-path apple` passes for the new Apple-side prototype package
+- CLI, site, shell-script, and skill-validation checks remain green
+
 ## [0.3.3] - 2026-04-04
 
 ### Added

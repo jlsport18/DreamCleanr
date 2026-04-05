@@ -1,0 +1,10 @@
+section,key,label,value,notes
+family,docker,active,3221225472,docker_system_prune
+family,claude,active,0,protect_only
+family,codex,active,2147483648,protect_only
+family,system,n/a,2147483648,protect_only
+detector,python,Python environments and caches,12884901888,guarded_by_active_projects
+detector,huggingface,Hugging Face caches,9663676416,visibility_only
+detector,ide,IDE support and cache roots,3221225472,guarded_by_active_projects
+storage_target,docker_vm_data,REVIEW_VM,27917287424,docker
+storage_target,uv_cache,SAFE_CACHE,2147483648,system

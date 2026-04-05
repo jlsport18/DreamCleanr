@@ -11,7 +11,7 @@ Turn DreamCleanr's current local engine into a premium native macOS experience w
 
 ## Use This Skill
 
-- Read [MACOS_SHELL_PLAN.md](../../MACOS_SHELL_PLAN.md), [IOS_APP_STORE_READINESS.md](../../IOS_APP_STORE_READINESS.md), [DREAMCLEANR_MASTER_STRATEGY.md](../../DREAMCLEANR_MASTER_STRATEGY.md), and [ONBOARDING_CONVERSION_SPEC.md](../../ONBOARDING_CONVERSION_SPEC.md) first when they exist.
+- Read [../../MACOS_SHELL_PLAN.md](../../MACOS_SHELL_PLAN.md), [../../FIGMA_READY_UI_BRIEF.md](../../FIGMA_READY_UI_BRIEF.md), [../../IOS_APP_STORE_READINESS.md](../../IOS_APP_STORE_READINESS.md), [../../DREAMCLEANR_MASTER_STRATEGY.md](../../DREAMCLEANR_MASTER_STRATEGY.md), and [../../ONBOARDING_CONVERSION_SPEC.md](../../ONBOARDING_CONVERSION_SPEC.md) first when they exist.
 - Treat the macOS shell as the first paid moat.
 - Treat iPhone/iPad as a later companion, not a generic device cleaner.
 
@@ -24,7 +24,13 @@ Turn DreamCleanr's current local engine into a premium native macOS experience w
    - preset model
    - paired status summary
    - real app onboarding flow
-4. Keep local-first and preview-first behavior intact.
+4. Define the future design system shape:
+   - Figma file/page structure
+   - frame sizes
+   - design tokens
+   - component inventory
+   - export-ready marketing assets
+5. Keep local-first and preview-first behavior intact.
 
 ## Native Product Rules
 
@@ -33,14 +39,17 @@ Turn DreamCleanr's current local engine into a premium native macOS experience w
 - The iPhone/iPad app should consume shared report/state contracts later.
 - Do not design backend-heavy sync as a prerequisite for the shell.
 - Keep App Store policy boundaries in mind when discussing future mobile work.
+- Treat monthly/yearly pricing toggles, seat dashboards, and hosted-account surfaces as future commercial concepts only, not current native product behavior.
 
 ## Good Deliverables
 
 - SwiftUI architecture plans
-- Figma-ready frame structures for onboarding, dashboard, scan, settings, paywall, and analytics
+- Figma-ready file structures and frame systems for onboarding, dashboard, scan, settings, paywall, and analytics
+- design token maps, app information architecture, and component inventories
 - receipt/history browsing models
 - preset workflow designs
 - pairing contract proposals
+- export-ready marketing asset specifications for screenshots, Product Hunt, X, and Open Graph surfaces
 
 ## Avoid
 
@@ -48,3 +57,4 @@ Turn DreamCleanr's current local engine into a premium native macOS experience w
 - generic cleaner UI language
 - promising remote destructive control before the pairing model is mature
 - treating browser-demo metrics as native product truth
+- letting future commercial pricing concepts bleed into the current macOS shell plan as if they were already approved

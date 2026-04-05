@@ -20,7 +20,7 @@ from .core import (
     prune_history_files,
     prune_rotated_logs,
 )
-from .reporting import write_html
+from .reporting import build_receipt_summary, build_team_export, write_html, write_team_csv
 from .scheduler import install_launch_agent, uninstall_launch_agent, write_launch_agent
 
 
@@ -34,6 +34,7 @@ def _latest_paths(output_dir: Path) -> Dict[str, Path]:
         "before": output_dir / "latest-before.json",
         "after": output_dir / "latest-after.json",
         "report": output_dir / "latest.json",
+        "summary": output_dir / "latest-summary.json",
         "html": output_dir / "latest.html",
         "failure": output_dir / "latest-failure.json",
     }
@@ -74,6 +75,19 @@ def command_report(args: argparse.Namespace) -> int:
     return 0
 
 
+def command_export(args: argparse.Namespace) -> int:
+    input_path = Path(args.input)
+    report = json.loads(input_path.read_text(encoding="utf-8"))
+    export = build_team_export(report)
+    json_out = Path(args.json_out) if args.json_out else input_path.with_name(f"{input_path.stem}-team-export.json")
+    csv_out = Path(args.csv_out) if args.csv_out else input_path.with_name(f"{input_path.stem}-team-export.csv")
+    _write_json(json_out, export)
+    write_team_csv(export, csv_out)
+    print(f"Wrote team export JSON: {json_out}")
+    print(f"Wrote team export CSV:  {csv_out}")
+    return 0
+
+
 def command_clean(args: argparse.Namespace) -> int:
     dry_run = not args.apply
     output_dir = Path(args.output_dir) if args.output_dir else default_report_dir()
@@ -98,14 +112,18 @@ def command_clean(args: argparse.Namespace) -> int:
         before_path = output_dir / f"before-{timestamp}-{run_id}.json"
         after_path = output_dir / f"after-{timestamp}-{run_id}.json"
         report_path = Path(args.json_out) if args.json_out else output_dir / f"report-{timestamp}-{run_id}.json"
+        summary_path = output_dir / f"summary-{timestamp}-{run_id}.json"
         html_path = Path(args.html_out) if args.html_out else output_dir / f"report-{timestamp}-{run_id}.html"
+        summary_dict = build_receipt_summary(report_dict)
 
         _write_json(before_path, before)
         _write_json(after_path, after)
         _write_json(report_path, report_dict)
+        _write_json(summary_path, summary_dict)
         _write_json(latest["before"], before)
         _write_json(latest["after"], after)
         _write_json(latest["report"], report_dict)
+        _write_json(latest["summary"], summary_dict)
         write_html(report_dict, html_path)
         write_html(report_dict, latest["html"])
 
@@ -116,6 +134,7 @@ def command_clean(args: argparse.Namespace) -> int:
         print(f"Before snapshot: {before_path}")
         print(f"After snapshot:  {after_path}")
         print(f"Report JSON:     {report_path}")
+        print(f"Summary JSON:    {summary_path}")
         print(f"Report HTML:     {html_path}")
         if removed_reports:
             print(f"Pruned history:  {len(removed_reports)} old artifact files")
@@ -176,6 +195,12 @@ def build_parser() -> argparse.ArgumentParser:
     report.add_argument("--html-out", help="Write HTML report to a file.")
     report.add_argument("--open", action="store_true", help="Open the HTML report in the default browser.")
     report.set_defaults(func=command_report)
+
+    export = subparsers.add_parser("export", help="Write admin-friendly team export artifacts from a cleanup JSON report.")
+    export.add_argument("--input", required=True, help="Path to cleanup report JSON.")
+    export.add_argument("--json-out", help="Write team export JSON to a file.")
+    export.add_argument("--csv-out", help="Write team export CSV to a file.")
+    export.set_defaults(func=command_export)
 
     clean = subparsers.add_parser("clean", help="Scan, classify, clean, and report.")
     clean.add_argument("--mode", choices=["safe", "balanced", "max"], default="balanced")

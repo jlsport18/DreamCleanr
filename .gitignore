@@ -9,3 +9,5 @@ build/
 *.egg-info/
 reports/generated/
 .venv/
+apple/.build/
+apple/.swiftpm/

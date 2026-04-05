@@ -66,6 +66,23 @@ Do not offer:
 - one sentence on current shipped surfaces
 - one sentence on what is planned next
 
+Current shipped surfaces should be framed as:
+
+- Docker-aware cleanup
+- Claude/Codex-aware protection
+- safe cache cleanup
+- receipts
+- scheduling
+- MCP support
+
+Planned-next surfaces may include:
+
+- Python env awareness
+- Node workspace intelligence
+- Hugging Face visibility
+- Ollama and LM Studio visibility
+- project-aware cleanup safety
+
 ## Strong creator asks
 
 Ask for angles like:
@@ -73,6 +90,16 @@ Ask for angles like:
 - `I cleaned my AI-dev Mac and here is what happened`
 - `Docker and cache noise are probably costing you more space than you think`
 - `This tool shows what is safe to delete instead of guessing`
+
+Avoid asks that imply:
+
+- live subscription checkout
+- fully shipped Python/Node/LLM detector support
+- team dashboards or hosted analytics
+
+## Follow-up example
+
+> Following up in case this is interesting now: DreamCleanr is still strongest today in Docker, safe cache cleanup, receipts, scheduling, and protected AI state. Python, Node, Hugging Face, Ollama, and LM Studio support are the next detector families, not hidden current features.
 
 ## Follow-Up Cadence
 

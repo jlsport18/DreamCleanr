@@ -21,6 +21,15 @@ Turn the current trustworthy CLI + MCP + receipt engine into a fast, premium, lo
 - stays local-first and does not require a backend
 - owns the real install -> scan -> first win -> upgrade flow once the shell exists
 
+## Design inputs
+
+Build the shell from these inputs:
+
+- [ONBOARDING_CONVERSION_SPEC.md](ONBOARDING_CONVERSION_SPEC.md) for the real install -> scan -> upgrade sequence
+- [FIGMA_READY_UI_BRIEF.md](FIGMA_READY_UI_BRIEF.md) for file pages, frame sizes, tokens, IA, and export-ready assets
+
+The shell should absorb the richer operator-pack design system without drifting into generic SaaS chrome.
+
 ## Core capabilities
 
 ### 1. Receipt and history browser
@@ -47,6 +56,14 @@ Turn the current trustworthy CLI + MCP + receipt engine into a fast, premium, lo
 - category-based disk visibility
 - detector-family summaries
 - clear distinction between current capability and future detector support
+- dashboard IA shaped around hero metric, category breakdown, smart recommendations, weekly trends, and history
+
+### 3.5. UI system
+
+- sidebar navigation for Dashboard, Scan, Auto Optimize, History, Settings, and Upgrade
+- top bar with product identity, health narrative, and future account slot only if commercial work is later approved
+- component system for metric cards, category cards, chart strips, review rows, and upgrade panels
+- export-ready screenshot surfaces for website, Product Hunt, X, and Open Graph assets
 
 ### 4. Shared contract for the future companion
 
@@ -60,6 +77,7 @@ Turn the current trustworthy CLI + MCP + receipt engine into a fast, premium, lo
 - do not fork cleanup logic into a second native implementation
 - keep the native layer focused on presentation, orchestration, and guided presets
 - preserve preview-first behavior and protected-state guarantees
+- treat monthly/yearly pricing toggles, live subscription gating, and team dashboards as future commercial concepts only until the strategy changes
 
 ## Sequencing
 

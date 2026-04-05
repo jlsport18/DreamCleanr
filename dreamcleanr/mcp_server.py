@@ -169,6 +169,22 @@ def tool_scan(arguments: Dict[str, Any]) -> Dict[str, Any]:
         }
         for family, data in snapshot.get("process_summary", {}).items()
     }
+    detectors = {
+        item["key"]: {
+            "title": item["title"],
+            "status": item["status"],
+            "total_bytes": item["total_bytes"],
+            "path_count": item["path_count"],
+            "cleanup_ready": item["cleanup_ready"],
+            "safety_state": item.get("safety_state", "visibility_only"),
+            "active_project_count": item.get("active_project_count", 0),
+        }
+        for item in snapshot.get("detector_findings", [])
+    }
+    projects = {
+        "summary": snapshot.get("project_summary", {}),
+        "signals": snapshot.get("project_signals", []),
+    }
     text = (
         f"DreamCleanr scan complete in {mode} mode. "
         f"Free space: {snapshot['host_disk_free_bytes']} bytes. "
@@ -176,7 +192,13 @@ def tool_scan(arguments: Dict[str, Any]) -> Dict[str, Any]:
         f"Claude={summary.get('claude', {}).get('state', 'n/a')}, "
         f"Codex={summary.get('codex', {}).get('state', 'n/a')}."
     )
-    return _text_result(text, {"snapshot": snapshot, "summary": summary})
+    if detectors:
+        observed = ", ".join(item["title"] for item in snapshot.get("detector_findings", [])[:3])
+        text += f" Observed additional developer surfaces: {observed}."
+    project_count = int(snapshot.get("project_summary", {}).get("active_project_count", 0))
+    if project_count:
+        text += f" Active project signals: {project_count}."
+    return _text_result(text, {"snapshot": snapshot, "summary": summary, "detectors": detectors, "projects": projects})
 
 
 def tool_clean_preview(arguments: Dict[str, Any]) -> Dict[str, Any]:

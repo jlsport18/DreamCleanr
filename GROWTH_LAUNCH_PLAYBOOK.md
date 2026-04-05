@@ -24,6 +24,25 @@ Public launch language must stay honest:
 - keep sample numbers labeled as sample numbers
 - reserve the real install -> scan -> upgrade path for the future macOS shell
 
+## Future-only language guardrail
+
+Do not publish copy that implies current live support for:
+
+- Python environment cleanup
+- Node workspace cleanup
+- Hugging Face cleanup
+- Ollama cleanup
+- LM Studio cleanup
+- monthly or yearly Pro checkout
+- hosted accounts or analytics dashboards
+
+Allowed phrasing:
+
+- `planned next detectors`
+- `coming next`
+- `future support`
+- `future commercial concept`
+
 ## Primary channels
 
 ### Product Hunt
@@ -53,6 +72,18 @@ Use [CREATOR_OUTREACH.md](CREATOR_OUTREACH.md) for:
 - creator-angle mapping
 - incentive rules
 - follow-up cadence
+
+## Copy-test system
+
+Use [ONBOARDING_CONVERSION_SPEC.md](ONBOARDING_CONVERSION_SPEC.md) as the source of truth for:
+
+- hero headline tests
+- CTA tests
+- result-screen variants
+- upgrade copy variants
+- lifecycle messaging concepts
+
+Current public tests must stay inside current product truth. Subscription timing, annual emphasis, and checkout tests belong only in future native-shell or future commercial concepts.
 
 ### Focused Reddit communities
 
@@ -95,6 +126,7 @@ Tagline options:
 - `Trust-first cleanup for AI developer Macs`
 - `Reclaim Docker and cache noise without breaking your workflow`
 - `AI workflow hygiene for macOS`
+- `The cleanup layer for AI developer Macs`
 
 First comment draft:
 
@@ -111,6 +143,8 @@ First comment draft:
 - Identity:
   - Headline: `The Mac cleanup tool for AI workflows`
   - Body: `Generic cleaners miss the developer context that matters. DreamCleanr leads with trust and visibility.`
+
+Do not run ads that say DreamCleanr already cleans Python envs, Node workspaces, Ollama, LM Studio, or Hugging Face caches unless those detectors are actually live.
 
 ### Reddit post angle
 
@@ -182,6 +216,7 @@ These are later features, not current promises:
 - safe “you reclaimed X GB” card
 - native shell screenshot loop
 - companion status sharing
+- lifecycle email sequences after a real commercial or native-shell funnel exists
 
 ## Positioning statement
 

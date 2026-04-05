@@ -54,24 +54,24 @@ Do not convert this flow into monthly-subscription-first copy unless the commerc
 
 ### 2. Live Scan
 
-- Use animated count-up and category reveals to build anticipation
-- Keep the unit either:
+- use animated count-up and category reveals to build anticipation
+- keep the unit either:
   - `sample machine footprint surfaced`
   - or `sample reclaimable space found`
-- Include protected-state visibility so the product feels conservative, not reckless
+- include protected-state visibility so the product feels conservative, not reckless
 
 ### 3. Results Reveal
 
-- Results should say what is safely reclaimable now from known-safe surfaces
-- Keep protected AI state visible in the breakdown
-- Show why DreamCleanr is different:
+- results should say what is safely reclaimable now from known-safe surfaces
+- keep protected AI state visible in the breakdown
+- show why DreamCleanr is different:
   - it separates reclaimable from protected
   - it does not collapse everything into one scary delete button
 
 ### 4. First Win
 
-- Do not use fake in-browser cleanup
-- Instead say:
+- do not use fake in-browser cleanup
+- instead say:
   - `Start with a real local scan and a visible receipt.`
 - Primary CTA: `Run your first local scan`
 - Secondary CTA: `Read the sample receipt`
@@ -85,26 +85,38 @@ Do not convert this flow into monthly-subscription-first copy unless the commerc
 - Primary CTA: `Join Pro Early Access`
 - Secondary CTA: `See the Pricing Plan`
 
-## Copy Test Variants
+## Test Structure
 
-These are valid headline tests only when the copy still reflects current truth.
+Test one major variable at a time:
+
+- headline angle
+- CTA phrasing
+- paywall timing
+- free cleanup cap
+- annual pricing emphasis
+
+Only the first two are valid for current public surfaces. Paywall timing, free cleanup cap, and annual pricing emphasis are future native-shell or future commercial concepts only.
+
+## Copy Test Variants
 
 ### Hero / Hook Variants
 
-- Variant A, loss aversion:
-  - `You're leaving reclaimable space on your Mac right now.`
-- Variant B, speed:
-  - `See what DreamCleanr can surface in under a minute.`
-- Variant C, dev-specific:
-  - `Docker, helper residue, and cache noise are quietly eating your disk.`
-- Variant D, curiosity:
-  - `What is actually taking up space on your Mac?`
-
-### Upgrade Copy Variants
-
-- `Don't leave safe cleanup and visibility on the table.`
-- `Unlock guided cleanup in the premium shell later.`
-- `One broken environment costs more than a trustworthy cleanup workflow.`
+- Variant A, pain-focused:
+  - Headline: `Your AI workflow is wasting space and slowing your Mac down.`
+  - Subheadline: `DreamCleanr surfaces Docker sprawl, cache noise, stale helper residue, and protected AI state safely.`
+  - CTA: `Start Smart Scan`
+- Variant B, speed-focused:
+  - Headline: `See reclaimable storage in under 60 seconds.`
+  - Subheadline: `A trust-first cleanup flow for Docker-heavy and AI-heavy Macs.`
+  - CTA: `Scan My Mac`
+- Variant C, curiosity-focused:
+  - Headline: `What is actually taking up space on your Mac?`
+  - Subheadline: `See sample reclaimable space, protected AI state, and cleanup-safe surfaces without guessing.`
+  - CTA: `Find Out Now`
+- Variant D, category-creation:
+  - Headline: `The cleanup layer for AI developer Macs.`
+  - Subheadline: `DreamCleanr separates reclaimable storage from protected state instead of pushing a blind delete button.`
+  - CTA: `See It In Action`
 
 ### Result-Screen Variants
 
@@ -117,6 +129,12 @@ These are valid headline tests only when the copy still reflects current truth.
 - `Want guided cleanup, richer history, and premium workflows?`
 - `Unlock one-click guidance and better local visibility in the premium shell later.`
 - `Free users recover space. Pro users recover time.`
+
+### Upgrade Copy Variants
+
+- `Don't leave safe cleanup and visibility on the table.`
+- `Unlock guided cleanup in the premium shell later.`
+- `One broken environment costs more than a trustworthy cleanup workflow.`
 
 ### Upgrade CTA Variants
 
@@ -145,11 +163,22 @@ Do not use:
 | Ollama / LM Studio visibility | teaser only | no | planned |
 | Project-aware cleanup safety | teaser only | no | planned |
 
+## Future-Only Concept Tests
+
+These concepts may appear in native-shell mockups or future commercial docs only:
+
+- monthly or yearly pricing emphasis
+- seat or team dashboard framing
+- checkout timing experiments
+- cleanup-cap experiments tied to hosted entitlements
+
+They are not current public-site behaviors.
+
 ## Upgrade Trigger Rules
 
-- Use the first real local scan and receipt as the trust-building moment
-- Use richer history, guided cleanup, and presets as the premium upsell
-- Do not gate basic safety or basic cleanup truth behind Pro
+- use the first real local scan and receipt as the trust-building moment
+- use richer history, guided cleanup, and presets as the premium upsell
+- do not gate basic safety or basic cleanup truth behind Pro
 
 ## Metrics To Watch Later
 
@@ -170,14 +199,14 @@ These are later lifecycle messages, not current product behavior.
 ### Day 0
 
 - Subject: `You've still got storage left to recover`
-- Message angle: remind the user that the first scan surfaced reclaimable space and point them back to safe local cleanup flows
+- Body: `Your first scan surfaced reclaimable space on your Mac. DreamCleanr keeps the cleanup flow local, visible, and receipt-first so you can finish the job safely when you're ready.`
 
 ### Day 2
 
 - Subject: `Docker is probably growing again`
-- Message angle: reinforce the ongoing cost of containers, images, and cache growth
+- Body: `Containers, images, and cache layers pile up quickly. DreamCleanr is designed to surface what is reclaimable while leaving protected AI state and active workflows alone.`
 
 ### Day 5
 
 - Subject: `Free up more space without touching active projects`
-- Message angle: reinforce project-aware safety as DreamCleanr's long-term differentiator
+- Body: `Project-aware safety is the long-term differentiator. DreamCleanr's premium shell is being designed around guided cleanup, richer history, and safer workflow-aware visibility rather than blind deletion.`

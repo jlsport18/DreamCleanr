@@ -53,6 +53,7 @@ Demo notes:
 - `Community`: free CLI, MCP, receipts, and scheduling
 - `Pro`: later one-time premium macOS shell
 - `Team`: later pilot for policy and rollout workflows
+- future recurring layers, if they ever exist, stay in the incubation docs and are not current public pricing
 
 ## 7. Traction
 
@@ -71,6 +72,7 @@ Do not fabricate these numbers for the deck.
 - GitHub-first distribution
 - Product Hunt, Hacker News, Indie Hackers, and targeted creator outreach
 - high-intent SEO around AI/dev cleanup pain
+- launch loops built around receipts, before/after visuals, and trust-first technical positioning
 
 ## 9. Competition
 
@@ -95,6 +97,10 @@ Become the default optimization layer every AI developer installs after setting 
 2. premium macOS shell
 3. iPhone/iPad companion
 4. Team pilot
+
+Note:
+
+- future backend, auth, analytics, and recurring pricing remain incubation tracks until the local-first product proves they are necessary
 
 ## 12. Ask
 

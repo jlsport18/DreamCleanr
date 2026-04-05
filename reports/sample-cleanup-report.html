@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>DreamCleanr Cleanup Receipt</title>
+  
+<style>
+  :root{
+    --paper:#f7f4ec;
+    --ink:#202124;
+    --muted:#6f766f;
+    --line:#ddd5c8;
+    --sea:#4f9d84;
+    --sand:#c7933d;
+    --coral:#c66a59;
+    --card:#fffcf5;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;font-family:ui-sans-serif,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;background:linear-gradient(180deg,#faf7f0 0%,#f3efe6 100%);color:var(--ink)}
+  .page{max-width:1080px;margin:0 auto;padding:24px}
+  .topbar{display:flex;justify-content:space-between;align-items:flex-start;gap:18px;padding:18px 20px;background:rgba(255,255,255,.7);border:1px solid rgba(221,213,200,.9);backdrop-filter:blur(10px);border-radius:22px}
+  .title{font-size:2rem;font-weight:800;letter-spacing:-.03em}
+  .subtitle{color:var(--muted);margin-top:6px}
+  .chips{display:flex;gap:10px;flex-wrap:wrap}
+  .chip{padding:8px 12px;border-radius:999px;border:1px solid var(--line);background:#fff;font-size:.82rem;font-weight:700}
+  .chip.preview{color:var(--sand);border-color:rgba(199,147,61,.35);background:rgba(199,147,61,.08)}
+  .chip.applied{color:var(--sea);border-color:rgba(79,157,132,.35);background:rgba(79,157,132,.08)}
+  .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:14px;margin-top:18px}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:18px;box-shadow:0 8px 28px rgba(0,0,0,.04)}
+  .label{font-size:.78rem;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);font-weight:800}
+  .value{font-size:1.9rem;font-weight:800;margin-top:8px}
+  .subvalue{margin-top:6px;color:var(--muted);font-size:.92rem}
+  .section{margin-top:22px}
+  .section h2{font-size:1rem;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin:0 0 10px}
+  .storage-bar{margin-top:14px;background:#ece4d6;border-radius:999px;height:14px;overflow:hidden;position:relative}
+  .storage-before,.storage-after{height:100%;border-radius:999px}
+  .storage-before{background:rgba(199,147,61,.35)}
+  .storage-after{position:absolute;left:0;top:0;background:linear-gradient(90deg,var(--sea),#72b59f)}
+  .legend{display:flex;justify-content:space-between;color:var(--muted);font-size:.86rem;margin-top:8px}
+  .stack{display:grid;gap:10px}
+  .row{display:grid;grid-template-columns:minmax(0,1.2fr) minmax(100px,.5fr) 1fr auto;gap:12px;align-items:center;background:rgba(255,255,255,.65);border:1px solid var(--line);border-radius:14px;padding:12px 14px}
+  .bar{height:8px;background:#ece4d6;border-radius:999px;overflow:hidden}
+  .bar span{display:block;height:100%;background:linear-gradient(90deg,var(--sea),#79b7a2)}
+  .row .name{font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .size{font-variant-numeric:tabular-nums;color:var(--ink);font-weight:700}
+  .badge{padding:6px 10px;border-radius:999px;font-size:.76rem;font-weight:800;border:1px solid var(--line);background:#fff}
+  .badge.deleted,.badge.terminated{color:var(--sea)}
+  .badge.planned,.badge.kept{color:var(--sand)}
+  .badge.blocked,.badge.failed{color:var(--coral)}
+  .badge.review,.badge.skipped{color:var(--muted)}
+  details{margin-top:14px;background:rgba(255,255,255,.55);border:1px solid var(--line);border-radius:14px;padding:12px 14px}
+  summary{cursor:pointer;font-weight:700}
+  pre{white-space:pre-wrap;word-break:break-word;font-size:.84rem;color:#334;background:#fff;padding:12px;border-radius:12px;border:1px solid var(--line);max-height:360px;overflow:auto}
+</style>
+
+</head>
+<body>
+  <div class="page">
+    <div class="topbar">
+      <div>
+        <div class="title">DreamCleanr</div>
+        <div class="subtitle">Cleanup receipt generated 2026-04-05T12:03:14Z</div>
+      </div>
+      <div class="chips">
+        <span class="badge review">Balanced</span>
+        <span class="badge applied">Applied</span>
+      </div>
+    </div>
+
+    <div class="grid"><div class="card"><div class="label">Reclaimed</div><div class="value">5.0GB</div><div class="subvalue">docker_vm_data</div></div><div class="card"><div class="label">Memory Relief</div><div class="value">38.3MB</div><div class="subvalue">3 stale processes targeted</div></div><div class="card"><div class="label">Free Space Now</div><div class="value">56.0GB</div><div class="subvalue">Live disk headroom after scan</div></div><div class="card"><div class="label">Protected</div><div class="value">1</div><div class="subvalue">1 items still require manual review</div></div></div>
+
+    <div class="card section">
+      <h2>Storage Before vs After</h2>
+      <div class="storage-bar">
+        <div class="storage-before" style="width:78.1%"></div>
+        <div class="storage-after" style="width:76.2%"></div>
+      </div>
+      <div class="legend">
+        <span>Before: 200.0GB</span>
+        <span>After: 195.0GB</span>
+      </div>
+    </div>
+
+    <div class="section">
+      <h2>Biggest Wins</h2>
+      <div class="stack"><div class="row"><div class="name">docker_vm_data</div><div class="size">26.0GB</div><div class="bar"><span style="width:100%"></span></div><span class="badge review">Review Vm</span></div><div class="row"><div class="name">uv_cache</div><div class="size">2.0GB</div><div class="bar"><span style="width:7%"></span></div><span class="badge planned">Safe Cache</span></div></div>
+    </div>
+
+    <div class="section">
+      <h2>Family Status</h2>
+      <div class="stack"><div class="row"><div class="name">Docker</div><div class="size">active</div><div class="bar"><span style="width:100%"></span></div><span class="badge review">Docker System Prune</span></div><div class="subvalue">containers 1 running / 3 stopped | 2 stale helpers</div><div class="row"><div class="name">Claude</div><div class="size">active</div><div class="bar"><span style="width:100%"></span></div><span class="badge review">Protect Only</span></div><div class="subvalue">0 stale helpers</div><div class="row"><div class="name">Codex</div><div class="size">active</div><div class="bar"><span style="width:100%"></span></div><span class="badge review">Protect Only</span></div><div class="subvalue">0 stale helpers</div></div>
+    </div>
+
+    <div class="section"><h2>Observed Developer Surfaces</h2><div class="grid"><div class="card"><div class="label">Python environments and caches</div><div class="value">12.0GB</div><div class="subvalue">3 observed roots · guarded by active projects · 2 active project signals</div><div class="subvalue">Visibility only for pip, pyenv, conda, and virtualenv roots. Project-aware cleanup remains planned.</div></div><div class="card"><div class="label">Hugging Face caches</div><div class="value">9.0GB</div><div class="subvalue">2 observed roots · visibility only</div><div class="subvalue">Observed Hugging Face hub and dataset cache roots. Cleanup remains visibility-first.</div></div><div class="card"><div class="label">IDE support and cache roots</div><div class="value">3.0GB</div><div class="subvalue">2 observed roots · guarded by active projects · 1 active project signals</div><div class="subvalue">Observed VS Code and JetBrains support paths only. Workspace intelligence remains planned.</div></div></div></div>
+
+    <div class="section"><h2>Active Project Signals</h2><div class="stack"><div class="row"><div class="name">/Users/example/Projects/agent-lab</div><div class="size">3 refs</div><div class="bar"><span style="width:100%"></span></div><span class="badge review">git, python, ide</span></div><div class="subvalue">pyproject.toml, .vscode</div><div class="row"><div class="name">/Users/example/Projects/model-playground</div><div class="size">2 refs</div><div class="bar"><span style="width:100%"></span></div><span class="badge review">git, python, node</span></div><div class="subvalue">pyproject.toml, package.json</div></div></div>
+
+    <div class="section">
+      <h2>Removed Or Planned</h2>
+      <div class="grid">
+        <div class="card"><div class="label">Deleted</div><div class="value">4</div><div class="subvalue">Applied removals and terminated stale processes</div></div>
+        <div class="card"><div class="label">Previewed</div><div class="value">0</div><div class="subvalue">Safe opportunities identified in dry run</div></div>
+        <div class="card"><div class="label">Blocked</div><div class="value">0</div><div class="subvalue">Protection rule prevented removal</div></div>
+        <div class="card"><div class="label">Kept</div><div class="value">0</div><div class="subvalue">Protected items intentionally preserved</div></div>
+      </div>
+      <div class="stack"><div class="row"><div class="name">docker_system_prune</div><div class="size">3.0GB</div><div class="bar"><span style="width:100%"></span></div><span class="badge deleted">Deleted</span></div><div class="row"><div class="name">/Users/example/.cache/uv</div><div class="size">2.0GB</div><div class="bar"><span style="width:100%"></span></div><span class="badge deleted">Deleted</span></div><div class="row"><div class="name">61825</div><div class="size">20.4MB</div><div class="bar"><span style="width:100%"></span></div><span class="badge terminated">Terminated</span></div><div class="row"><div class="name">61822</div><div class="size">18.0MB</div><div class="bar"><span style="width:100%"></span></div><span class="badge terminated">Terminated</span></div></div>
+    </div>
+
+    <div class="section">
+      <h2>Protected</h2>
+      <div class="card"><span class="badge kept">claude_vm_bundle</span> <span class="badge review">docker_raw</span></div>
+      <div class="stack"><div class="row"><div class="name">claude_vm_bundle</div><div class="size">9.7GB</div><div class="bar"><span style="width:100%"></span></div><span class="badge kept">Protected</span></div></div>
+    </div>
+
+    <div class="section">
+      <h2>Manual Review</h2>
+      <div class="stack"><div class="row"><div class="name">docker_raw</div><div class="size">25.0GB</div><div class="bar"><span style="width:100%"></span></div><span class="badge review">Manual Review</span></div></div>
+    </div>
+
+    <div class="section">
+      <h2>Why It Was Safe</h2>
+      <div class="stack"><div class="row"><div class="name">Docker</div><div class="size">active</div><div class="bar"><span style="width:100%"></span></div><span class="badge review">Docker System Prune</span></div><div class="row"><div class="name">Claude</div><div class="size">active</div><div class="bar"><span style="width:100%"></span></div><span class="badge review">Protect Only</span></div><div class="row"><div class="name">Codex</div><div class="size">active</div><div class="bar"><span style="width:100%"></span></div><span class="badge review">Protect Only</span></div></div>
+    </div>
+
+    <details>
+      <summary>Full action log</summary>
+      <pre>[
+  {
+    &quot;target&quot;: &quot;61822&quot;,
+    &quot;target_type&quot;: &quot;process&quot;,
+    &quot;family&quot;: &quot;docker&quot;,
+    &quot;classification&quot;: &quot;STALE_CLI&quot;,
+    &quot;result&quot;: &quot;terminated&quot;,
+    &quot;bytes_reclaimed&quot;: 18841600,
+    &quot;reason&quot;: &quot;Stale helper or CLI probe process with low activity and no active parent chain.&quot;,
+    &quot;details&quot;: {
+      &quot;pid&quot;: 61822,
+      &quot;args&quot;: &quot;docker info&quot;,
+      &quot;elapsed_seconds&quot;: 811,
+      &quot;apply_allowed&quot;: true
+    }
+  },
+  {
+    &quot;target&quot;: &quot;61825&quot;,
+    &quot;target_type&quot;: &quot;process&quot;,
+    &quot;family&quot;: &quot;docker&quot;,
+    &quot;classification&quot;: &quot;STALE_CLI&quot;,
+    &quot;result&quot;: &quot;terminated&quot;,
+    &quot;bytes_reclaimed&quot;: 21364736,
+    &quot;reason&quot;: &quot;Stale helper or CLI probe process with low activity and no active parent chain.&quot;,
+    &quot;details&quot;: {
+      &quot;pid&quot;: 61825,
+      &quot;args&quot;: &quot;docker system df -v&quot;,
+      &quot;elapsed_seconds&quot;: 804,
+      &quot;apply_allowed&quot;: true
+    }
+  },
+  {
+    &quot;target&quot;: &quot;docker_system_prune&quot;,
+    &quot;target_type&quot;: &quot;docker&quot;,
+    &quot;family&quot;: &quot;docker&quot;,
+    &quot;classification&quot;: &quot;SAFE_CACHE&quot;,
+    &quot;result&quot;: &quot;deleted&quot;,
+    &quot;bytes_reclaimed&quot;: 3187671040,
+    &quot;reason&quot;: &quot;Prune stopped containers, dangling images, and build cache via Docker daemon.&quot;,
+    &quot;details&quot;: {
+      &quot;apply_allowed&quot;: true,
+      &quot;inventory_counts&quot;: {
+        &quot;running_containers&quot;: 1,
+        &quot;exited_containers&quot;: 3,
+        &quot;dangling_images&quot;: 2,
+        &quot;volumes&quot;: 6,
+        &quot;networks&quot;: 4
+      }
+    }
+  },
+  {
+    &quot;target&quot;: &quot;/Users/example/.cache/uv&quot;,
+    &quot;target_type&quot;: &quot;path&quot;,
+    &quot;family&quot;: &quot;system&quot;,
+    &quot;classification&quot;: &quot;SAFE_CACHE&quot;,
+    &quot;result&quot;: &quot;deleted&quot;,
+    &quot;bytes_reclaimed&quot;: 2147483648,
+    &quot;reason&quot;: &quot;Regenerable uv cache.&quot;,
+    &quot;details&quot;: {
+      &quot;label&quot;: &quot;uv_cache&quot;,
+      &quot;apply_allowed&quot;: true
+    }
+  }
+]</pre>
+    </details>
+
+    <details>
+      <summary>Process safety summary</summary>
+      <pre>{
+  &quot;docker&quot;: {
+    &quot;state&quot;: &quot;active&quot;,
+    &quot;recommended_action&quot;: &quot;docker_system_prune&quot;,
+    &quot;process_counts&quot;: {
+      &quot;total&quot;: 7,
+      &quot;active_primary&quot;: 2,
+      &quot;active_helper&quot;: 2,
+      &quot;background_only&quot;: 1,
+      &quot;stale&quot;: 2
+    },
+    &quot;inventory_counts&quot;: {
+      &quot;running_containers&quot;: 1,
+      &quot;exited_containers&quot;: 3,
+      &quot;dangling_images&quot;: 2,
+      &quot;volumes&quot;: 6,
+      &quot;networks&quot;: 4
+    }
+  },
+  &quot;claude&quot;: {
+    &quot;state&quot;: &quot;active&quot;,
+    &quot;recommended_action&quot;: &quot;protect_only&quot;,
+    &quot;process_counts&quot;: {
+      &quot;total&quot;: 4,
+      &quot;active_primary&quot;: 1,
+      &quot;active_helper&quot;: 2,
+      &quot;background_only&quot;: 1,
+      &quot;stale&quot;: 0
+    },
+    &quot;inventory_counts&quot;: {}
+  },
+  &quot;codex&quot;: {
+    &quot;state&quot;: &quot;active&quot;,
+    &quot;recommended_action&quot;: &quot;protect_only&quot;,
+    &quot;process_counts&quot;: {
+      &quot;total&quot;: 6,
+      &quot;active_primary&quot;: 1,
+      &quot;active_helper&quot;: 4,
+      &quot;background_only&quot;: 1,
+      &quot;stale&quot;: 0
+    },
+    &quot;inventory_counts&quot;: {}
+  }
+}</pre>
+    </details>
+  </div>
+</body>
+</html>

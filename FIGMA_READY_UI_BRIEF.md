@@ -12,6 +12,7 @@ The interface should feel:
 - technical
 - premium without looking like a generic optimizer
 - conservative about destructive actions
+- Mac-native first, not SaaS-dashboard first
 
 ## Visual Direction
 
@@ -25,19 +26,45 @@ Recommended stack:
 - Primary UI type: `SF Pro Display` or `Avenir Next`
 - Monospace: `SF Mono`
 
-## Core Tokens
+If a marketing-only export needs broader web parity, `Inter` can be used in that export layer only. It should not replace the native-shell baseline.
 
-These map to the current site language and can seed a Figma variable set later.
+## Foundations
+
+### Core tokens
 
 | Token | Value | Use |
 |---|---|---|
 | `bg/base` | `#08101D` | app chrome |
 | `bg/soft` | `#101C32` | panels and grouped surfaces |
+| `bg/elevated` | `#172742` | emphasized cards and modals |
 | `text/primary` | `#F9F6EF` | main copy |
+| `text/secondary` | `#D7E0E8` | subheads and support copy |
 | `text/muted` | `#B6C4D2` | supporting copy |
 | `accent/teal` | `#75E0C0` | primary action |
-| `accent/gold` | `#F7C46B` | labels and risk-aware highlights |
+| `accent/gold` | `#F7C46B` | labels and premium highlights |
+| `accent/amber` | `#FFB463` | warning or storage pressure states |
+| `accent/red` | `#FF7B72` | destructive or blocked states |
 | `line/default` | `rgba(255,255,255,0.12)` | borders |
+
+### Typography
+
+- H1: `48 / 56 / 700`
+- H2: `32 / 40 / 700`
+- H3: `24 / 32 / 600`
+- Body LG: `18 / 28 / 400`
+- Body MD: `16 / 24 / 400`
+- Body SM: `14 / 20 / 400`
+- Label: `12 / 16 / 600`
+- Metric Mono: `SF Mono 14 / 20 / 600`
+
+### Spacing, radius, and elevation
+
+- spacing scale: `4, 8, 12, 16, 24, 32, 40, 48, 64`
+- card radius: `16`
+- modal radius: `20`
+- pill radius: `999`
+- elevation 1: `0 8 24 rgba(0,0,0,0.24)`
+- elevation 2: `0 16 40 rgba(0,0,0,0.32)`
 
 ## File Structure
 
@@ -55,101 +82,157 @@ Recommended Figma file pages:
 10. `09 Marketing Assets`
 11. `10 Prototype`
 
-## Figma Pages
+## Core Frame Sizes
 
-Create these pages:
-
-1. `Onboarding`
-2. `Dashboard`
-3. `Scan`
-4. `Paywall`
-5. `Settings`
-6. `Analytics`
-
-## Frame Structure
-
-### Core frame sizes
+### App frames
 
 - desktop app main: `1440 x 960`
+- sidebar app state: `1440 x 960`
 - modal: `560 x 640`
+
+### Website frames
+
 - website desktop: `1440 x 4200`
 - website tablet: `834 x 3200`
 - website mobile: `390 x 2800`
 
-### Page 1: Onboarding
+## App Layout Spec
 
-Frames:
+### Sidebar
 
-- `Onboarding / Hook`
-- `Onboarding / Live Scan`
-- `Onboarding / Results`
-- `Onboarding / First Win`
-- `Onboarding / Upgrade`
+- width: `240`
+- items:
+  - Dashboard
+  - Scan
+  - Auto Optimize
+  - History
+  - Settings
+  - Upgrade
 
-Key modules:
+### Top bar
 
-- headline block
-- sample/live scan meter
-- reclaimable breakdown cards
-- protected-state callout
-- install CTA
-- Pro early-access prompt
+- height: `72`
+- elements:
+  - product logo
+  - device health narrative or summary
+  - account menu slot for future-only commercial concept work
 
-### Page 2: Dashboard
+### Dashboard sections
 
-Frames:
+1. hero metric
+2. recoverable storage categories
+3. smart recommendations
+4. weekly trend
+5. upgrade teaser
 
-- `Dashboard / Overview`
-- `Dashboard / Dense`
-- `Dashboard / Empty State`
+## Component Inventory
 
-Key modules:
+### Buttons
 
-- reclaimable space hero metric
-- action bar: `Preview Cleanup`, `Run Cleanup`, `Schedule`, `View Receipt`
-- category cards by artifact family
-- health narrative, not a vague magic score
-- latest receipt summary
+Variants:
 
-### Page 3: Scan
+- Primary
+- Secondary
+- Ghost
+- Danger
 
-Frames:
+States:
 
-- `Scan / Running`
-- `Scan / Results`
-- `Scan / Review Required`
+- Default
+- Hover
+- Pressed
+- Disabled
+- Loading
 
-Key modules:
+### Cards
 
-- progress indicator
-- category event feed
-- surfaced storage total
-- reclaimable total
-- protected items rail
+Variants:
 
-### Page 4: Paywall
+- metric card
+- category card
+- recommendation card
+- pricing or comparison card
 
-Frames:
+### Inputs
 
-- `Paywall / Soft`
-- `Paywall / Comparison`
+- email input
+- search field
+- protected folder picker
+- dropdown
+- toggle
+- slider
 
-Key modules:
+### Data visualization
 
-- value recap
-- Pro shell benefits
-- free vs Pro comparison
-- early-access or purchase CTA depending on product stage
+- recoverable GB metric tile
+- storage category bar
+- weekly savings chart
+- system health ring or narrative equivalent
 
-### Page 5: Settings
+### Paywall elements
 
-Frames:
+- locked feature row
+- comparison table
+- savings callout badge
+- annual pricing toggle as future commercial concept only
 
-- `Settings / General`
-- `Settings / Safety`
-- `Settings / Scheduling`
+## Required Screens
 
-Key modules:
+### Onboarding 1
+
+Headline:
+
+**Your Mac wasn't built for AI workflows.**
+
+Sub:
+
+DreamCleanr surfaces Docker sprawl, cache noise, stale helper residue, and protected AI state without pretending everything is safe to delete.
+
+CTA:
+
+- `Start Smart Scan`
+- `See sample scan`
+
+### Onboarding 2
+
+- live scan state with animated categories and counter
+- protected-state callout visible early
+
+### Onboarding 3
+
+Results reveal:
+
+- recoverable total
+- category list
+- protected-state rail
+- free-action CTA
+- premium shell preview panel
+
+### Dashboard
+
+- large recoverable storage number
+- `Preview Cleanup` and `Run Cleanup` actions
+- breakdown list
+- health narrative
+- recommendations
+
+### Scan detail
+
+- tabs for Docker, cache/logs, stale helpers, protected state, and future detector families
+- safe, risky, and review labels
+- preview and clean action where the current product actually supports it
+
+### Paywall
+
+- headline
+- value stack
+- free versus Pro comparison
+- CTA ladder
+- FAQ accordion
+
+Any monthly/yearly toggle, seat comparison, or hosted-team element must be labeled `future commercial concept only`.
+
+### Settings
 
 - schedule toggle
 - preset selection
@@ -157,32 +240,12 @@ Key modules:
 - report retention
 - safety explanation blocks
 
-### Page 6: Analytics
-
-Frames:
-
-- `Analytics / Weekly`
-- `Analytics / Trends`
-
-Key modules:
+### Analytics
 
 - reclaimed space over time
 - repeated growth categories
 - cleanup streaks
 - protected-state patterns
-
-## Component Inventory
-
-- top app bar
-- sidebar or split navigation
-- metric hero
-- artifact category card
-- protected-state badge
-- action pill button
-- receipt summary card
-- trend strip
-- review-required list row
-- code/config snippet card for MCP setup
 
 ## Export-Ready Marketing Assets
 
@@ -207,6 +270,7 @@ Prepare reusable frames for:
 - `GB reclaimed` can be live only when backed by a real scan
 - `health score` is optional and should be narrative-first, not gimmick-first
 - future concept frames may use sample numbers only when clearly marked as conceptual
+- commercial concepts like annual pricing, seat-based dashboards, or hosted accounts must be explicitly marked as future-only
 
 ## Handoff Notes
 

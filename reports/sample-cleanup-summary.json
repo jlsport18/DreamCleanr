@@ -1,0 +1,121 @@
+{
+  "summary_version": 1,
+  "run_id": "sample004",
+  "finished_at": "2026-04-05T12:03:14Z",
+  "mode": "balanced",
+  "dry_run": false,
+  "storage_reclaimed_bytes": 5368709120,
+  "free_space_bytes": 60129542144,
+  "processes_trimmed": 3,
+  "objects_pruned": 4,
+  "family_overview": {
+    "docker": {
+      "state": "active",
+      "recommended_action": "docker_system_prune",
+      "stale": 2,
+      "bytes_reclaimed": 3221225472
+    },
+    "claude": {
+      "state": "active",
+      "recommended_action": "protect_only",
+      "stale": 0,
+      "bytes_reclaimed": 0
+    },
+    "codex": {
+      "state": "active",
+      "recommended_action": "protect_only",
+      "stale": 0,
+      "bytes_reclaimed": 2147483648
+    },
+    "system": {
+      "state": "n/a",
+      "recommended_action": "protect_only",
+      "stale": 0,
+      "bytes_reclaimed": 2147483648
+    }
+  },
+  "detector_overview": [
+    {
+      "key": "python",
+      "title": "Python environments and caches",
+      "total_bytes": 12884901888,
+      "path_count": 3,
+      "safety_state": "guarded_by_active_projects",
+      "active_project_count": 2
+    },
+    {
+      "key": "huggingface",
+      "title": "Hugging Face caches",
+      "total_bytes": 9663676416,
+      "path_count": 2,
+      "safety_state": "visibility_only",
+      "active_project_count": 0
+    },
+    {
+      "key": "ide",
+      "title": "IDE support and cache roots",
+      "total_bytes": 3221225472,
+      "path_count": 2,
+      "safety_state": "guarded_by_active_projects",
+      "active_project_count": 1
+    }
+  ],
+  "project_summary": {
+    "active_project_count": 2,
+    "toolchain_counts": {
+      "git": 2,
+      "ide": 1,
+      "node": 1,
+      "python": 2
+    }
+  },
+  "project_signals": [
+    {
+      "root": "/Users/example/Projects/agent-lab",
+      "toolchains": [
+        "git",
+        "python",
+        "ide"
+      ],
+      "markers": [
+        "pyproject.toml",
+        ".vscode"
+      ],
+      "source_process_count": 3,
+      "families": [
+        "claude",
+        "codex"
+      ]
+    },
+    {
+      "root": "/Users/example/Projects/model-playground",
+      "toolchains": [
+        "git",
+        "python",
+        "node"
+      ],
+      "markers": [
+        "pyproject.toml",
+        "package.json"
+      ],
+      "source_process_count": 2,
+      "families": [
+        "docker"
+      ]
+    }
+  ],
+  "top_storage_targets": [
+    {
+      "label": "docker_vm_data",
+      "family": "docker",
+      "classification": "REVIEW_VM",
+      "size_bytes": 27917287424
+    },
+    {
+      "label": "uv_cache",
+      "family": "system",
+      "classification": "SAFE_CACHE",
+      "size_bytes": 2147483648
+    }
+  ]
+}

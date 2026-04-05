@@ -14,17 +14,27 @@ Current canonical model:
 
 This roadmap exists so DreamCleanr can evaluate a recurring layer later without losing the current product strategy.
 
-## Revenue Math
+## Revenue Scenarios
+
+### Monthly-only baseline
 
 At `$19/month`:
 
 - `526` active Pro users is approximately `$9,994 MRR`
 
-Example blended path:
+### Blended recurring scenario
+
+- `300` monthly Pro users at `$19` = `$5,700 MRR`
+- `35` annual users at `$149/year` recognized monthly = about `$434 MRR`
+- `8` team seats at `$49` = `$392 MRR`
+
+This is still short of the target and depends on stronger annual or team expansion.
+
+### Cleaner target mix
 
 - `400` monthly Pro users at `$19` = `$7,600 MRR`
 - `16` team seats at `$49` = `$784 MRR`
-- `130` annual users recognized monthly at roughly `$1,614`
+- `130` annual users recognized monthly = about `$1,614 MRR`
 
 Approximate total:
 
@@ -65,6 +75,12 @@ Actions:
 - annual discount experiments
 - activation instrumentation
 
+North-star questions:
+
+- what does one activated user cost by channel
+- which launch surfaces produce the best first-week conversion
+- what kind of early user converts into repeat usage
+
 ## Phase 3: 100 To 250 Paying Users
 
 Goals:
@@ -79,6 +95,13 @@ Likely feature unlocks:
 - project protection
 - stronger LLM cache support
 - better storage visualizations
+
+Growth moves:
+
+- creator affiliates
+- tutorial or demo videos
+- comparison pages
+- search-intent content
 
 ## Phase 4: 250 To 526+ Paying Users
 
@@ -111,6 +134,33 @@ Likely channels:
 - tutorial videos
 - affiliate program
 
+## Offer Structure To Test Later
+
+These are future commercial experiments only:
+
+- annual plan with a meaningful discount
+- founder plan for the first high-signal paid cohort
+- lifetime or deep discount offer for exceptional early advocates
+- creator affiliate rev share
+- team beta with a minimum seat threshold
+
+Do not use these as live public pricing until the commercial strategy intentionally changes.
+
+## KPI Dashboard
+
+Track weekly:
+
+- installs
+- scan completion percentage
+- average GB found
+- free-action rate
+- paywall viewed rate
+- checkout started rate
+- checkout completed rate
+- monthly-to-annual mix
+- 30-day paid retention
+- referral rate
+
 ## Conversion Targets
 
 Reasonable early targets:
@@ -130,7 +180,7 @@ Subject: `You've still got storage left to recover`
 Angle:
 
 - remind the user their first scan surfaced reclaimable space
-- invite them back into the product flow
+- invite them back into a future richer product flow
 
 ### Day 2
 
@@ -146,8 +196,8 @@ Subject: `Free up more space without touching active projects`
 
 Angle:
 
-- reinforce environment-aware safety as the differentiator
+- reinforce environment-aware safety as the long-term differentiator
 
-## Rule
+## Hard Rule
 
 Do not reuse this roadmap as live public pricing guidance until DreamCleanr intentionally adopts a recurring commercial layer.

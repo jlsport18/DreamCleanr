@@ -70,6 +70,36 @@ class DockerInventory:
 
 
 @dataclass
+class DetectorFinding:
+    key: str
+    title: str
+    status: str
+    total_bytes: int
+    path_count: int
+    cleanup_ready: bool
+    notes: str
+    safety_state: str = "visibility_only"
+    active_project_count: int = 0
+    active_project_roots: List[str] = field(default_factory=list)
+    observed_paths: List[Dict[str, Any]] = field(default_factory=list)
+
+    def to_dict(self) -> Dict[str, Any]:
+        return asdict(self)
+
+
+@dataclass
+class ProjectSignal:
+    root: str
+    toolchains: List[str]
+    markers: List[str]
+    source_process_count: int
+    families: List[str]
+
+    def to_dict(self) -> Dict[str, Any]:
+        return asdict(self)
+
+
+@dataclass
 class ScanSnapshot:
     run_id: str
     started_at: str
@@ -81,6 +111,8 @@ class ScanSnapshot:
     processes: List[ProcessRecord]
     storage_records: List[StorageRecord]
     docker_inventory: DockerInventory
+    detector_findings: List[DetectorFinding]
+    project_signals: List[ProjectSignal]
     protected_items: List[StorageRecord]
     manual_review_items: List[StorageRecord]
 

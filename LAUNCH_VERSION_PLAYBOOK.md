@@ -6,7 +6,7 @@ This playbook ties release prep, launch copy, deploy verification, and post-laun
 
 Planned operator-system release:
 
-- `v0.3.3`
+- `v0.3.4`
 
 Use the next patch version instead if the package version has already advanced by the time release prep begins.
 
@@ -55,7 +55,7 @@ After merge to `main`:
 - `Pages` green
 - `Pages Verify` green
 
-After pushing `v0.3.3`:
+After pushing `v0.3.4`:
 
 - `Release` green
 - `Install Smoke` green

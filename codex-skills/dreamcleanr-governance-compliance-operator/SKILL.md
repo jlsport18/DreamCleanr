@@ -39,6 +39,8 @@ Keep DreamCleanr compliant, trustworthy, release-safe, and aligned with platform
 - Treat Stripe, subscriptions, and seat billing as future architecture unless runtime implementation is explicitly in scope.
 - Keep App Store language aligned with the companion-app boundary.
 - When in doubt, choose the more conservative trust-preserving public statement.
+- Treat advanced detector families, hosted accounts, team dashboards, and recurring pricing as non-public until they are truly shipped.
+- Review public launch copy and README language with the same rigor as policy pages.
 
 ## Good Deliverables
 
@@ -48,6 +50,7 @@ Keep DreamCleanr compliant, trustworthy, release-safe, and aligned with platform
 - App Store readiness boundaries
 - future billing architecture guardrails
 - no-fake-checkout review notes
+- public-claim review for future-only detectors, analytics, subscriptions, and account flows
 
 ## Avoid
 
@@ -55,3 +58,4 @@ Keep DreamCleanr compliant, trustworthy, release-safe, and aligned with platform
 - fake checkout or false paid-feature availability
 - compliance recommendations that require a backend DreamCleanr does not have
 - quietly converting one-time Pro strategy into live recurring billing
+- letting investor or launch materials overstate product surfaces because they feel "internal"

@@ -41,6 +41,28 @@ class McpServerTests(unittest.TestCase):
                 "claude": {"state": "active", "recommended_action": "protect_only", "process_counts": {"stale": 0}},
                 "codex": {"state": "background_only", "recommended_action": "protect_only", "process_counts": {"stale": 0}},
             },
+            "detector_findings": [
+                {
+                    "key": "python",
+                    "title": "Python environments and caches",
+                    "status": "observed",
+                    "total_bytes": 4 * 1024 ** 3,
+                    "path_count": 2,
+                    "cleanup_ready": False,
+                    "safety_state": "guarded_by_active_projects",
+                    "active_project_count": 1,
+                }
+            ],
+            "project_signals": [
+                {
+                    "root": "/Users/test/Projects/sample-app",
+                    "toolchains": ["git", "python"],
+                    "markers": ["pyproject.toml"],
+                    "source_process_count": 1,
+                    "families": ["other"],
+                }
+            ],
+            "project_summary": {"active_project_count": 1, "toolchain_counts": {"git": 1, "python": 1}},
         }
         with patch("dreamcleanr.mcp_server.capture_snapshot", return_value=snapshot):
             response = handle_request(
@@ -52,9 +74,15 @@ class McpServerTests(unittest.TestCase):
                 }
             )
         assert response is not None
+        text = response["result"]["content"][0]["text"]
         structured = response["result"]["structuredContent"]
+        self.assertIn("Observed additional developer surfaces", text)
+        self.assertIn("Active project signals: 1", text)
         self.assertEqual(structured["summary"]["docker"]["state"], "active")
         self.assertEqual(structured["summary"]["docker"]["stale"], 1)
+        self.assertEqual(structured["detectors"]["python"]["status"], "observed")
+        self.assertEqual(structured["detectors"]["python"]["safety_state"], "guarded_by_active_projects")
+        self.assertEqual(structured["projects"]["summary"]["active_project_count"], 1)
 
     def test_report_render_writes_html(self) -> None:
         report = {
@@ -74,6 +102,9 @@ class McpServerTests(unittest.TestCase):
                 "host_disk_total_bytes": 200,
                 "storage_records": [],
                 "process_summary": {},
+                "detector_findings": [],
+                "project_signals": [],
+                "project_summary": {"active_project_count": 0, "toolchain_counts": {}},
             },
             "actions": [],
         }

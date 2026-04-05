@@ -6,6 +6,10 @@ Supporting docs:
 
 - [site/pricing.html](site/pricing.html)
 - [MACOS_SHELL_PLAN.md](MACOS_SHELL_PLAN.md)
+- [COMMERCIAL_BACKEND_ARCHITECTURE.md](COMMERCIAL_BACKEND_ARCHITECTURE.md)
+- [AUTH_BILLING_ENTITLEMENTS_SPEC.md](AUTH_BILLING_ENTITLEMENTS_SPEC.md)
+- [ANALYTICS_AND_KPI_PLAN.md](ANALYTICS_AND_KPI_PLAN.md)
+- [MRR_ROADMAP.md](MRR_ROADMAP.md)
 - [STRIPE_COMMERCIAL_ARCHITECTURE.md](STRIPE_COMMERCIAL_ARCHITECTURE.md)
 - [CLOUD_ARCHITECTURE_FUTURE.md](CLOUD_ARCHITECTURE_FUTURE.md)
 
@@ -65,6 +69,7 @@ Bad paid lanes right now:
 
 - recurring Team pricing
 - optional recurring automation or hosted services only if DreamCleanr later adds real cloud value
+- all such work stays in the incubation docs until the canonical strategy intentionally changes
 
 ### Rejected for now
 

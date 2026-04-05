@@ -26,6 +26,16 @@ Related phase-2 docs:
 - [STRIPE_COMMERCIAL_ARCHITECTURE.md](STRIPE_COMMERCIAL_ARCHITECTURE.md)
 - [CLOUD_ARCHITECTURE_FUTURE.md](CLOUD_ARCHITECTURE_FUTURE.md)
 
+## Operator-Pack Integration Rule
+
+DreamCleanr's deeper operator pack stays modular:
+
+- canonical product and monetization truth lives here and in the strategy rollups
+- future commercial backend, auth, analytics, and MRR work live in the incubation docs only
+- richer onboarding, Figma, and launch systems live in their dedicated modular docs
+
+Do not collapse these into a single founder memo, and do not treat future-commercial planning as a strategic pivot away from the current local-first product.
+
 ## 1. Product Overview
 
 ### What DreamCleanr does today
@@ -37,6 +47,8 @@ The current shipped product:
 - classifies `Docker`, `Claude`, and `Codex` process trees as active, background, stale, or protected
 - prunes safe storage targets like `uv`, `trunk`, `Library/Caches`, `gradle`, `npm`, and `npx` caches
 - keeps high-risk state outside default auto-delete, including Docker VM storage, the Claude VM bundle, `~/.codex`, and `~/.claude`
+- adds read-only detector visibility for Python, Node, Hugging Face, Ollama, LM Studio, Git/LFS, and IDE support roots in receipts and MCP scan output
+- captures active Git-backed project signals so future cleanup can distinguish live workspaces from cold artifact stores
 - writes local JSON and HTML cleanup receipts
 - installs balanced-safe scheduled cleanup through `launchd`
 - exposes a local MCP server for Claude, Codex, and VS Code
@@ -85,6 +97,7 @@ That workflow must stay grounded in:
 - current repo truth
 - current product boundaries
 - explicit separation between shipped, planned, and future-incubation systems
+- modular docs that absorb design depth, launch systems, and commercial planning without broadening public product claims
 
 The core value stack is:
 
@@ -102,6 +115,8 @@ The core value stack is:
 | Safe file-system cleanup | safe cache paths and protected-state rules in `core.py` | trust is the hardest part of this category |
 | Docker-aware cleanup | Docker process roles, engine inventory, and prune logic already exist | Docker is a core pain point for AI/dev Macs |
 | Claude/Codex awareness | active-vs-stale classification and protected support roots exist today | strong niche differentiation versus generic cleaners |
+| Detector visibility layer | read-only detector registry now feeds receipts and MCP scan output for broader dev ecosystems | expands the moat without overclaiming cleanup support |
+| Project-signal safety layer | Git-backed Python, Node, Git/LFS, and IDE workspaces can now be observed as active project signals | creates a safer bridge from visibility into later guided cleanup |
 | Preview-first workflow | cleanup plans and receipts are first-class | makes the tool auditable and safer |
 | Receipt-first reporting | HTML and JSON receipts already exist | creates explainability and future premium UX leverage |
 | GitHub-first distribution | release, install-smoke, governance, and Pages are already live | low-maintenance and globally distributable |
@@ -130,11 +145,11 @@ Its next leap is not generic “faster computer” marketing. It is deeper devel
 
 | Weakness | Current state | Risk |
 |---|---|---|
-| No Python env awareness | no venv/conda/poetry-specific intelligence in current code | missed value and risk of deleting around active projects too bluntly |
-| No Node workspace awareness | no `node_modules`, `pnpm`, or project lockfile logic | misses a major developer pain area |
-| No local LLM stack awareness | no `Ollama` or `LM Studio` intelligence | misses fast-growing AI workflow surface |
-| No Hugging Face cache intelligence | current code does not inspect HF caches | leaves major ML disk consumption unmodeled |
-| No Git/LFS project awareness | no repo or branch activity checks | cannot yet make project-aware safety decisions |
+| Python env cleanup is not project-aware yet | visibility-only roots exist for venv/conda/pip/poetry, but no safe guided cleanup | still misses one of the biggest dev pain areas |
+| Node workspace awareness is still shallow | visibility-only store roots exist, but no workspace or lockfile intelligence | misses a major developer pain area |
+| Local LLM cleanup remains visibility-first | Ollama and LM Studio roots are observable, but model-safe cleanup is not implemented | still missing a fast-growing AI workflow surface |
+| Hugging Face support is observability-only | HF cache roots are detectable, but cleanup logic is not yet live | leaves major ML disk consumption only partially modeled |
+| Git/LFS project awareness is still early | Git-backed activity signals exist, but repo-safe cleanup decisions are not modeled yet | cannot yet make project-aware safety decisions |
 | Limited observability UX | receipts exist, but no interactive heatmap or disk explorer | weaker premium feel and lower “aha” factor |
 
 ### Technical risks
@@ -150,12 +165,12 @@ Its next leap is not generic “faster computer” marketing. It is deeper devel
 |---|---|---|---|
 | Docker | strong | deeper image/container/volume guidance, project-aware pruning | critical |
 | Kubernetes | none | kube context/cache/log intelligence | medium |
-| Python | minimal | `venv`, `conda`, `poetry`, pip cache, active project detection | critical |
-| Node | minimal | `npm`, `pnpm`, `yarn`, `node_modules`, monorepo awareness | critical |
-| Local LLM stacks | none | Ollama and LM Studio cache/model awareness | critical |
-| Git and LFS | none | active repo detection, large artifact tracking, stale clone cleanup | high |
-| Hugging Face | none | HF hub and dataset cache awareness | high |
-| IDEs | minimal | VS Code workspace intelligence and JetBrains cache/workspace awareness | high |
+| Python | visibility + active project signals | `venv`, `conda`, `poetry`, pip cache, active project detection | critical |
+| Node | visibility + active project signals | `npm`, `pnpm`, `yarn`, `node_modules`, monorepo awareness | critical |
+| Local LLM stacks | visibility-only | Ollama and LM Studio cache/model awareness | critical |
+| Git and LFS | visibility + active project signals | active repo detection, large artifact tracking, stale clone cleanup | high |
+| Hugging Face | visibility-only | HF hub and dataset cache awareness | high |
+| IDEs | visibility + active project signals | VS Code workspace intelligence and JetBrains cache/workspace awareness | high |
 
 ### Hugging Face-specific note
 

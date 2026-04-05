@@ -11,6 +11,8 @@ DreamCleanr currently:
 - classifies `Docker`, `Claude`, and `Codex` processes as active, background, stale, or protected
 - separates active Docker engine state from stale CLI probe chains and orphaned helpers
 - prunes safe storage targets while keeping protected AI state and risky VM artifacts out of scheduled cleanup
+- exposes read-only detector visibility for Python, Node, Hugging Face, Ollama, LM Studio, Git/LFS, and IDE support roots in receipts and MCP scan output
+- captures active Git-backed project signals so future cleanup guidance can stay conservative around live Python, Node, Git/LFS, and IDE workspaces
 - generates a self-contained HTML receipt plus canonical JSON output
 - installs a daily `launchd` job for balanced-safe cleanup with bounded report retention
 - exposes a local MCP server for Claude, Codex, and VS Code
@@ -73,6 +75,7 @@ dreamcleanr scan --mode balanced
 dreamcleanr clean --dry-run --mode balanced
 dreamcleanr clean --apply --mode balanced
 dreamcleanr report --input ~/Library/Logs/DreamCleanr/reports/latest.json
+dreamcleanr export --input ~/Library/Logs/DreamCleanr/reports/latest.json
 dreamcleanr schedule install --mode balanced
 dreamcleanr schedule uninstall
 dreamcleanr-mcp
@@ -115,8 +118,14 @@ Key files:
 - `latest-before.json`
 - `latest-after.json`
 - `latest.json`
+- `latest-summary.json`
 - `latest.html`
 - `latest-failure.json` on runtime errors
+
+Team/admin export surfaces:
+
+- `dreamcleanr export --input ~/Library/Logs/DreamCleanr/reports/latest.json`
+- writes `*-team-export.json` and `*-team-export.csv`
 
 ## Public Launch Surface
 
@@ -165,9 +174,11 @@ DreamCleanr’s next product phase is:
 
 - a grounded public conversion demo that distinguishes shipped value from future detectors
 - a more polished macOS shell on top of the current local engine
-- stronger ecosystem-aware cleanup intelligence
+- expansion of the new detector-visibility layer into project-aware cleanup intelligence
 - grounded public conversion surfaces with a free Community tier and future one-time Pro anchor
 - an eventual iPhone and iPad companion app that acts as a premium viewer/controller, not a generic device-wide cleaner
+
+The deeper operator-pack docs in this repo are modular planning surfaces. They do not mean DreamCleanr already has hosted accounts, live subscriptions, or a commercial backend in the current shipping product.
 
 ## Release Surface
 

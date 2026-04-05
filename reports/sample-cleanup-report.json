@@ -1,7 +1,7 @@
 {
-  "run_id": "sample001",
-  "started_at": "2026-03-28T04:30:00Z",
-  "finished_at": "2026-03-28T04:31:04Z",
+  "run_id": "sample004",
+  "started_at": "2026-04-05T12:01:00Z",
+  "finished_at": "2026-04-05T12:03:14Z",
   "mode": "balanced",
   "dry_run": false,
   "storage_before_bytes": 214748364800,
@@ -259,6 +259,134 @@
           "stale": 0
         },
         "inventory_counts": {}
+      }
+    },
+    "detector_findings": [
+      {
+        "key": "python",
+        "title": "Python environments and caches",
+        "status": "observed",
+        "total_bytes": 12884901888,
+        "path_count": 3,
+        "cleanup_ready": false,
+        "notes": "Visibility only for pip, pyenv, conda, and virtualenv roots. Project-aware cleanup remains planned.",
+        "safety_state": "guarded_by_active_projects",
+        "active_project_count": 2,
+        "active_project_roots": [
+          "/Users/example/Projects/agent-lab",
+          "/Users/example/Projects/model-playground"
+        ],
+        "observed_paths": [
+          {
+            "label": "pip_cache",
+            "path": "/Users/example/.cache/pip",
+            "size_bytes": 2147483648
+          },
+          {
+            "label": "pyenv_versions",
+            "path": "/Users/example/.pyenv/versions",
+            "size_bytes": 6442450944
+          },
+          {
+            "label": "virtualenvs",
+            "path": "/Users/example/.local/share/virtualenvs",
+            "size_bytes": 4294967296
+          }
+        ]
+      },
+      {
+        "key": "huggingface",
+        "title": "Hugging Face caches",
+        "status": "observed",
+        "total_bytes": 9663676416,
+        "path_count": 2,
+        "cleanup_ready": false,
+        "notes": "Observed Hugging Face hub and dataset cache roots. Cleanup remains visibility-first.",
+        "safety_state": "visibility_only",
+        "active_project_count": 0,
+        "active_project_roots": [],
+        "observed_paths": [
+          {
+            "label": "hf_hub",
+            "path": "/Users/example/.cache/huggingface/hub",
+            "size_bytes": 7516192768
+          },
+          {
+            "label": "hf_datasets",
+            "path": "/Users/example/.cache/huggingface/datasets",
+            "size_bytes": 2147483648
+          }
+        ]
+      },
+      {
+        "key": "ide",
+        "title": "IDE support and cache roots",
+        "status": "observed",
+        "total_bytes": 3221225472,
+        "path_count": 2,
+        "cleanup_ready": false,
+        "notes": "Observed VS Code and JetBrains support paths only. Workspace intelligence remains planned.",
+        "safety_state": "guarded_by_active_projects",
+        "active_project_count": 1,
+        "active_project_roots": [
+          "/Users/example/Projects/agent-lab"
+        ],
+        "observed_paths": [
+          {
+            "label": "vscode_support",
+            "path": "/Users/example/Library/Application Support/Code",
+            "size_bytes": 2147483648
+          },
+          {
+            "label": "jetbrains_cache",
+            "path": "/Users/example/Library/Caches/JetBrains",
+            "size_bytes": 1073741824
+          }
+        ]
+      }
+    ],
+    "project_signals": [
+      {
+        "root": "/Users/example/Projects/agent-lab",
+        "toolchains": [
+          "git",
+          "python",
+          "ide"
+        ],
+        "markers": [
+          "pyproject.toml",
+          ".vscode"
+        ],
+        "source_process_count": 3,
+        "families": [
+          "claude",
+          "codex"
+        ]
+      },
+      {
+        "root": "/Users/example/Projects/model-playground",
+        "toolchains": [
+          "git",
+          "python",
+          "node"
+        ],
+        "markers": [
+          "pyproject.toml",
+          "package.json"
+        ],
+        "source_process_count": 2,
+        "families": [
+          "docker"
+        ]
+      }
+    ],
+    "project_summary": {
+      "active_project_count": 2,
+      "toolchain_counts": {
+        "git": 2,
+        "ide": 1,
+        "node": 1,
+        "python": 2
       }
     }
   }

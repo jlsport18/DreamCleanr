@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 import os
+import re
 import shutil
 import signal
 import subprocess
@@ -12,7 +13,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Dict, Iterable, List, Optional, Tuple
 
-from .models import CleanupAction, CleanupReport, DockerInventory, ProcessRecord, StorageRecord
+from .models import CleanupAction, CleanupReport, DetectorFinding, DockerInventory, ProcessRecord, ProjectSignal, StorageRecord
 
 FAMILIES = ("docker", "claude", "codex")
 REPORT_ROOT = Path.home() / "Library" / "Logs" / "DreamCleanr" / "reports"
@@ -62,6 +63,86 @@ CODEX_SUPPORT_CACHE_DIRS = [
     "DawnWebGPUCache",
 ]
 
+
+def detector_registry(home: Optional[Path] = None) -> Dict[str, Dict[str, Any]]:
+    home = home or Path.home()
+    library = home / "Library"
+    return {
+        "python": {
+            "title": "Python environments and caches",
+            "notes": "Visibility only for pip, pyenv, conda, and virtualenv roots. Project-aware cleanup remains planned.",
+            "cleanup_ready": False,
+            "paths": [
+                ("pip_cache", home / ".cache" / "pip"),
+                ("pyenv_versions", home / ".pyenv" / "versions"),
+                ("virtualenvs", home / ".local" / "share" / "virtualenvs"),
+                ("conda_root", home / ".conda"),
+                ("miniconda3", home / "miniconda3"),
+                ("anaconda3", home / "anaconda3"),
+                ("pypoetry_cache", library / "Caches" / "pypoetry"),
+            ],
+        },
+        "node": {
+            "title": "Node package stores and caches",
+            "notes": "Visibility only for npm, pnpm, and yarn stores. Workspace-aware cleanup remains planned.",
+            "cleanup_ready": False,
+            "paths": [
+                ("npm_cache", home / ".npm"),
+                ("pnpm_store", home / ".pnpm-store"),
+                ("library_pnpm_store", library / "pnpm" / "store"),
+                ("yarn_cache", home / ".cache" / "yarn"),
+                ("library_yarn_cache", library / "Caches" / "Yarn"),
+            ],
+        },
+        "huggingface": {
+            "title": "Hugging Face caches",
+            "notes": "Observed Hugging Face hub and dataset cache roots. Cleanup remains visibility-first.",
+            "cleanup_ready": False,
+            "paths": [
+                ("hf_hub", home / ".cache" / "huggingface" / "hub"),
+                ("hf_datasets", home / ".cache" / "huggingface" / "datasets"),
+            ],
+        },
+        "ollama": {
+            "title": "Ollama model roots",
+            "notes": "Observed Ollama support paths only. Model-aware cleanup remains planned.",
+            "cleanup_ready": False,
+            "paths": [
+                ("ollama_home", home / ".ollama"),
+                ("ollama_support", library / "Application Support" / "Ollama"),
+            ],
+        },
+        "lm_studio": {
+            "title": "LM Studio model and cache roots",
+            "notes": "Observed LM Studio support paths only. Cleanup remains visibility-first.",
+            "cleanup_ready": False,
+            "paths": [
+                ("lm_studio_support", library / "Application Support" / "LM Studio"),
+                ("lm_studio_cache", home / ".cache" / "lm-studio"),
+            ],
+        },
+        "git_lfs": {
+            "title": "Git and Git LFS roots",
+            "notes": "Observed Git LFS storage roots only. Repo-aware cleanup remains planned.",
+            "cleanup_ready": False,
+            "paths": [
+                ("git_lfs_home", home / ".git-lfs"),
+                ("git_lfs_library", library / "Application Support" / "git-lfs"),
+            ],
+        },
+        "ide": {
+            "title": "IDE support and cache roots",
+            "notes": "Observed VS Code and JetBrains support paths only. Workspace intelligence remains planned.",
+            "cleanup_ready": False,
+            "paths": [
+                ("vscode_home", home / ".vscode"),
+                ("vscode_support", library / "Application Support" / "Code"),
+                ("jetbrains_support", library / "Application Support" / "JetBrains"),
+                ("jetbrains_cache", library / "Caches" / "JetBrains"),
+            ],
+        },
+    }
+
 DOCKER_PROBE_SNIPPETS = (
     "docker info",
     "docker ps",
@@ -72,10 +153,23 @@ DOCKER_PROBE_SNIPPETS = (
     "docker context ls",
 )
 
+PATH_TOKEN_RE = re.compile(r"(~/[^\s\"']+|/[^\s\"']+)")
+PROJECT_TOOLCHAIN_MARKERS = {
+    "python": ("pyproject.toml", "poetry.lock", "Pipfile", "Pipfile.lock", "requirements.txt", "environment.yml", "setup.py"),
+    "node": ("package.json", "package-lock.json", "pnpm-lock.yaml", "yarn.lock", "pnpm-workspace.yaml", "bun.lockb"),
+}
+DETECTOR_PROJECT_TOOLCHAINS = {
+    "python": {"python"},
+    "node": {"node"},
+    "git_lfs": {"git", "git_lfs"},
+    "ide": {"ide"},
+}
+
 TIMESTAMPED_REPORT_GLOBS = (
     "before-*.json",
     "after-*.json",
     "report-*.json",
+    "summary-*.json",
     "report-*.html",
     "failure-*.json",
 )
@@ -181,6 +275,183 @@ def du_bytes(path: Path) -> int:
         return int(result["stdout"].split()[0]) * 1024
     except (IndexError, ValueError):
         return 0
+
+
+def gather_detector_findings(home: Optional[Path] = None) -> List[Dict[str, Any]]:
+    home = home or Path.home()
+    findings: List[DetectorFinding] = []
+    for key, detector in detector_registry(home).items():
+        observed_paths: List[Dict[str, Any]] = []
+        total_bytes = 0
+        seen_paths = set()
+        for label, path in detector["paths"]:
+            normalized = str(path)
+            if normalized in seen_paths:
+                continue
+            seen_paths.add(normalized)
+            if not path.exists():
+                continue
+            size_bytes = du_bytes(path)
+            observed_paths.append(
+                {
+                    "label": label,
+                    "path": str(path),
+                    "size_bytes": size_bytes,
+                }
+            )
+            total_bytes += size_bytes
+        if not observed_paths:
+            continue
+        findings.append(
+            DetectorFinding(
+                key=key,
+                title=detector["title"],
+                status="observed",
+                total_bytes=total_bytes,
+                path_count=len(observed_paths),
+                cleanup_ready=detector["cleanup_ready"],
+                notes=detector["notes"],
+                observed_paths=observed_paths,
+            )
+        )
+    findings.sort(key=lambda item: item.total_bytes, reverse=True)
+    return [finding.to_dict() for finding in findings]
+
+
+def extract_candidate_paths(args: str, home: Path) -> List[Path]:
+    candidates: List[Path] = []
+    seen = set()
+    for raw in PATH_TOKEN_RE.findall(args):
+        token = raw.rstrip('",:;)]}')
+        path = Path(token).expanduser()
+        if not path.is_absolute():
+            continue
+        try:
+            path.relative_to(home)
+        except ValueError:
+            continue
+        normalized = str(path)
+        if normalized in seen:
+            continue
+        seen.add(normalized)
+        candidates.append(path)
+    return candidates
+
+
+def find_git_root(path: Path, home: Path) -> Optional[Path]:
+    current = path if path.is_dir() else path.parent
+    while True:
+        if current == current.parent:
+            return None
+        try:
+            current.relative_to(home)
+        except ValueError:
+            return None
+        if (current / ".git").exists():
+            return current
+        if current == home:
+            return None
+        current = current.parent
+
+
+def inspect_project_root(root: Path) -> Dict[str, Any]:
+    markers: List[str] = []
+    toolchains = {"git"}
+    for toolchain, filenames in PROJECT_TOOLCHAIN_MARKERS.items():
+        for filename in filenames:
+            if (root / filename).exists():
+                markers.append(filename)
+                toolchains.add(toolchain)
+    if (root / ".vscode").exists():
+        markers.append(".vscode")
+        toolchains.add("ide")
+    if (root / ".idea").exists():
+        markers.append(".idea")
+        toolchains.add("ide")
+    gitattributes = root / ".gitattributes"
+    if gitattributes.exists():
+        try:
+            text = gitattributes.read_text(encoding="utf-8", errors="ignore")
+        except OSError:
+            text = ""
+        if "filter=lfs" in text:
+            markers.append(".gitattributes:lfs")
+            toolchains.add("git_lfs")
+    return {
+        "markers": sorted(set(markers)),
+        "toolchains": sorted(toolchains),
+    }
+
+
+def gather_project_signals(processes: List[ProcessRecord], home: Optional[Path] = None) -> List[Dict[str, Any]]:
+    home = home or Path.home()
+    aggregated: Dict[str, Dict[str, Any]] = {}
+    for process in processes:
+        if process.family == "self":
+            continue
+        for candidate in extract_candidate_paths(process.args, home):
+            root = find_git_root(candidate, home)
+            if root is None:
+                continue
+            key = str(root)
+            bucket = aggregated.setdefault(
+                key,
+                {
+                    "root": root,
+                    "source_pids": set(),
+                    "families": set(),
+                },
+            )
+            bucket["source_pids"].add(process.pid)
+            if process.family != "other":
+                bucket["families"].add(process.family)
+    signals: List[ProjectSignal] = []
+    for key, bucket in aggregated.items():
+        inspection = inspect_project_root(bucket["root"])
+        signals.append(
+            ProjectSignal(
+                root=key,
+                toolchains=inspection["toolchains"],
+                markers=inspection["markers"],
+                source_process_count=len(bucket["source_pids"]),
+                families=sorted(bucket["families"]),
+            )
+        )
+    signals.sort(key=lambda item: (-item.source_process_count, item.root))
+    return [signal.to_dict() for signal in signals]
+
+
+def annotate_detector_findings(
+    findings: List[Dict[str, Any]],
+    project_signals: List[Dict[str, Any]],
+) -> List[Dict[str, Any]]:
+    toolchain_roots: Dict[str, List[str]] = {}
+    for signal in project_signals:
+        for toolchain in signal.get("toolchains", []):
+            toolchain_roots.setdefault(toolchain, []).append(signal["root"])
+    annotated: List[Dict[str, Any]] = []
+    for finding in findings:
+        related_roots: List[str] = []
+        for toolchain in DETECTOR_PROJECT_TOOLCHAINS.get(finding["key"], set()):
+            related_roots.extend(toolchain_roots.get(toolchain, []))
+        unique_roots = sorted(set(related_roots))
+        item = dict(finding)
+        item["active_project_roots"] = unique_roots[:5]
+        item["active_project_count"] = len(unique_roots)
+        item["safety_state"] = "guarded_by_active_projects" if unique_roots else "visibility_only"
+        annotated.append(item)
+    return annotated
+
+
+def project_activity_summary(project_signals: List[Dict[str, Any]]) -> Dict[str, Any]:
+    toolchain_counts: Dict[str, int] = {}
+    for signal in project_signals:
+        for toolchain in signal.get("toolchains", []):
+            toolchain_counts[toolchain] = toolchain_counts.get(toolchain, 0) + 1
+    return {
+        "active_project_count": len(project_signals),
+        "toolchain_counts": dict(sorted(toolchain_counts.items())),
+    }
 
 
 def list_processes() -> List[ProcessRecord]:
@@ -718,6 +989,9 @@ def capture_snapshot(mode: str = "balanced") -> Dict[str, Any]:
     classify_processes(processes, family_summaries)
     attach_classification_counts(processes, family_summaries)
     storage_records, protected_items, manual_review_items = gather_storage_records(family_summaries)
+    project_signals = gather_project_signals(processes)
+    detector_findings = annotate_detector_findings(gather_detector_findings(), project_signals)
+    project_summary = project_activity_summary(project_signals)
 
     return {
         "run_id": run_id,
@@ -730,6 +1004,9 @@ def capture_snapshot(mode: str = "balanced") -> Dict[str, Any]:
         "processes": [process.to_dict() for process in processes],
         "process_summary": family_summaries,
         "storage_records": [record.to_dict() for record in storage_records],
+        "detector_findings": detector_findings,
+        "project_signals": project_signals,
+        "project_summary": project_summary,
         "protected_items": [record.to_dict() for record in protected_items],
         "manual_review_items": [record.to_dict() for record in manual_review_items],
         "docker_inventory": docker_inventory.to_dict(),

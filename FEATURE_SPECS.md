@@ -26,33 +26,33 @@ This is the engineering-facing feature spec set for DreamCleanr Phase 2. It stay
 
 ## 3. Python Environment Cleaner
 
-- Current state: `planned`
+- Current state: `partial`
 - Package: `Community` moving into `Pro` for guided actions
-- Description: detect `venv`, `conda`, and `poetry` environments and distinguish active project state from reclaimable leftovers.
+- Description: detect `venv`, `conda`, `pyenv`, pip, and `poetry` roots. Current work is read-only detector visibility; project-aware cleanup remains planned.
 - Inputs: project roots, lockfiles, env directories, access recency, interpreter references.
-- Outputs: environment inventory, safe candidates, project-aware warnings.
-- Safety boundary: never recommend deleting clearly active or linked environments without project-aware confirmation.
+- Outputs: environment inventory and observed-size rollups now, then safe candidates and project-aware warnings later.
+- Safety boundary: initial implementation is visibility-only and never auto-cleans Python environments.
 - Revenue impact: very high
 - Technical complexity: high
 
 ## 4. LLM Cache Manager
 
-- Current state: `planned`
+- Current state: `partial`
 - Package: `Community`
 - Description: make local model and cache surfaces visible across Hugging Face, Ollama, and LM Studio before DreamCleanr offers guided cleanup.
 - Inputs: known cache/model paths, size scans, recency, optional tool-specific metadata.
-- Outputs: model/cache inventory, size summaries, safe-review candidates.
-- Safety boundary: start with observability first; do not auto-delete model stores in the first iteration.
+- Outputs: model/cache inventory and size summaries now, then safe-review candidates once model-safe rules exist.
+- Safety boundary: initial implementation is visibility-only; do not auto-delete model stores in the first iteration.
 - Revenue impact: very high
 - Technical complexity: high
 
 ## 5. Disk Heatmap
 
-- Current state: `planned`
+- Current state: `partial`
 - Package: `Community`
-- Description: visualize disk usage by developer artifact family such as Docker, caches, models, environments, repos, and logs.
+- Description: visualize disk usage by developer artifact family such as Docker, caches, models, environments, repos, and logs. Current work surfaces category visibility in receipts and MCP output; richer visual heatmaps remain planned.
 - Inputs: detector registry outputs, directory size summaries, receipt history.
-- Outputs: category-level breakdowns for the site, CLI summaries, and future native shell.
+- Outputs: category-level breakdowns in receipts and MCP summaries now, then richer visual surfaces for the site and future native shell.
 - Safety boundary: read-only observability surface.
 - Revenue impact: high
 - Technical complexity: medium
@@ -76,9 +76,10 @@ This is the engineering-facing feature spec set for DreamCleanr Phase 2. It stay
 | Claude/Codex-aware protection | yes | keep as trust moat |
 | Safe cache cleanup | yes | broaden only with detector intelligence |
 | Receipts and scheduling | yes | richer history and premium browsing |
-| Python / Node awareness | no | add detector registry first |
-| Ollama / LM Studio / Hugging Face | no | start with visibility, then guided cleanup |
-| Disk heatmap | no | build as observability-first surface |
+| Python / Node awareness | partial | expand detector visibility and active-project signals into guided cleanup |
+| Ollama / LM Studio / Hugging Face | partial | keep observability first, guided cleanup later |
+| Git/LFS and IDE visibility | partial | use active-project signals to keep future cleanup conservative |
+| Disk heatmap | partial | grow receipt and MCP visibility into richer visual surfaces |
 | Native shell | no | Phase 2 premium moat |
 
 ## Public Demo Truth Table
@@ -91,8 +92,8 @@ Use this table for the homepage demo, launch copy, and investor-facing materials
 | Safe cache and log noise | yes | grounded in current safe cleanup behavior |
 | Stale helper residue | yes | grounded in current process cleanup behavior |
 | Protected AI state | yes | must be framed as protected, not reclaimable |
-| Python environments | no | teaser only until detector support exists |
-| Node workspaces | no | teaser only until detector support exists |
-| Hugging Face | no | teaser only until detector support exists |
-| Ollama / LM Studio | no | teaser only until detector support exists |
+| Python environments | no | public site remains teaser-only until the shipped detector layer is intentionally surfaced there |
+| Node workspaces | no | public site remains teaser-only until the shipped detector layer is intentionally surfaced there |
+| Hugging Face | no | public site remains teaser-only until the shipped detector layer is intentionally surfaced there |
+| Ollama / LM Studio | no | public site remains teaser-only until the shipped detector layer is intentionally surfaced there |
 | Project-aware cleanup safety | no | roadmap only until implementation exists |

@@ -10,6 +10,7 @@
   - `Team`: later, after repeated small-team demand
 - Keep DreamCleanr `local-first`, `preview-first`, and `GitHub-first`.
 - Do not add backend dependency, billing flows, or App Store-specific implementation work unless the task explicitly requires it.
+- Treat future-commercial docs, Figma-ready specs, lifecycle experiments, and pricing experiments as internal planning surfaces until they are intentionally promoted into shipped product work.
 
 ## Canonical Docs
 
@@ -45,6 +46,7 @@
   - no fake testimonials
   - no fake checkout or billing flow
   - no misleading structured data
+  - no public subscription, hosted-account, or advanced-detector claims unless they are actually shipped
 - Keep future features clearly labeled as `planned`, `coming next`, or `early access`.
 - Reject a slice if local verification shows the copy or UI overclaims current product capability.
 - Treat GitHub as the sync surface once a slice is green.
@@ -90,6 +92,7 @@
 
 ## Current Product Boundaries
 
-- Current strengths: Docker, Claude, Codex, safe cache cleanup, receipts, MCP integration, scheduled cleanup.
-- Current gaps: Python env awareness, Node workspace awareness, Ollama, LM Studio, Hugging Face cache intelligence, Git/LFS awareness, JetBrains/VS Code workspace intelligence, project-aware safe-delete logic.
+- Current strengths: Docker, Claude, Codex, safe cache cleanup, receipts, MCP integration, scheduled cleanup, detector visibility across broader AI/dev surfaces, active project signals, latest-summary contract, and admin export surfaces.
+- Current gaps: project-aware safe-delete logic for Python and Node environments, guided cleanup for Ollama, LM Studio, and Hugging Face caches, deeper Git/LFS policy logic, richer IDE workspace intelligence, productized macOS shell packaging, iPhone/iPad app targets, and real small-team rollout support.
+- Future-commercial concepts like monthly or yearly billing, live team dashboards, account-based onboarding, and hosted analytics remain planning-only.
 - iPhone and iPad remain `companion` surfaces only; do not position DreamCleanr as a generic device cleaner.

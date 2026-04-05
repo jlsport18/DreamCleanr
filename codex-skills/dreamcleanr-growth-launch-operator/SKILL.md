@@ -11,7 +11,7 @@ Own DreamCleanr's public conversion surfaces without overstating current product
 
 ## Use This Skill
 
-- Read [README.md](../../README.md), [DREAMCLEANR_MASTER_STRATEGY.md](../../DREAMCLEANR_MASTER_STRATEGY.md), [GROWTH_LAUNCH_PLAYBOOK.md](../../GROWTH_LAUNCH_PLAYBOOK.md), and [ONBOARDING_CONVERSION_SPEC.md](../../ONBOARDING_CONVERSION_SPEC.md) first when they exist.
+- Read [../../README.md](../../README.md), [../../DREAMCLEANR_MASTER_STRATEGY.md](../../DREAMCLEANR_MASTER_STRATEGY.md), [../../GROWTH_LAUNCH_PLAYBOOK.md](../../GROWTH_LAUNCH_PLAYBOOK.md), [../../ONBOARDING_CONVERSION_SPEC.md](../../ONBOARDING_CONVERSION_SPEC.md), [../../CREATOR_OUTREACH.md](../../CREATOR_OUTREACH.md), and [../../INVESTOR_PITCH_DECK.md](../../INVESTOR_PITCH_DECK.md) first when they exist.
 - Keep the public story `grounded-MVP`.
 - Convert with trust, proof, and clarity instead of hype.
 
@@ -30,6 +30,8 @@ Own DreamCleanr's public conversion surfaces without overstating current product
 - Do not use fabricated testimonials, fake user counts, or fake pricing urgency.
 - Keep `Community` live and free, `Pro` as a later one-time premium shell, and `Team` as later-stage.
 - Support investor-facing narrative and A/B copy tests only when they stay grounded in current DreamCleanr truth.
+- Rewrite Python, Node, Ollama, LM Studio, and Hugging Face language as `planned next`, `coming next`, or `future support` unless those detectors are actually shipped.
+- Treat lifecycle emails, annual pricing emphasis, and subscription paywalls as future commercial or future native-shell concepts unless explicitly approved at the canonical level.
 
 ## Core Workflow
 
@@ -42,6 +44,10 @@ Own DreamCleanr's public conversion surfaces without overstating current product
    - creator outreach
    - investor narrative support
    - release notes or social copy
+   - launch tweets and founder thread
+   - Product Hunt, Reddit, or ad copy
+   - onboarding A/B and CTA test matrices
+   - lifecycle or nurture messaging
 2. Tighten the message around:
    - immediate value
    - safety
@@ -58,6 +64,8 @@ Own DreamCleanr's public conversion surfaces without overstating current product
 - GitHub-first launch motions
 - creator outreach scripts and creator-angle matrices
 - grounded A/B copy variants
+- launch tweets, founder threads, Product Hunt comments, Reddit posts, and ad concepts
+- future-only lifecycle or nurture messaging kept out of current public claims
 - SEO content grounded in real product behavior
 
 ## Avoid
@@ -66,3 +74,4 @@ Own DreamCleanr's public conversion surfaces without overstating current product
 - “AI magic” language that hides product boundaries
 - generic Mac-cleaner messaging that erases DreamCleanr's developer niche
 - investor or creator copy that implies unshipped detectors are already live
+- social or launch copy that makes the website sound like it scans the user's machine in-browser
