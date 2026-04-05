@@ -60,6 +60,64 @@ class GithubReviewTests(unittest.TestCase):
         self.assertIn("## Tracker Threads", markdown)
         self.assertIn("DreamCleanr Governance Review Tracker", markdown)
 
+    def test_ensure_issue_reopens_existing_tracker_and_repairs_labels(self) -> None:
+        calls: list[tuple[str, str, str | None, dict | None]] = []
+
+        def fake_api_request(repo: str, path: str, *, token=None, method="GET", body=None):
+            calls.append((path, method, token, body))
+            if path == "/issues?state=all&per_page=100":
+                return [
+                    {
+                        "number": 11,
+                        "title": "DreamCleanr Governance Review Tracker",
+                        "state": "closed",
+                        "labels": [{"name": "governance"}],
+                    }
+                ]
+            return {"ok": True}
+
+        with patch.object(github_review, "api_request", side_effect=fake_api_request):
+            issue_number = github_review.ensure_issue(
+                "jlsport18/DreamCleanr",
+                "token",
+                "DreamCleanr Governance Review Tracker",
+                ["tracker", "governance", "maintenance"],
+            )
+
+        self.assertEqual(issue_number, 11)
+        self.assertIn(("/issues/11", "PATCH", "token", {"state": "open"}), calls)
+        self.assertIn(
+            ("/issues/11/labels", "POST", "token", {"labels": ["tracker", "maintenance"]}),
+            calls,
+        )
+
+    def test_upsert_issue_comment_updates_existing_marked_comment(self) -> None:
+        calls: list[tuple[str, str, dict | None]] = []
+
+        def fake_api_request(repo: str, path: str, *, token=None, method="GET", body=None):
+            calls.append((path, method, body))
+            if path == "/issues/11/comments?per_page=100":
+                return [{"id": 55, "body": "<!-- dreamcleanr-review:governance -->\n\nold body"}]
+            return {"ok": True}
+
+        with patch.object(github_review, "api_request", side_effect=fake_api_request):
+            github_review.upsert_issue_comment(
+                "jlsport18/DreamCleanr",
+                11,
+                "token",
+                "<!-- dreamcleanr-review:governance -->",
+                "# DreamCleanr Governance Review\n",
+            )
+
+        self.assertEqual(
+            calls[-1],
+            (
+                "/issues/comments/55",
+                "PATCH",
+                {"body": "<!-- dreamcleanr-review:governance -->\n\n# DreamCleanr Governance Review\n"},
+            ),
+        )
+
 
 if __name__ == "__main__":
     unittest.main()

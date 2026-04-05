@@ -14,6 +14,10 @@ from typing import Any, Dict, Iterable, List, Optional
 TRACKER_LABEL = "tracker"
 INSTALL_QUEUE_LABELS = {"distribution", "launch", "maintenance"}
 MONETIZATION_QUEUE_LABELS = {"monetization", "market-research"}
+COMMENT_MARKERS = {
+    "governance": "<!-- dreamcleanr-review:governance -->",
+    "business": "<!-- dreamcleanr-review:business -->",
+}
 
 
 def iso_to_datetime(value: str) -> datetime:
@@ -60,22 +64,94 @@ def issue_comment_request(
     )
 
 
+def issue_update_request(
+    repo: str,
+    issue_number: int,
+    token: str,
+    body: Dict[str, Any],
+) -> Any:
+    return api_request(
+        repo,
+        f"/issues/{issue_number}",
+        token=token,
+        method="PATCH",
+        body=body,
+    )
+
+
+def issue_label_add_request(
+    repo: str,
+    issue_number: int,
+    token: str,
+    labels: Iterable[str],
+) -> Any:
+    return api_request(
+        repo,
+        f"/issues/{issue_number}/labels",
+        token=token,
+        method="POST",
+        body={"labels": list(labels)},
+    )
+
+
+def issue_comments_request(repo: str, issue_number: int, token: str) -> Any:
+    return api_request(repo, f"/issues/{issue_number}/comments?per_page=100", token=token)
+
+
+def issue_comment_update_request(
+    repo: str,
+    comment_id: int,
+    token: str,
+    body: str,
+) -> Any:
+    return api_request(
+        repo,
+        f"/issues/comments/{comment_id}",
+        token=token,
+        method="PATCH",
+        body={"body": body},
+    )
+
+
 def ensure_issue(repo: str, token: Optional[str], title: str, labels: Iterable[str]) -> Optional[int]:
     if not token:
         return None
-    issues = api_request(repo, "/issues?state=open&per_page=100", token=token)
+    desired_labels = list(dict.fromkeys(labels))
+    issues = api_request(repo, "/issues?state=all&per_page=100", token=token)
     for issue in issues:
         if issue.get("title") == title and "pull_request" not in issue:
-            return int(issue["number"])
+            issue_number = int(issue["number"])
+            current_labels = issue_label_names(issue)
+            missing_labels = [label for label in desired_labels if label not in current_labels]
+            if issue.get("state") != "open":
+                issue_update_request(repo, issue_number, token, {"state": "open"})
+            if missing_labels:
+                issue_label_add_request(repo, issue_number, token, missing_labels)
+            return issue_number
 
     created = api_request(
         repo,
         "/issues",
         token=token,
         method="POST",
-        body={"title": title, "labels": list(labels)},
+        body={"title": title, "labels": desired_labels},
     )
     return int(created["number"])
+
+
+def upsert_issue_comment(
+    repo: str,
+    issue_number: int,
+    token: str,
+    marker: str,
+    body: str,
+) -> Any:
+    comments = issue_comments_request(repo, issue_number, token)
+    marked_body = f"{marker}\n\n{body}"
+    for comment in comments:
+        if marker in comment.get("body", ""):
+            return issue_comment_update_request(repo, int(comment["id"]), token, marked_body)
+    return issue_comment_request(repo, issue_number, token, marked_body)
 
 
 def fetch_site_status(url: str) -> str:
@@ -313,7 +389,8 @@ def main(argv: Optional[List[str]] = None) -> int:
     if args.post_to_issue and args.issue_title:
         issue_number = ensure_issue(args.repo, token, args.issue_title, args.issue_label)
         if issue_number is not None:
-            issue_comment_request(args.repo, issue_number, token, markdown)
+            marker = COMMENT_MARKERS[args.mode]
+            upsert_issue_comment(args.repo, issue_number, token, marker, markdown)
 
     return 0
 
