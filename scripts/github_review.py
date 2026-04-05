@@ -51,7 +51,10 @@ def api_request(
         headers["Authorization"] = f"Bearer {token}"
     request = urllib.request.Request(url, data=payload, headers=headers, method=method)
     with urllib.request.urlopen(request) as response:
-        return json.load(response)
+        content = response.read()
+        if not content:
+            return None
+        return json.loads(content.decode("utf-8"))
 
 
 def issue_comment_request(
