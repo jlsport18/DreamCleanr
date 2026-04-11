@@ -30,7 +30,7 @@ dependencies = []
 
 [project.optional-dependencies]
 dev = [
-  "build>=1.2.2",
+  "build>=1.4.3",
 ]
 
 [project.urls]
