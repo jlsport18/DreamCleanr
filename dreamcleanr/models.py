@@ -5,7 +5,13 @@ from typing import Any, Dict, List, Optional
 
 
 @dataclass
-class ProcessRecord:
+class _Dictable:
+    def to_dict(self) -> Dict[str, Any]:
+        return asdict(self)
+
+
+@dataclass
+class ProcessRecord(_Dictable):
     pid: int
     ppid: int
     etime: str
@@ -20,12 +26,9 @@ class ProcessRecord:
     classification: str = "UNCLASSIFIED"
     reasons: List[str] = field(default_factory=list)
 
-    def to_dict(self) -> Dict[str, Any]:
-        return asdict(self)
-
 
 @dataclass
-class StorageRecord:
+class StorageRecord(_Dictable):
     label: str
     path: str
     family: str
@@ -33,12 +36,9 @@ class StorageRecord:
     size_bytes: int
     notes: str
 
-    def to_dict(self) -> Dict[str, Any]:
-        return asdict(self)
-
 
 @dataclass
-class CleanupAction:
+class CleanupAction(_Dictable):
     target: str
     target_type: str
     family: str
@@ -48,12 +48,9 @@ class CleanupAction:
     reason: str
     details: Dict[str, Any] = field(default_factory=dict)
 
-    def to_dict(self) -> Dict[str, Any]:
-        return asdict(self)
-
 
 @dataclass
-class DockerInventory:
+class DockerInventory(_Dictable):
     engine_available: bool
     engine_state: str = "unknown"
     info: Optional[Dict[str, Any]] = None
@@ -65,12 +62,9 @@ class DockerInventory:
     timed_out_commands: List[str] = field(default_factory=list)
     raw_text: Dict[str, str] = field(default_factory=dict)
 
-    def to_dict(self) -> Dict[str, Any]:
-        return asdict(self)
-
 
 @dataclass
-class DetectorFinding:
+class DetectorFinding(_Dictable):
     key: str
     title: str
     status: str
@@ -83,24 +77,18 @@ class DetectorFinding:
     active_project_roots: List[str] = field(default_factory=list)
     observed_paths: List[Dict[str, Any]] = field(default_factory=list)
 
-    def to_dict(self) -> Dict[str, Any]:
-        return asdict(self)
-
 
 @dataclass
-class ProjectSignal:
+class ProjectSignal(_Dictable):
     root: str
     toolchains: List[str]
     markers: List[str]
     source_process_count: int
     families: List[str]
 
-    def to_dict(self) -> Dict[str, Any]:
-        return asdict(self)
-
 
 @dataclass
-class ScanSnapshot:
+class ScanSnapshot(_Dictable):
     run_id: str
     started_at: str
     finished_at: str
@@ -115,10 +103,6 @@ class ScanSnapshot:
     project_signals: List[ProjectSignal]
     protected_items: List[StorageRecord]
     manual_review_items: List[StorageRecord]
-
-    def to_dict(self) -> Dict[str, Any]:
-        payload = asdict(self)
-        return payload
 
 
 @dataclass
