@@ -48,14 +48,7 @@ CLAUDE_LIBRARY_CACHE_BASENAMES = [
 ]
 CODEX_LIBRARY_CACHE_BASENAMES = ["com.openai.codex"]
 
-CLAUDE_SUPPORT_CACHE_DIRS = [
-    "Cache",
-    "Code Cache",
-    "GPUCache",
-    "DawnGraphiteCache",
-    "DawnWebGPUCache",
-]
-CODEX_SUPPORT_CACHE_DIRS = [
+SUPPORT_CACHE_DIRS = [
     "Cache",
     "Code Cache",
     "GPUCache",
@@ -886,13 +879,13 @@ def gather_storage_records(family_summaries: Dict[str, Dict[str, Any]]) -> Tuple
             classification = "PROTECTED_STATE" if basename in family_summaries.get(family, {}).get("protected_library_caches", []) else "SAFE_CACHE"
             add_record(f"library_cache:{basename}", path, family, classification, "Protected if the owning app family is active.")
 
-    for dirname in CLAUDE_SUPPORT_CACHE_DIRS:
+    for dirname in SUPPORT_CACHE_DIRS:
         path = PROTECTED_STATE_PATHS["claude_support"] / dirname
         if path.exists():
             classification = "SAFE_CACHE" if family_summaries["claude"]["state"] in {"inactive", "residual_data_only"} else "PROTECTED_STATE"
             add_record(f"claude_support_cache:{dirname}", path, "claude", classification, "Claude support cache directory.")
 
-    for dirname in CODEX_SUPPORT_CACHE_DIRS:
+    for dirname in SUPPORT_CACHE_DIRS:
         path = PROTECTED_STATE_PATHS["codex_support"] / dirname
         if path.exists():
             classification = "SAFE_CACHE" if family_summaries["codex"]["state"] == "inactive" else "PROTECTED_STATE"
@@ -1129,11 +1122,11 @@ def plan_cleanup(snapshot: Dict[str, Any], mode: str = "balanced") -> List[Clean
         claude_state = process_summary["claude"]["state"]
         codex_state = process_summary["codex"]["state"]
         if claude_state in {"inactive", "residual_data_only"}:
-            for dirname in CLAUDE_SUPPORT_CACHE_DIRS:
+            for dirname in SUPPORT_CACHE_DIRS:
                 path = PROTECTED_STATE_PATHS["claude_support"] / dirname
                 safe_delete_action(f"claude_support_cache:{dirname}", path, "claude", "Claude support cache while inactive.")
         if codex_state == "inactive":
-            for dirname in CODEX_SUPPORT_CACHE_DIRS:
+            for dirname in SUPPORT_CACHE_DIRS:
                 path = PROTECTED_STATE_PATHS["codex_support"] / dirname
                 safe_delete_action(f"codex_support_cache:{dirname}", path, "codex", "Codex support cache while inactive.")
 
