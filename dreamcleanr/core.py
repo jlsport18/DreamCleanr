@@ -167,6 +167,22 @@ TIMESTAMPED_REPORT_GLOBS = (
     "failure-*.json",
 )
 
+FAMILY_STRONG_ROLES: Dict[str, set] = {
+    "docker": {"vmnetd", "backend", "backend_service", "virtualization", "sandbox", "docker_helper"},
+    "claude": {"claude_app", "vscode_cli"},
+    "codex": {"codex_app", "helper", "renderer", "cli_service"},
+}
+FAMILY_WEAK_ROLES: Dict[str, set] = {
+    "docker": {"docker_cli", "docker_cli_probe", "shell_docker_probe", "shell_docker_session"},
+    "claude": {"shipit", "crashpad"},
+    "codex": {"updater", "crashpad"},
+}
+FAMILY_PRIMARY_ROLES: Dict[str, set] = {
+    "docker": {"vmnetd", "backend", "virtualization"},
+    "claude": {"claude_app", "vscode_cli"},
+    "codex": {"codex_app", "cli_service"},
+}
+
 
 def now_iso() -> str:
     return datetime.now(timezone.utc).isoformat()
@@ -625,21 +641,9 @@ def summarize_family(
     active_primary_pids: List[int] = []
     roles = set()
 
-    strong_roles = {
-        "docker": {"vmnetd", "backend", "backend_service", "virtualization", "sandbox", "docker_helper"},
-        "claude": {"claude_app", "vscode_cli"},
-        "codex": {"codex_app", "helper", "renderer", "cli_service"},
-    }[family]
-    weak_roles = {
-        "docker": {"docker_cli", "docker_cli_probe", "shell_docker_probe", "shell_docker_session"},
-        "claude": {"shipit", "crashpad"},
-        "codex": {"updater", "crashpad"},
-    }[family]
-    primary_roles = {
-        "docker": {"vmnetd", "backend", "virtualization"},
-        "claude": {"claude_app", "vscode_cli"},
-        "codex": {"codex_app", "cli_service"},
-    }[family]
+    strong_roles = FAMILY_STRONG_ROLES[family]
+    weak_roles = FAMILY_WEAK_ROLES[family]
+    primary_roles = FAMILY_PRIMARY_ROLES[family]
 
     for record in processes:
         if record.family != family:
