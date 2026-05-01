@@ -614,6 +614,25 @@ def ancestor_chain(pid: int, by_pid: Dict[int, ProcessRecord]) -> List[ProcessRe
     return chain
 
 
+_STRONG_ROLES: Dict[str, frozenset] = {
+    "docker": frozenset({"vmnetd", "backend", "backend_service", "virtualization", "sandbox", "docker_helper"}),
+    "claude": frozenset({"claude_app", "vscode_cli"}),
+    "codex": frozenset({"codex_app", "helper", "renderer", "cli_service"}),
+}
+_WEAK_ROLES: Dict[str, frozenset] = {
+    "docker": frozenset({"docker_cli", "docker_cli_probe", "shell_docker_probe", "shell_docker_session"}),
+    "claude": frozenset({"shipit", "crashpad"}),
+    "codex": frozenset({"updater", "crashpad"}),
+}
+_PRIMARY_ROLES: Dict[str, frozenset] = {
+    "docker": frozenset({"vmnetd", "backend", "virtualization"}),
+    "claude": frozenset({"claude_app", "vscode_cli"}),
+    "codex": frozenset({"codex_app", "cli_service"}),
+}
+# Flat union used by classify_processes; derived from _PRIMARY_ROLES so both stay in sync.
+_PRIMARY_ROLES_FLAT: frozenset = frozenset().union(*_PRIMARY_ROLES.values())
+
+
 def summarize_family(
     family: str,
     processes: List[ProcessRecord],
@@ -627,21 +646,9 @@ def summarize_family(
     active_primary_pids: List[int] = []
     roles = set()
 
-    strong_roles = {
-        "docker": {"vmnetd", "backend", "backend_service", "virtualization", "sandbox", "docker_helper"},
-        "claude": {"claude_app", "vscode_cli"},
-        "codex": {"codex_app", "helper", "renderer", "cli_service"},
-    }[family]
-    weak_roles = {
-        "docker": {"docker_cli", "docker_cli_probe", "shell_docker_probe", "shell_docker_session"},
-        "claude": {"shipit", "crashpad"},
-        "codex": {"updater", "crashpad"},
-    }[family]
-    primary_roles = {
-        "docker": {"vmnetd", "backend", "virtualization"},
-        "claude": {"claude_app", "vscode_cli"},
-        "codex": {"codex_app", "cli_service"},
-    }[family]
+    strong_roles = _STRONG_ROLES[family]
+    weak_roles = _WEAK_ROLES[family]
+    primary_roles = _PRIMARY_ROLES[family]
 
     for record in processes:
         if record.family != family:
@@ -783,7 +790,7 @@ def summarize_family(
 # not a silent mis-classification into an existing bucket.
 _CLASSIFICATION_RULES: List[Tuple[Any, str, Any]] = [
     (
-        lambda r, ap, st, ss: r.role in {"vmnetd", "backend", "virtualization", "claude_app", "vscode_cli", "codex_app", "cli_service"},
+        lambda r, ap, st, ss: r.role in _PRIMARY_ROLES_FLAT,
         "ACTIVE_PRIMARY",
         "primary runtime role",
     ),
