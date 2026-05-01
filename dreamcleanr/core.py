@@ -48,13 +48,15 @@ CLAUDE_LIBRARY_CACHE_BASENAMES = [
 ]
 CODEX_LIBRARY_CACHE_BASENAMES = ["com.openai.codex"]
 
-SUPPORT_CACHE_DIRS = [
+CLAUDE_SUPPORT_CACHE_DIRS = [
     "Cache",
     "Code Cache",
     "GPUCache",
     "DawnGraphiteCache",
     "DawnWebGPUCache",
 ]
+# Both app families share the same Chromium/Electron cache directory layout.
+CODEX_SUPPORT_CACHE_DIRS = CLAUDE_SUPPORT_CACHE_DIRS
 
 
 def detector_registry(home: Optional[Path] = None) -> Dict[str, Dict[str, Any]]:
@@ -167,22 +169,6 @@ TIMESTAMPED_REPORT_GLOBS = (
     "failure-*.json",
 )
 
-FAMILY_STRONG_ROLES: Dict[str, set] = {
-    "docker": {"vmnetd", "backend", "backend_service", "virtualization", "sandbox", "docker_helper"},
-    "claude": {"claude_app", "vscode_cli"},
-    "codex": {"codex_app", "helper", "renderer", "cli_service"},
-}
-FAMILY_WEAK_ROLES: Dict[str, set] = {
-    "docker": {"docker_cli", "docker_cli_probe", "shell_docker_probe", "shell_docker_session"},
-    "claude": {"shipit", "crashpad"},
-    "codex": {"updater", "crashpad"},
-}
-FAMILY_PRIMARY_ROLES: Dict[str, set] = {
-    "docker": {"vmnetd", "backend", "virtualization"},
-    "claude": {"claude_app", "vscode_cli"},
-    "codex": {"codex_app", "cli_service"},
-}
-
 
 def now_iso() -> str:
     return datetime.now(timezone.utc).isoformat()
@@ -264,18 +250,6 @@ def run_command(command: List[str], timeout: int = 5) -> Dict[str, Any]:
             "returncode": None,
             "stdout": "",
             "stderr": "",
-        }
-    except (FileNotFoundError, PermissionError) as exc:
-        # Optional dependencies (docker, brew, uv, etc.) may be uninstalled or
-        # not on PATH. Treat that as a clean "not available" signal so the
-        # caller can fall back to its existing engine_state == "unreachable"
-        # branch instead of aborting the whole clean.
-        return {
-            "ok": False,
-            "timed_out": False,
-            "returncode": None,
-            "stdout": "",
-            "stderr": f"{type(exc).__name__}: {exc}",
         }
     return {
         "ok": proc.returncode == 0,
@@ -653,9 +627,21 @@ def summarize_family(
     active_primary_pids: List[int] = []
     roles = set()
 
-    strong_roles = FAMILY_STRONG_ROLES[family]
-    weak_roles = FAMILY_WEAK_ROLES[family]
-    primary_roles = FAMILY_PRIMARY_ROLES[family]
+    strong_roles = {
+        "docker": {"vmnetd", "backend", "backend_service", "virtualization", "sandbox", "docker_helper"},
+        "claude": {"claude_app", "vscode_cli"},
+        "codex": {"codex_app", "helper", "renderer", "cli_service"},
+    }[family]
+    weak_roles = {
+        "docker": {"docker_cli", "docker_cli_probe", "shell_docker_probe", "shell_docker_session"},
+        "claude": {"shipit", "crashpad"},
+        "codex": {"updater", "crashpad"},
+    }[family]
+    primary_roles = {
+        "docker": {"vmnetd", "backend", "virtualization"},
+        "claude": {"claude_app", "vscode_cli"},
+        "codex": {"codex_app", "cli_service"},
+    }[family]
 
     for record in processes:
         if record.family != family:
@@ -895,13 +881,13 @@ def gather_storage_records(family_summaries: Dict[str, Dict[str, Any]]) -> Tuple
             classification = "PROTECTED_STATE" if basename in family_summaries.get(family, {}).get("protected_library_caches", []) else "SAFE_CACHE"
             add_record(f"library_cache:{basename}", path, family, classification, "Protected if the owning app family is active.")
 
-    for dirname in SUPPORT_CACHE_DIRS:
+    for dirname in CLAUDE_SUPPORT_CACHE_DIRS:
         path = PROTECTED_STATE_PATHS["claude_support"] / dirname
         if path.exists():
             classification = "SAFE_CACHE" if family_summaries["claude"]["state"] in {"inactive", "residual_data_only"} else "PROTECTED_STATE"
             add_record(f"claude_support_cache:{dirname}", path, "claude", classification, "Claude support cache directory.")
 
-    for dirname in SUPPORT_CACHE_DIRS:
+    for dirname in CODEX_SUPPORT_CACHE_DIRS:
         path = PROTECTED_STATE_PATHS["codex_support"] / dirname
         if path.exists():
             classification = "SAFE_CACHE" if family_summaries["codex"]["state"] == "inactive" else "PROTECTED_STATE"
@@ -1138,11 +1124,11 @@ def plan_cleanup(snapshot: Dict[str, Any], mode: str = "balanced") -> List[Clean
         claude_state = process_summary["claude"]["state"]
         codex_state = process_summary["codex"]["state"]
         if claude_state in {"inactive", "residual_data_only"}:
-            for dirname in SUPPORT_CACHE_DIRS:
+            for dirname in CLAUDE_SUPPORT_CACHE_DIRS:
                 path = PROTECTED_STATE_PATHS["claude_support"] / dirname
                 safe_delete_action(f"claude_support_cache:{dirname}", path, "claude", "Claude support cache while inactive.")
         if codex_state == "inactive":
-            for dirname in SUPPORT_CACHE_DIRS:
+            for dirname in CODEX_SUPPORT_CACHE_DIRS:
                 path = PROTECTED_STATE_PATHS["codex_support"] / dirname
                 safe_delete_action(f"codex_support_cache:{dirname}", path, "codex", "Codex support cache while inactive.")
 
