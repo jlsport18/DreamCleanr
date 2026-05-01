@@ -777,6 +777,49 @@ def summarize_family(
     }
 
 
+# Each entry: (predicate(record, has_active_parent, state, stale_signal), classification, reason).
+# reason may be a plain string or a callable with the same four-argument signature.
+# Walked in order; first match wins. Forgetting to wire a new case → only the fallback changes,
+# not a silent mis-classification into an existing bucket.
+_CLASSIFICATION_RULES: List[Tuple[Any, str, Any]] = [
+    (
+        lambda r, ap, st, ss: r.role in {"vmnetd", "backend", "virtualization", "claude_app", "vscode_cli", "codex_app", "cli_service"},
+        "ACTIVE_PRIMARY",
+        "primary runtime role",
+    ),
+    (
+        lambda r, ap, st, ss: ap and st == "active",
+        "ACTIVE_HELPER",
+        "active parent chain",
+    ),
+    (
+        lambda r, ap, st, ss: r.role in {"docker_cli_probe", "shell_docker_probe"} and ss,
+        "STALE_CLI",
+        "old docker probe chain with low activity",
+    ),
+    (
+        lambda r, ap, st, ss: r.role in {"updater", "shipit", "crashpad"} and not ap,
+        "BACKGROUND_ONLY",
+        "background updater or crash handler without active root",
+    ),
+    (
+        lambda r, ap, st, ss: r.role in {"helper", "renderer", "docker_helper", "sandbox", "backend_service"} and not ap and ss,
+        "STALE_HELPER",
+        "helper without active root and low activity",
+    ),
+    (
+        lambda r, ap, st, ss: r.role in {"docker_cli", "shell_docker_session"},
+        "BACKGROUND_ONLY",
+        "interactive or non-probe docker CLI preserved conservatively",
+    ),
+    (
+        lambda r, ap, st, ss: st in {"background_only", "cli_only"},
+        "BACKGROUND_ONLY",
+        lambda r, ap, st, ss: f"{r.family} state is {st}",
+    ),
+]
+
+
 def classify_processes(processes: List[ProcessRecord], family_summaries: Dict[str, Dict[str, Any]]) -> None:
     by_pid = {process.pid: process for process in processes}
     active_primary_pids = {
@@ -786,10 +829,7 @@ def classify_processes(processes: List[ProcessRecord], family_summaries: Dict[st
 
     for record in processes:
         if record.family in {"self", "other"}:
-            if record.family == "self":
-                record.classification = "IGNORED"
-            else:
-                record.classification = "OTHER"
+            record.classification = "IGNORED" if record.family == "self" else "OTHER"
             continue
 
         family = record.family
@@ -802,27 +842,13 @@ def classify_processes(processes: List[ProcessRecord], family_summaries: Dict[st
             and record.cpu_percent <= STALE_PROCESS_MAX_CPU_PERCENT
         )
 
-        if record.role in {"vmnetd", "backend", "virtualization", "claude_app", "vscode_cli", "codex_app", "cli_service"}:
-            record.classification = "ACTIVE_PRIMARY"
-            record.reasons.append("primary runtime role")
-        elif has_active_parent and state == "active":
-            record.classification = "ACTIVE_HELPER"
-            record.reasons.append("active parent chain")
-        elif record.role in {"docker_cli_probe", "shell_docker_probe"} and stale_signal:
-            record.classification = "STALE_CLI"
-            record.reasons.append("old docker probe chain with low activity")
-        elif record.role in {"updater", "shipit", "crashpad"} and not has_active_parent:
-            record.classification = "BACKGROUND_ONLY"
-            record.reasons.append("background updater or crash handler without active root")
-        elif record.role in {"helper", "renderer", "docker_helper", "sandbox", "backend_service"} and not has_active_parent and stale_signal:
-            record.classification = "STALE_HELPER"
-            record.reasons.append("helper without active root and low activity")
-        elif record.role in {"docker_cli", "shell_docker_session"}:
-            record.classification = "BACKGROUND_ONLY"
-            record.reasons.append("interactive or non-probe docker CLI preserved conservatively")
-        elif state in {"background_only", "cli_only"}:
-            record.classification = "BACKGROUND_ONLY"
-            record.reasons.append(f"{family} state is {state}")
+        for pred, cls, reason in _CLASSIFICATION_RULES:
+            if pred(record, has_active_parent, state, stale_signal):
+                record.classification = cls
+                record.reasons.append(
+                    reason(record, has_active_parent, state, stale_signal) if callable(reason) else reason
+                )
+                break
         else:
             record.classification = "ACTIVE_HELPER"
             record.reasons.append("conservative protection fallback")
