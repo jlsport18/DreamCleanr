@@ -55,13 +55,8 @@ CLAUDE_SUPPORT_CACHE_DIRS = [
     "DawnGraphiteCache",
     "DawnWebGPUCache",
 ]
-CODEX_SUPPORT_CACHE_DIRS = [
-    "Cache",
-    "Code Cache",
-    "GPUCache",
-    "DawnGraphiteCache",
-    "DawnWebGPUCache",
-]
+# Both app families share the same Chromium/Electron cache directory layout.
+CODEX_SUPPORT_CACHE_DIRS = CLAUDE_SUPPORT_CACHE_DIRS
 
 
 def detector_registry(home: Optional[Path] = None) -> Dict[str, Dict[str, Any]]:
