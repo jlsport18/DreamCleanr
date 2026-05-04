@@ -256,6 +256,18 @@ def run_command(command: List[str], timeout: int = 5) -> Dict[str, Any]:
             "stdout": "",
             "stderr": "",
         }
+    except (FileNotFoundError, PermissionError) as exc:
+        # Optional dependencies (docker, brew, uv, etc.) may be uninstalled or
+        # not on PATH. Treat that as a clean "not available" signal so the
+        # caller can fall back to its existing engine_state == "unreachable"
+        # branch instead of aborting the whole clean.
+        return {
+            "ok": False,
+            "timed_out": False,
+            "returncode": None,
+            "stdout": "",
+            "stderr": f"{type(exc).__name__}: {exc}",
+        }
     return {
         "ok": proc.returncode == 0,
         "timed_out": False,

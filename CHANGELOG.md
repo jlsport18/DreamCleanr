@@ -4,6 +4,20 @@ All notable DreamCleanr release-facing changes should be tracked here.
 
 ## [Unreleased]
 
+## [0.3.5] - 2026-05-04
+
+### Fixed
+
+- `clean` no longer aborts with `FileNotFoundError` when an optional
+  external binary (most commonly `docker`) is missing from `PATH`. The
+  shared `run_command()` helper now catches `FileNotFoundError` and
+  `PermissionError` and returns the same "ok=False" shape that the
+  timeout branch produces, so the caller's existing
+  `engine_state == "unreachable"` fallback fires as designed. Previously
+  a fresh Mac without Docker Desktop would crash on every `dreamcleanr
+  clean` invocation, including `--scope=storage` runs that don't need
+  docker at all.
+
 ## [0.3.4] - 2026-04-05
 
 ### Added
