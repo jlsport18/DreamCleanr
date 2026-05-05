@@ -1,0 +1,7 @@
+name: minimal-runner-test
+on: { workflow_dispatch: {} }
+jobs:
+  hello:
+    runs-on: ubuntu-latest
+    steps:
+      - run: echo "hi from $(uname -a)"
