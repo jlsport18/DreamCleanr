@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>CFBundleDevelopmentRegion</key>          <string>en_US</string>
+    <key>CFBundleExecutable</key>                 <string>DreamCleanrMenubar</string>
+    <key>CFBundleIdentifier</key>                 <string>com.jlfg.dreamcleanr.menubar</string>
+    <key>CFBundleName</key>                       <string>DreamCleanr</string>
+    <key>CFBundlePackageType</key>                <string>APPL</string>
+    <key>CFBundleShortVersionString</key>         <string>0.1.0</string>
+    <key>CFBundleVersion</key>                    <string>1</string>
+    <key>LSMinimumSystemVersion</key>             <string>13.0</string>
+    <key>LSUIElement</key>                        <true/>
+    <key>NSHumanReadableCopyright</key>           <string>Copyright © 2026 Jon Lynch Financial Group. All rights reserved.</string>
+    <key>SUEnableAutomaticChecks</key>            <true/>
+    <key>SUFeedURL</key>                          <string>https://dreamcleanr.jonlynchfinancial.com/appcast.xml</string>
+    <key>SUPublicEDKey</key>                      <string>REPLACE_WITH_REAL_ED25519_KEY_BEFORE_RELEASE</string>
+    <key>SUScheduledCheckInterval</key>           <integer>86400</integer>
+</dict>
+</plist>
