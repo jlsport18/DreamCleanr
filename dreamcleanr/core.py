@@ -152,6 +152,7 @@ PATH_TOKEN_RE = re.compile(r"(~/[^\s\"']+|/[^\s\"']+)")
 PROJECT_TOOLCHAIN_MARKERS = {
     "python": ("pyproject.toml", "poetry.lock", "Pipfile", "Pipfile.lock", "requirements.txt", "environment.yml", "setup.py"),
     "node": ("package.json", "package-lock.json", "pnpm-lock.yaml", "yarn.lock", "pnpm-workspace.yaml", "bun.lockb"),
+    "ide": (".vscode", ".idea"),
 }
 DETECTOR_PROJECT_TOOLCHAINS = {
     "python": {"python"},
@@ -357,12 +358,6 @@ def inspect_project_root(root: Path) -> Dict[str, Any]:
             if (root / filename).exists():
                 markers.append(filename)
                 toolchains.add(toolchain)
-    if (root / ".vscode").exists():
-        markers.append(".vscode")
-        toolchains.add("ide")
-    if (root / ".idea").exists():
-        markers.append(".idea")
-        toolchains.add("ide")
     gitattributes = root / ".gitattributes"
     if gitattributes.exists():
         try:
