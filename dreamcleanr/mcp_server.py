@@ -380,6 +380,7 @@ def handle_request(message: Dict[str, Any]) -> Optional[Dict[str, Any]]:
 
 
 def main() -> int:
+    message: Optional[Dict[str, Any]] = None
     while True:
         try:
             message = _read_message()
@@ -389,18 +390,10 @@ def main() -> int:
             if response is not None:
                 _write_message(response)
         except McpProtocolError as exc:
-            request_id = None
-            try:
-                request_id = message.get("id") if isinstance(message, dict) else None
-            except Exception:
-                request_id = None
+            request_id = message.get("id") if isinstance(message, dict) else None
             _write_message(_error_response(request_id, exc.code, exc.message))
         except Exception as exc:  # pragma: no cover - defensive protocol safety
-            request_id = None
-            try:
-                request_id = message.get("id") if isinstance(message, dict) else None
-            except Exception:
-                request_id = None
+            request_id = message.get("id") if isinstance(message, dict) else None
             _write_message(_error_response(request_id, -32000, f"DreamCleanr MCP server error: {exc}"))
 
 
