@@ -92,6 +92,18 @@ def _group_counts(actions: List[Dict[str, Any]]) -> Dict[str, int]:
     return counts
 
 
+def _sized_rows(items: List[Dict[str, Any]], badge_text: str, badge_class: str, limit: int = 10) -> List[str]:
+    return [
+        '<div class="row">'
+        f'<div class="name">{html.escape(item["label"])}</div>'
+        f'<div class="size">{human_bytes(item.get("size_bytes", 0))}</div>'
+        '<div class="bar"><span style="width:100%"></span></div>'
+        f'{_badge(badge_text, badge_class)}'
+        '</div>'
+        for item in items[:limit]
+    ]
+
+
 def build_receipt_summary(report: Dict[str, Any]) -> Dict[str, Any]:
     snapshot = report.get("snapshot", {})
     family_summary = {}
@@ -303,27 +315,8 @@ def render_html(report: Dict[str, Any]) -> str:
             + (f'<div class="subvalue">{" | ".join(html.escape(part) for part in details)}</div>' if details else "")
         )
 
-    protected_rows = []
-    for item in protected_items[:10]:
-        protected_rows.append(
-            '<div class="row">'
-            f'<div class="name">{html.escape(item["label"])}</div>'
-            f'<div class="size">{human_bytes(item.get("size_bytes", 0))}</div>'
-            '<div class="bar"><span style="width:100%"></span></div>'
-            f'{_badge("Protected", "kept")}'
-            '</div>'
-        )
-
-    manual_rows = []
-    for item in manual_review[:10]:
-        manual_rows.append(
-            '<div class="row">'
-            f'<div class="name">{html.escape(item["label"])}</div>'
-            f'<div class="size">{human_bytes(item.get("size_bytes", 0))}</div>'
-            '<div class="bar"><span style="width:100%"></span></div>'
-            f'{_badge("Manual Review", "review")}'
-            '</div>'
-        )
+    protected_rows = _sized_rows(protected_items, "Protected", "kept")
+    manual_rows = _sized_rows(manual_review, "Manual Review", "review")
 
     why_safe = []
     for family in ("docker", "claude", "codex"):
