@@ -17,7 +17,7 @@ permissions:
 
 jobs:
   asset-install:
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, linux, x64, getupsoft]
     timeout-minutes: 15
     steps:
       - uses: actions/checkout@v6
@@ -69,7 +69,7 @@ jobs:
           PY
 
   public-install-script:
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, linux, x64, getupsoft]
     timeout-minutes: 15
     steps:
       - uses: actions/checkout@v6
@@ -104,7 +104,7 @@ jobs:
           PY
 
   upgrade-path:
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, linux, x64, getupsoft]
     timeout-minutes: 15
     steps:
       - uses: actions/checkout@v6
@@ -157,7 +157,7 @@ jobs:
           test "$(python -c 'from importlib.metadata import version; print(version("dreamcleanr"))')" = "${{ steps.releases.outputs.latest_version }}"
 
   public-surface:
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, linux, x64, getupsoft]
     timeout-minutes: 10
     steps:
       - name: Verify public site and latest release

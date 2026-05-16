@@ -13,7 +13,7 @@ permissions:
 
 jobs:
   governance:
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, linux, x64, getupsoft]
     timeout-minutes: 15
     steps:
       - uses: actions/checkout@v6
