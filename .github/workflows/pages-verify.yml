@@ -44,9 +44,9 @@ jobs:
             local attempt
             local homepage=""
             for attempt in $(seq 1 10); do
-              if homepage="$(curl -fsSL "$url")" \
-                && printf '%s' "$homepage" | grep -q "DreamCleanr" \
-                && printf '%s' "$homepage" | grep -q "releases/latest"; then
+              homepage="$(curl -fsSL "$url" 2>/dev/null || true)"
+              # bash regex avoids SIGPIPE from grep -q closing the pipe early
+              if [[ -n "$homepage" && "$homepage" == *"DreamCleanr"* && "$homepage" == *"releases/latest"* ]]; then
                 echo "PASS [homepage] $url"
                 return 0
               fi
