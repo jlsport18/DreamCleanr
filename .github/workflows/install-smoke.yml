@@ -167,7 +167,7 @@ jobs:
           curl -fsSLI https://jlsport18.github.io/DreamCleanr/faq.html >/dev/null
           curl -fsSLI https://jlsport18.github.io/DreamCleanr/compare-cleanmymac.html >/dev/null
           curl -fsSLI https://github.com/jlsport18/DreamCleanr/releases/latest >/dev/null
-          python - <<'PY'
+          python3 - <<'PY'
           import json
           import urllib.request
 
