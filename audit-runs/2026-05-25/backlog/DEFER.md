@@ -8,6 +8,11 @@
 
 ## High-value, do next (in the Python CLI — fastest ROI)
 
+- **MEM-ACT — Wire the memory reclaim *actions*.** Measurement + the ceiling shipped; the
+  destructive verbs are surfaced but not yet executed. Add (gated to confirm, like the rest):
+  `ollama stop <model>` for idle loaded models (reversible — highest-wow), and stop idle
+  running containers (`docker stats --no-stream` to detect; never auto-stop without confirm).
+  Never auto-run `purge`. This makes "clean up memory" actually clean, not just show.
 - **MODEL-2 — Per-tool model pruning.** The remaining wedge: GC *within* model stores —
   Hugging Face old revisions/unused blobs (`huggingface-cli delete-cache` semantics), Ollama
   orphaned layers/old tags. Per-tool cache-structure logic; deferred deliberately (deleting a

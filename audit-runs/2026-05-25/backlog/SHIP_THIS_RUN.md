@@ -17,6 +17,7 @@ steer. All low-risk, additive or safety-improving. No push (human reviews).
 | B (perf) | High | `perf(core): parallelize path sizing` | `test_du_bytes_many_parallel_sizes_and_dedups` |
 | C (trash) | High | `feat(cli): macOS Trash safety net` | `test_path_delete_trash_*`, `test_trash_defaults_*`, `test_no_trash_flag_*` |
 | A (smart) | High | `feat(core): smart model-cache reclaim` | `test_detector_findings_carry_reclaim_metadata`, `test_plan_cleanup_max_*` (reclaim / skip guarded-fresh-model / overlap) |
+| MEM (memory-first) | High | `feat(core): vm_stat baseline + loaded-model + reclaim ceiling` | `test_capture_memory_state_parses_vm_stat`, `test_list_loaded_models_*`, `test_reclaim_ceiling_sums_only_named_actionable_sources`, `test_parse_size_to_bytes_handles_multichar_units` |
 
 **Result:** 51 tests pass (was 33). Verified on this Mac: real scan surfaces 885 MB
 node regenerable cache ("safe to clear in max"); model_data (Ollama/HF) surfaced for
