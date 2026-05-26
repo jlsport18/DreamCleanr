@@ -78,6 +78,14 @@ class DetectorFinding(_Dictable):
     active_project_count: int = 0
     active_project_roots: List[str] = field(default_factory=list)
     observed_paths: List[Dict[str, Any]] = field(default_factory=list)
+    # Smart-reclaim metadata. reclaim_policy: "regenerable" (caches that re-create
+    # on demand) vs "model_data" (downloaded models — expensive to refetch, never
+    # auto-deleted). last_touched_days is a heuristic = days since the most recent
+    # TOP-LEVEL mtime among observed paths (not deep, not access time).
+    reclaim_policy: str = "regenerable"
+    last_touched_days: Optional[int] = None
+    reclaimable_bytes: int = 0
+    recommendation: str = ""
 
 
 @dataclass

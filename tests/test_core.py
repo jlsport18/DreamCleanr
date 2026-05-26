@@ -309,6 +309,75 @@ class CoreTests(unittest.TestCase):
         )
         self.assertNotIn("library_caches", {a.details.get("label") for a in safe})
 
+    def test_detector_findings_carry_reclaim_metadata(self) -> None:
+        with TemporaryDirectory() as tmpdir:
+            home = Path(tmpdir)
+            (home / ".cache" / "pip").mkdir(parents=True)
+            (home / ".ollama").mkdir(parents=True)
+            with patch("dreamcleanr.core.du_bytes", return_value=1024):
+                findings = gather_detector_findings(home=home)
+        by_key = {f["key"]: f for f in findings}
+        self.assertEqual(by_key["ollama"]["reclaim_policy"], "model_data")
+        self.assertEqual(by_key["ollama"]["reclaimable_bytes"], 0)  # models never auto-reclaimed
+        self.assertEqual(by_key["python"]["reclaim_policy"], "regenerable")
+        self.assertEqual(by_key["python"]["reclaimable_bytes"], 1024)  # pip_cache is regenerable
+        self.assertIsNotNone(by_key["python"]["last_touched_days"])
+
+    def _detector_snapshot(self, finding: dict) -> dict:
+        return {
+            "processes": [],
+            "process_summary": {
+                fam: {"state": "inactive", "recommended_action": "protect_only"}
+                for fam in ("docker", "claude", "codex")
+            },
+            "detector_findings": [finding],
+        }
+
+    def test_plan_cleanup_max_reclaims_stale_regenerable_detector_cache(self) -> None:
+        finding = {
+            "key": "python", "reclaim_policy": "regenerable", "safety_state": "visibility_only",
+            "last_touched_days": 30,
+            "observed_paths": [{"label": "pip_cache", "path": "/Users/x/.cache/pip", "size_bytes": 100}],
+        }
+        snapshot = self._detector_snapshot(finding)
+        with patch("dreamcleanr.core.du_bytes", return_value=100):
+            max_actions = plan_cleanup(snapshot, mode="max")
+            balanced = plan_cleanup(snapshot, mode="balanced")
+        self.assertIn("python:pip_cache", {a.details.get("label") for a in max_actions})
+        self.assertNotIn("python:pip_cache", {a.details.get("label") for a in balanced})
+
+    def test_plan_cleanup_max_skips_guarded_fresh_and_model_data(self) -> None:
+        def finding(**overrides):
+            base = {
+                "key": "python", "reclaim_policy": "regenerable", "safety_state": "visibility_only",
+                "last_touched_days": 30,
+                "observed_paths": [{"label": "pip_cache", "path": "/Users/x/.cache/pip", "size_bytes": 100}],
+            }
+            base.update(overrides)
+            return base
+
+        for case in (
+            finding(safety_state="guarded_by_active_projects"),  # active project guard
+            finding(last_touched_days=2),                        # too fresh
+            finding(reclaim_policy="model_data"),                # downloaded models
+        ):
+            with patch("dreamcleanr.core.du_bytes", return_value=100):
+                actions = plan_cleanup(self._detector_snapshot(case), mode="max")
+            self.assertNotIn("python:pip_cache", {a.details.get("label") for a in actions})
+
+    def test_plan_cleanup_max_skips_detector_path_overlapping_library_sweep(self) -> None:
+        overlapping = str(Path.home() / "Library" / "Caches" / "pip")
+        finding = {
+            "key": "python", "reclaim_policy": "regenerable", "safety_state": "visibility_only",
+            "last_touched_days": 30,
+            "observed_paths": [{"label": "pip_cache", "path": overlapping, "size_bytes": 100}],
+        }
+        with patch("dreamcleanr.core.du_bytes", return_value=100):
+            actions = plan_cleanup(self._detector_snapshot(finding), mode="max")
+        labels = {a.details.get("label") for a in actions}
+        self.assertIn("library_caches", labels)        # wholesale sweep present
+        self.assertNotIn("python:pip_cache", labels)    # overlapping path not double-planned
+
     def test_prune_history_files_keeps_most_recent_artifacts(self) -> None:
         with TemporaryDirectory() as tmpdir:
             root = Path(tmpdir)

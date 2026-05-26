@@ -23,6 +23,15 @@ DEFAULT_LOG_RETENTION_COUNT = 5
 STALE_PROCESS_MIN_ELAPSED_SECONDS = 300
 STALE_PROCESS_MAX_CPU_PERCENT = 1.0
 
+# Smart-reclaim policy. Downloaded models are user assets (expensive to refetch),
+# never auto-deleted — surfaced for review only. Everything else is a regenerable
+# cache. RECLAIMABLE_CACHE_LABELS are the regenerable detector caches safe to
+# auto-clear in max: they live OUTSIDE ~/Library/Caches and are not in
+# SAFE_CACHE_PATHS, so they never overlap the wholesale sweep or other actions.
+STALE_DETECTOR_DAYS = 14
+MODEL_DATA_DETECTORS = {"huggingface", "ollama", "lm_studio", "git_lfs"}
+RECLAIMABLE_CACHE_LABELS = {"pip_cache", "pnpm_store", "library_pnpm_store", "yarn_cache"}
+
 PROTECTED_STATE_PATHS = {
     "codex_home": Path.home() / ".codex",
     "claude_home": Path.home() / ".claude",
@@ -299,6 +308,7 @@ def gather_detector_findings(home: Optional[Path] = None) -> List[Dict[str, Any]
     # together in parallel so big model dirs don't serialize the scan.
     per_detector: Dict[str, List[Tuple[str, Path]]] = {}
     all_paths: List[Path] = []
+    mtime_map: Dict[str, float] = {}
     for key, detector in registry.items():
         items: List[Tuple[str, Path]] = []
         seen_paths = set()
@@ -311,8 +321,13 @@ def gather_detector_findings(home: Optional[Path] = None) -> List[Dict[str, Any]
                 continue
             items.append((label, path))
             all_paths.append(path)
+            try:
+                mtime_map[normalized] = path.stat().st_mtime
+            except OSError:
+                pass
         per_detector[key] = items
     size_map = du_bytes_many(all_paths)
+    now = time.time()
 
     findings: List[DetectorFinding] = []
     for key, detector in registry.items():
@@ -330,6 +345,12 @@ def gather_detector_findings(home: Optional[Path] = None) -> List[Dict[str, Any]
             total_bytes += size_bytes
         if not observed_paths:
             continue
+        reclaim_policy = "model_data" if key in MODEL_DATA_DETECTORS else "regenerable"
+        reclaimable_bytes = sum(
+            item["size_bytes"] for item in observed_paths if item["label"] in RECLAIMABLE_CACHE_LABELS
+        )
+        mtimes = [mtime_map[item["path"]] for item in observed_paths if item["path"] in mtime_map]
+        last_touched_days = int((now - max(mtimes)) // 86400) if mtimes else None
         findings.append(
             DetectorFinding(
                 key=key,
@@ -340,6 +361,9 @@ def gather_detector_findings(home: Optional[Path] = None) -> List[Dict[str, Any]
                 cleanup_ready=detector["cleanup_ready"],
                 notes=detector["notes"],
                 observed_paths=observed_paths,
+                reclaim_policy=reclaim_policy,
+                last_touched_days=last_touched_days,
+                reclaimable_bytes=reclaimable_bytes,
             )
         )
     findings.sort(key=lambda item: item.total_bytes, reverse=True)
@@ -460,7 +484,22 @@ def annotate_detector_findings(
         item = dict(finding)
         item["active_project_roots"] = unique_roots[:5]
         item["active_project_count"] = len(unique_roots)
-        item["safety_state"] = "guarded_by_active_projects" if unique_roots else "visibility_only"
+        guarded = bool(unique_roots)
+        item["safety_state"] = "guarded_by_active_projects" if guarded else "visibility_only"
+        # Smart recommendation, and gate reclaim on the active-project guard.
+        if guarded:
+            item["reclaimable_bytes"] = 0
+        if item.get("reclaim_policy") == "model_data":
+            item["recommendation"] = (
+                "Review — downloaded models are expensive to refetch; prune unused ones "
+                "with the tool itself (e.g. `ollama rm`, `huggingface-cli delete-cache`)."
+            )
+        elif guarded:
+            item["recommendation"] = "Guarded — tied to an active project; left alone."
+        elif item.get("reclaimable_bytes", 0) > 0:
+            item["recommendation"] = "Regenerable cache — safe to clear in --mode max."
+        else:
+            item["recommendation"] = "Visibility only."
         annotated.append(item)
     return annotated
 
@@ -1103,6 +1142,16 @@ def family_summary_from_actions(
     return summary
 
 
+def _path_overlaps_any(candidate: Path, planned: Iterable[str]) -> bool:
+    """True if candidate equals, contains, or is contained by any planned path —
+    so two cleanup actions can't target overlapping trees (double-count/missing)."""
+    for planned_str in planned:
+        other = Path(planned_str)
+        if candidate == other or other in candidate.parents or candidate in other.parents:
+            return True
+    return False
+
+
 def plan_cleanup(snapshot: Dict[str, Any], mode: str = "balanced") -> List[CleanupAction]:
     """Plan cleanup actions for the requested tier.
 
@@ -1208,6 +1257,31 @@ def plan_cleanup(snapshot: Dict[str, Any], mode: str = "balanced") -> List[Clean
             for dirname in CODEX_SUPPORT_CACHE_DIRS:
                 path = PROTECTED_STATE_PATHS["codex_support"] / dirname
                 safe_delete_action(f"codex_support_cache:{dirname}", path, "codex", "Codex support cache while inactive.")
+
+        # Smart reclaim: stale, regenerable, unguarded detector caches that live
+        # outside ~/Library/Caches. Model data is never auto-deleted (review only).
+        planned_paths = {action.target for action in actions if action.target_type == "path"}
+        for finding in snapshot.get("detector_findings", []):
+            if finding.get("reclaim_policy") != "regenerable":
+                continue
+            if finding.get("safety_state") == "guarded_by_active_projects":
+                continue
+            touched = finding.get("last_touched_days")
+            if touched is None or touched < STALE_DETECTOR_DAYS:
+                continue
+            for observed in finding.get("observed_paths", []):
+                if observed.get("label") not in RECLAIMABLE_CACHE_LABELS:
+                    continue
+                candidate = observed.get("path", "")
+                if not candidate or _path_overlaps_any(Path(candidate), planned_paths):
+                    continue
+                safe_delete_action(
+                    f"{finding['key']}:{observed['label']}",
+                    Path(candidate),
+                    "system",
+                    f"Stale regenerable {finding['key']} cache (last touched {touched}d ago).",
+                )
+                planned_paths.add(candidate)
 
     return actions
 
