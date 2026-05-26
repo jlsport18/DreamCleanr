@@ -205,6 +205,24 @@ class CliTests(unittest.TestCase):
         confirm_mock.assert_not_called()
         self.assertFalse(apply_mock.call_args.kwargs["dry_run"])
 
+    def test_clean_apply_skipped_when_report_dir_locked(self) -> None:
+        import fcntl
+
+        apply_mock = MagicMock(return_value=[])
+        with TemporaryDirectory() as tmpdir:
+            holder = open(Path(tmpdir) / ".dreamcleanr.lock", "w")
+            fcntl.flock(holder.fileno(), fcntl.LOCK_EX | fcntl.LOCK_NB)
+            try:
+                args = _apply_args(tmpdir, yes=True)
+                with patch("dreamcleanr.cli.capture_snapshot", return_value={}), patch(
+                    "dreamcleanr.cli.plan_cleanup", return_value=[_deletion_action()]
+                ), patch("dreamcleanr.cli.apply_actions", apply_mock):
+                    result = command_clean(args)
+            finally:
+                holder.close()
+        self.assertEqual(result, 0)
+        apply_mock.assert_not_called()
+
     def test_clean_apply_decline_falls_back_to_preview(self) -> None:
         apply_mock = MagicMock(return_value=[])
         with TemporaryDirectory() as tmpdir:

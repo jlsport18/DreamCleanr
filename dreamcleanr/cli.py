@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import argparse
+import fcntl
 import json
 import sys
 import traceback
@@ -47,6 +48,26 @@ def _confirm_apply(actions: list, mode: str) -> bool:
     except EOFError:
         return False
     return answer in {"y", "yes"}
+
+
+def _acquire_run_lock(output_dir: Path):
+    """Non-blocking exclusive lock so a manual run and the scheduled job don't
+    apply concurrently to the same report dir. Returns the held handle or None."""
+    lock_path = output_dir / ".dreamcleanr.lock"
+    handle = open(lock_path, "w")
+    try:
+        fcntl.flock(handle.fileno(), fcntl.LOCK_EX | fcntl.LOCK_NB)
+    except OSError:
+        handle.close()
+        return None
+    return handle
+
+
+def _release_run_lock(handle) -> None:
+    try:
+        fcntl.flock(handle.fileno(), fcntl.LOCK_UN)
+    finally:
+        handle.close()
 from .reporting import build_receipt_summary, build_team_export, write_html, write_team_csv
 from .scheduler import install_launch_agent, uninstall_launch_agent, write_launch_agent
 
@@ -121,6 +142,16 @@ def command_clean(args: argparse.Namespace) -> int:
     output_dir.mkdir(parents=True, exist_ok=True)
     latest = _latest_paths(output_dir)
 
+    lock_handle = None
+    if not dry_run:
+        lock_handle = _acquire_run_lock(output_dir)
+        if lock_handle is None:
+            print(
+                "Another DreamCleanr apply is in progress for this report dir; skipping.",
+                file=sys.stderr,
+            )
+            return 0
+
     try:
         before = capture_snapshot(mode=args.mode)
         planned_actions = plan_cleanup(before, mode=args.mode)
@@ -189,6 +220,9 @@ def command_clean(args: argparse.Namespace) -> int:
         print(f"DreamCleanr clean failed: {exc}", file=sys.stderr)
         print(f"Failure report: {failure_path}", file=sys.stderr)
         return 1
+    finally:
+        if lock_handle is not None:
+            _release_run_lock(lock_handle)
 
 
 def command_schedule_install(args: argparse.Namespace) -> int:
