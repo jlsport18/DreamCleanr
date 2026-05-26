@@ -29,19 +29,22 @@ def _planned_deletions(actions: list) -> list:
     return [a for a in actions if a.details.get("apply_allowed", True)]
 
 
-def _confirm_apply(actions: list, mode: str) -> bool:
+def _confirm_apply(actions: list, mode: str, use_trash: bool = False) -> bool:
     deletions = _planned_deletions(actions)
     paths = [a for a in deletions if a.target_type != "process"]
     procs = sum(1 for a in deletions if a.target_type == "process")
     total = sum(a.bytes_reclaimed for a in paths)
+    verb = "trash" if use_trash else "delete"
     print(f"DreamCleanr will apply {len(deletions)} action(s) in '{mode}' mode:")
     for action in paths[:20]:
         label = action.details.get("label", action.target)
-        print(f"  delete     {label}  (~{human_bytes(action.bytes_reclaimed)})")
+        print(f"  {verb:<9} {label}  (~{human_bytes(action.bytes_reclaimed)})")
     if len(paths) > 20:
         print(f"  … and {len(paths) - 20} more path(s)")
     if procs:
-        print(f"  terminate  {procs} stale process(es)")
+        print(f"  terminate {procs} stale process(es)")
+    if use_trash:
+        print("Paths go to the macOS Trash (restore from Finder); empty the Trash to reclaim space.")
     print(f"Estimated reclaim: ~{human_bytes(total)}")
     try:
         answer = input("Proceed? [y/N] ").strip().lower()
@@ -160,15 +163,18 @@ def command_clean(args: argparse.Namespace) -> int:
         elif args.scope == "storage":
             planned_actions = [action for action in planned_actions if action.target_type != "process"]
 
+        # Trash (restorable) vs hard-delete. Default: on for the aggressive max
+        # tier, off for balanced (regenerable caches free space immediately).
+        use_trash = args.trash if getattr(args, "trash", None) is not None else (args.mode == "max")
         if not dry_run and _planned_deletions(planned_actions):
             # Interactive runs confirm before deleting. Scripted / scheduled runs
             # (no TTY) are intentional automation and proceed — this preserves an
             # already-installed LaunchAgent. --yes skips the prompt explicitly.
             if not getattr(args, "yes", False) and sys.stdin.isatty():
-                if not _confirm_apply(planned_actions, args.mode):
+                if not _confirm_apply(planned_actions, args.mode, use_trash):
                     print("Aborted — running a preview instead; no changes made.")
                     dry_run = True
-        actions = apply_actions(before, planned_actions, dry_run=dry_run)
+        actions = apply_actions(before, planned_actions, dry_run=dry_run, trash=use_trash)
         after = capture_snapshot(mode=args.mode)
         report = build_cleanup_report(before, after, actions, mode=args.mode, dry_run=dry_run)
         report_dict = report.to_dict()
@@ -277,6 +283,8 @@ def build_parser() -> argparse.ArgumentParser:
     clean.add_argument("--scope", choices=["all", "processes", "storage"], default="all")
     clean.add_argument("--apply", action="store_true", help="Apply cleanup actions instead of dry-run preview.")
     clean.add_argument("--yes", "-y", action="store_true", help="Skip the interactive confirmation prompt before --apply.")
+    clean.add_argument("--trash", dest="trash", action="store_true", default=None, help="Move deleted items to the macOS Trash (restorable) instead of removing them. Default: on for --mode max.")
+    clean.add_argument("--no-trash", dest="trash", action="store_false", help="Hard-delete to reclaim space immediately, even in --mode max.")
     clean.add_argument("--output-dir", help="Directory for JSON and HTML reports.")
     clean.add_argument("--json-out", help="Write cleanup report JSON to a specific file.")
     clean.add_argument("--html-out", help="Write cleanup report HTML to a specific file.")

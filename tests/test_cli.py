@@ -32,11 +32,12 @@ def _deletion_action() -> CleanupAction:
     )
 
 
-def _apply_args(tmpdir: str, yes: bool) -> Namespace:
+def _apply_args(tmpdir: str, yes: bool, mode: str = "balanced", trash=None) -> Namespace:
     return Namespace(
-        mode="balanced",
+        mode=mode,
         apply=True,
         yes=yes,
+        trash=trash,
         output_dir=tmpdir,
         json_out=None,
         html_out=None,
@@ -204,6 +205,35 @@ class CliTests(unittest.TestCase):
         self.assertEqual(result, 0)
         confirm_mock.assert_not_called()
         self.assertFalse(apply_mock.call_args.kwargs["dry_run"])
+
+    def test_trash_defaults_on_for_max_off_for_balanced(self) -> None:
+        for mode, expected_trash in (("max", True), ("balanced", False)):
+            apply_mock = MagicMock(return_value=[])
+            with TemporaryDirectory() as tmpdir:
+                args = _apply_args(tmpdir, yes=True, mode=mode)
+                with patch("dreamcleanr.cli.capture_snapshot", return_value={}), patch(
+                    "dreamcleanr.cli.plan_cleanup", return_value=[_deletion_action()]
+                ), patch("dreamcleanr.cli.apply_actions", apply_mock), patch(
+                    "dreamcleanr.cli.build_cleanup_report", return_value=_StubReport()
+                ), patch("dreamcleanr.cli.build_receipt_summary", return_value={}), patch(
+                    "dreamcleanr.cli.write_html"
+                ):
+                    command_clean(args)
+            self.assertEqual(apply_mock.call_args.kwargs["trash"], expected_trash, f"mode={mode}")
+
+    def test_no_trash_flag_overrides_max_default(self) -> None:
+        apply_mock = MagicMock(return_value=[])
+        with TemporaryDirectory() as tmpdir:
+            args = _apply_args(tmpdir, yes=True, mode="max", trash=False)
+            with patch("dreamcleanr.cli.capture_snapshot", return_value={}), patch(
+                "dreamcleanr.cli.plan_cleanup", return_value=[_deletion_action()]
+            ), patch("dreamcleanr.cli.apply_actions", apply_mock), patch(
+                "dreamcleanr.cli.build_cleanup_report", return_value=_StubReport()
+            ), patch("dreamcleanr.cli.build_receipt_summary", return_value={}), patch(
+                "dreamcleanr.cli.write_html"
+            ):
+                command_clean(args)
+        self.assertFalse(apply_mock.call_args.kwargs["trash"])
 
     def test_clean_apply_skipped_when_report_dir_locked(self) -> None:
         import fcntl

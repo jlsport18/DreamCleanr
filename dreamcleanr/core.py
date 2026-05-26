@@ -1212,13 +1212,39 @@ def plan_cleanup(snapshot: Dict[str, Any], mode: str = "balanced") -> List[Clean
     return actions
 
 
-def path_delete(path: Path) -> None:
+def _trash_dir() -> Path:
+    return Path.home() / ".Trash"
+
+
+def trash_path(path: Path) -> Optional[Path]:
+    """Move a path into the macOS Trash (restorable via Finder). On the same
+    volume this is a fast rename, not a copy. Returns the destination or None."""
+    trash_dir = _trash_dir()
+    try:
+        trash_dir.mkdir(exist_ok=True)
+    except OSError:
+        return None
+    dest = trash_dir / path.name
+    if dest.exists():
+        stamp = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%S")
+        dest = trash_dir / f"{path.name}.{stamp}-{uuid.uuid4().hex[:6]}"
+    shutil.move(str(path), str(dest))
+    return dest
+
+
+def path_delete(path: Path, trash: bool = False) -> None:
     # Remove a symlink itself rather than following it — never traverse out of
     # the intended tree (and avoid shutil.rmtree raising on a symlinked dir).
     if path.is_symlink():
-        path.unlink(missing_ok=True)
+        if trash:
+            trash_path(path)
+        else:
+            path.unlink(missing_ok=True)
         return
     if not path.exists():
+        return
+    if trash:
+        trash_path(path)
         return
     if path.is_dir():
         shutil.rmtree(path)
@@ -1250,7 +1276,7 @@ def prune_rotated_logs(output_dir: Path, keep: int = DEFAULT_LOG_RETENTION_COUNT
     return removed
 
 
-def remove_unprotected_library_caches(protected_basenames: List[str]) -> int:
+def remove_unprotected_library_caches(protected_basenames: List[str], trash: bool = False) -> int:
     cache_root = SAFE_CACHE_PATHS["library_caches"]
     if not cache_root.exists():
         return 0
@@ -1259,7 +1285,7 @@ def remove_unprotected_library_caches(protected_basenames: List[str]) -> int:
         if child.name in protected_basenames:
             continue
         reclaimed += du_bytes(child)
-        path_delete(child)
+        path_delete(child, trash=trash)
     return reclaimed
 
 
@@ -1318,6 +1344,7 @@ def apply_actions(
     snapshot: Dict[str, Any],
     actions: List[CleanupAction],
     dry_run: bool,
+    trash: bool = False,
 ) -> List[CleanupAction]:
     protected_caches = protected_library_cache_basenames(snapshot)
     applied: List[CleanupAction] = []
@@ -1356,14 +1383,16 @@ def apply_actions(
             elif action.target_type == "path":
                 path = Path(action.target)
                 if action.target.endswith("Library/Caches"):
-                    realized.bytes_reclaimed = remove_unprotected_library_caches(protected_caches)
+                    realized.bytes_reclaimed = remove_unprotected_library_caches(protected_caches, trash=trash)
                     realized.result = "deleted"
                 elif path.exists():
                     realized.bytes_reclaimed = du_bytes(path)
-                    path_delete(path)
+                    path_delete(path, trash=trash)
                     realized.result = "deleted"
                 else:
                     realized.result = "missing"
+                if trash and realized.result == "deleted":
+                    realized.details["trashed"] = True
             elif action.target_type == "docker":
                 if snapshot["process_summary"]["docker"]["recommended_action"] != "docker_system_prune":
                     realized.result = "blocked"

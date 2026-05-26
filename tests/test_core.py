@@ -212,6 +212,29 @@ class CoreTests(unittest.TestCase):
         self.assertEqual(annotated[0]["active_project_count"], 1)
         self.assertEqual(annotated[1]["safety_state"], "visibility_only")
 
+    def test_path_delete_trash_moves_instead_of_destroying(self) -> None:
+        from dreamcleanr.core import path_delete
+
+        with TemporaryDirectory() as tmpdir:
+            home = Path(tmpdir)
+            trash = home / ".Trash"
+            victim = home / "regenerable-cache"
+            victim.mkdir()
+            (victim / "blob").write_text("data", encoding="utf-8")
+            with patch("dreamcleanr.core._trash_dir", return_value=trash):
+                path_delete(victim, trash=True)
+            self.assertFalse(victim.exists())
+            self.assertTrue((trash / "regenerable-cache" / "blob").exists())  # recoverable
+
+    def test_path_delete_hard_delete_removes(self) -> None:
+        from dreamcleanr.core import path_delete
+
+        with TemporaryDirectory() as tmpdir:
+            victim = Path(tmpdir) / "cache"
+            victim.mkdir()
+            path_delete(victim, trash=False)
+            self.assertFalse(victim.exists())
+
     def test_du_bytes_many_parallel_sizes_and_dedups(self) -> None:
         from dreamcleanr.core import du_bytes_many
 

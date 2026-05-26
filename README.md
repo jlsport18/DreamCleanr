@@ -122,6 +122,12 @@ everything lower tiers do, plus a wider blast radius.
 `--yes` to skip). A scripted or scheduled run (no terminal) is treated as
 intentional automation and proceeds, so an installed LaunchAgent keeps working.
 
+**Reversibility:** `--trash` moves deleted items to the macOS Trash (restore from
+Finder) instead of removing them — default **on** for `--mode max` (the aggressive
+tier), **off** for `balanced` (regenerable caches free space immediately). Use
+`--no-trash` to hard-delete in `max`, or `--trash` to stage any tier. Trashed space
+is reclaimed when you empty the Trash.
+
 ## Safety defaults
 
 - auto-trims only stale helper and stale CLI probe processes
