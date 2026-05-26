@@ -1370,6 +1370,26 @@ def plan_cleanup(snapshot: Dict[str, Any], mode: str = "balanced") -> List[Clean
                 )
                 planned_paths.add(candidate)
 
+        # Memory reclaim: unload RAM-resident Ollama models (reversible — re-loads
+        # on next inference). Aggressive tier + confirm; never deletes the model.
+        for model in snapshot.get("loaded_models", []):
+            actions.append(
+                CleanupAction(
+                    target=model["name"],
+                    target_type="memory",
+                    family="ollama",
+                    classification="LOADED_MODEL",
+                    result="planned",
+                    bytes_reclaimed=int(model.get("size_bytes", 0)),
+                    reason="Unload idle Ollama model from RAM (reversible — re-loads on next use).",
+                    details={
+                        "apply_allowed": True,
+                        "action": model.get("action", f"ollama stop {model['name']}"),
+                        "reversible": True,
+                    },
+                )
+            )
+
     return actions
 
 
@@ -1605,6 +1625,15 @@ def apply_actions(
                     realized.result = "missing"
                 if trash and realized.result == "deleted":
                     realized.details["trashed"] = True
+            elif action.target_type == "memory":
+                command = str(action.details.get("action", "")).split()
+                if not command:
+                    realized.result = "skipped"
+                else:
+                    outcome = run_command(command, timeout=10)
+                    realized.result = "unloaded" if outcome["ok"] else "blocked"
+                    if not outcome["ok"]:
+                        realized.reason = "Could not unload from RAM."
             elif action.target_type == "docker":
                 if snapshot["process_summary"]["docker"]["recommended_action"] != "docker_system_prune":
                     realized.result = "blocked"
@@ -1635,14 +1664,14 @@ def build_cleanup_report(
 ) -> CleanupReport:
     storage_before = before_snapshot["host_disk_used_bytes"]
     storage_after = after_snapshot["host_disk_used_bytes"]
-    # Attribute only the bytes DreamCleanr actually acted on. The previous
-    # max(host-disk-delta, planned) could overstate the receipt when unrelated
-    # processes freed disk during the run — receipts must not inflate.
-    planned_bytes = sum(action.bytes_reclaimed for action in actions)
-    storage_reclaimed = planned_bytes
+    # Honestly separate disk vs RAM: caches/docker are disk; terminated processes
+    # and unloaded models are RAM. Don't conflate the two in the receipt.
+    storage_reclaimed = sum(action.bytes_reclaimed for action in actions if action.target_type in {"path", "docker"})
 
     memory_before = sum(item["rss_kb"] for item in before_snapshot["processes"]) / 1024.0
-    memory_reclaimed = sum(action.bytes_reclaimed for action in actions if action.target_type == "process") / (1024.0 * 1024.0)
+    memory_reclaimed = sum(
+        action.bytes_reclaimed for action in actions if action.target_type in {"process", "memory"}
+    ) / (1024.0 * 1024.0)
     memory_after = max(0.0, memory_before - memory_reclaimed)
 
     processes_trimmed = sum(1 for action in actions if action.target_type == "process" and action.result in {"planned", "terminated"})

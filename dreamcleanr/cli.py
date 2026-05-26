@@ -49,11 +49,15 @@ def _planned_deletions(actions: list) -> list:
 
 def _confirm_apply(actions: list, mode: str, use_trash: bool = False) -> bool:
     deletions = _planned_deletions(actions)
-    paths = [a for a in deletions if a.target_type != "process"]
+    mem = [a for a in deletions if a.target_type == "memory"]
+    paths = [a for a in deletions if a.target_type not in {"process", "memory"}]
     procs = sum(1 for a in deletions if a.target_type == "process")
-    total = sum(a.bytes_reclaimed for a in paths)
+    disk_total = sum(a.bytes_reclaimed for a in paths)
+    ram_total = sum(a.bytes_reclaimed for a in mem)
     verb = "trash" if use_trash else "delete"
     print(f"DreamCleanr will apply {len(deletions)} action(s) in '{mode}' mode:")
+    for action in mem[:10]:
+        print(f"  unload    {action.target}  (~{human_bytes(action.bytes_reclaimed)} RAM)  (reversible)")
     for action in paths[:20]:
         label = action.details.get("label", action.target)
         print(f"  {verb:<9} {label}  (~{human_bytes(action.bytes_reclaimed)})")
@@ -63,7 +67,10 @@ def _confirm_apply(actions: list, mode: str, use_trash: bool = False) -> bool:
         print(f"  terminate {procs} stale process(es)")
     if use_trash:
         print("Paths go to the macOS Trash (restore from Finder); empty the Trash to reclaim space.")
-    print(f"Estimated reclaim: ~{human_bytes(total)}")
+    reclaim = f"~{human_bytes(disk_total)} disk"
+    if ram_total:
+        reclaim += f" + ~{human_bytes(ram_total)} RAM"
+    print(f"Estimated reclaim: {reclaim}")
     try:
         answer = input("Proceed? [y/N] ").strip().lower()
     except EOFError:

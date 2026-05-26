@@ -455,6 +455,56 @@ class CoreTests(unittest.TestCase):
         self.assertEqual(ceiling["ram_bytes"], 1024 * 1024 + 8 * 1024 ** 3)  # stale proc + model (active excluded)
         self.assertEqual(ceiling["disk_bytes"], 2048 + 4096)  # uv + node; child/protected/guarded excluded
 
+    def test_plan_cleanup_max_unloads_loaded_models(self) -> None:
+        snapshot = {
+            "processes": [],
+            "process_summary": {fam: {"state": "inactive", "recommended_action": "protect_only"} for fam in ("docker", "claude", "codex")},
+            "loaded_models": [{"name": "llama3", "size_bytes": 8 * 1024 ** 3, "action": "ollama stop llama3"}],
+        }
+        with patch("dreamcleanr.core.du_bytes", return_value=0):
+            max_actions = plan_cleanup(snapshot, mode="max")
+            balanced = plan_cleanup(snapshot, mode="balanced")
+        mem = [a for a in max_actions if a.target_type == "memory"]
+        self.assertEqual(len(mem), 1)
+        self.assertEqual(mem[0].target, "llama3")
+        self.assertEqual(mem[0].bytes_reclaimed, 8 * 1024 ** 3)
+        self.assertTrue(mem[0].details["reversible"])
+        self.assertEqual([a for a in balanced if a.target_type == "memory"], [])  # max-only
+
+    def test_apply_unloads_model_via_command(self) -> None:
+        snapshot = {"process_summary": {fam: {"protected_library_caches": []} for fam in ("claude", "codex")}}
+        action = CleanupAction(
+            target="llama3", target_type="memory", family="ollama", classification="LOADED_MODEL",
+            result="planned", bytes_reclaimed=8 * 1024 ** 3, reason="r",
+            details={"apply_allowed": True, "action": "ollama stop llama3"},
+        )
+        captured = {}
+
+        def fake_run(cmd, timeout=5):
+            captured["cmd"] = cmd
+            return {"ok": True, "timed_out": False, "returncode": 0, "stdout": "", "stderr": ""}
+
+        with patch("dreamcleanr.core.run_command", side_effect=fake_run):
+            applied = apply_actions(snapshot, [action], dry_run=False)
+        self.assertEqual(applied[0].result, "unloaded")
+        self.assertEqual(captured["cmd"], ["ollama", "stop", "llama3"])
+
+    def test_build_cleanup_report_separates_ram_and_disk(self) -> None:
+        from dreamcleanr.core import build_cleanup_report
+
+        before = {"run_id": "r", "started_at": "s", "host_disk_used_bytes": 1000, "processes": [],
+                  "protected_items": [], "manual_review_items": [], "process_summary": {}}
+        after = {"finished_at": "f", "host_disk_used_bytes": 1000}
+        actions = [
+            CleanupAction(target="x", target_type="path", family="system", classification="SAFE_CACHE", result="deleted", bytes_reclaimed=5000, reason="r", details={}),
+            CleanupAction(target="llama3", target_type="memory", family="ollama", classification="LOADED_MODEL", result="unloaded", bytes_reclaimed=8 * 1024 ** 3, reason="r", details={}),
+            CleanupAction(target="123", target_type="process", family="docker", classification="STALE_CLI", result="terminated", bytes_reclaimed=2 * 1024 * 1024, reason="r", details={}),
+        ]
+        report = build_cleanup_report(before, after, actions, mode="max", dry_run=False)
+        self.assertEqual(report.storage_reclaimed_bytes, 5000)  # disk only — RAM not conflated
+        expected_mem_mb = round((8 * 1024 ** 3 + 2 * 1024 * 1024) / (1024 * 1024), 2)
+        self.assertEqual(report.memory_reclaimed_estimate_mb, expected_mem_mb)  # model + process
+
     def test_prune_history_files_keeps_most_recent_artifacts(self) -> None:
         with TemporaryDirectory() as tmpdir:
             root = Path(tmpdir)
