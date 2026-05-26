@@ -1,11 +1,39 @@
 from __future__ import annotations
 
 import json
+import re
 import unittest
 from pathlib import Path
 
+import dreamcleanr
+
 
 ROOT = Path(__file__).resolve().parents[1]
+
+
+class VersionConsistencyTests(unittest.TestCase):
+    def test_package_version_matches_pyproject(self) -> None:
+        pyproject = (ROOT / "pyproject.toml").read_text(encoding="utf-8")
+        match = re.search(r'(?m)^version = "([^"]+)"', pyproject)
+        self.assertIsNotNone(match, "could not find version in pyproject.toml")
+        assert match is not None  # narrow type for readers/type-checkers
+        self.assertEqual(
+            dreamcleanr.__version__,
+            match.group(1),
+            "dreamcleanr.__version__ must match pyproject.toml version so installed "
+            "artifacts do not self-report a stale version (regression guard for the "
+            "0.3.5 release that shipped __version__='0.3.4').",
+        )
+
+    def test_cleanup_report_stamps_tool_version(self) -> None:
+        # Receipts must record which build produced them, so a support ticket
+        # carrying a report JSON is traceable to a version.
+        from dataclasses import fields
+
+        from dreamcleanr.models import CleanupReport
+
+        defaults = {f.name: f.default for f in fields(CleanupReport)}
+        self.assertEqual(defaults["tool_version"], dreamcleanr.__version__)
 
 
 class DistributionSurfaceTests(unittest.TestCase):
