@@ -8,6 +8,7 @@ import signal
 import subprocess
 import time
 import uuid
+from concurrent.futures import ThreadPoolExecutor
 from dataclasses import asdict
 from datetime import datetime, timezone
 from pathlib import Path
@@ -273,12 +274,33 @@ def du_bytes(path: Path) -> int:
         return 0
 
 
+def du_bytes_many(paths: Iterable[Path]) -> Dict[str, int]:
+    """Size many paths concurrently. du is subprocess/IO-bound, so a small thread
+    pool turns a serial sweep of large model/cache dirs into a parallel one."""
+    unique: List[Path] = []
+    seen = set()
+    for path in paths:
+        key = str(path)
+        if key not in seen:
+            seen.add(key)
+            unique.append(path)
+    if not unique:
+        return {}
+    with ThreadPoolExecutor(max_workers=min(8, len(unique))) as pool:
+        sizes = list(pool.map(du_bytes, unique))
+    return {str(path): size for path, size in zip(unique, sizes)}
+
+
 def gather_detector_findings(home: Optional[Path] = None) -> List[Dict[str, Any]]:
     home = home or Path.home()
-    findings: List[DetectorFinding] = []
-    for key, detector in detector_registry(home).items():
-        observed_paths: List[Dict[str, Any]] = []
-        total_bytes = 0
+    registry = detector_registry(home)
+
+    # First pass: collect existing paths (deduped per detector); size them all
+    # together in parallel so big model dirs don't serialize the scan.
+    per_detector: Dict[str, List[Tuple[str, Path]]] = {}
+    all_paths: List[Path] = []
+    for key, detector in registry.items():
+        items: List[Tuple[str, Path]] = []
         seen_paths = set()
         for label, path in detector["paths"]:
             normalized = str(path)
@@ -287,7 +309,17 @@ def gather_detector_findings(home: Optional[Path] = None) -> List[Dict[str, Any]
             seen_paths.add(normalized)
             if not path.exists():
                 continue
-            size_bytes = du_bytes(path)
+            items.append((label, path))
+            all_paths.append(path)
+        per_detector[key] = items
+    size_map = du_bytes_many(all_paths)
+
+    findings: List[DetectorFinding] = []
+    for key, detector in registry.items():
+        observed_paths: List[Dict[str, Any]] = []
+        total_bytes = 0
+        for label, path in per_detector[key]:
+            size_bytes = size_map.get(str(path), 0)
             observed_paths.append(
                 {
                     "label": label,
@@ -869,26 +901,13 @@ def attach_classification_counts(processes: List[ProcessRecord], family_summarie
 
 
 def gather_storage_records(family_summaries: Dict[str, Dict[str, Any]]) -> Tuple[List[StorageRecord], List[StorageRecord], List[StorageRecord]]:
-    records: List[StorageRecord] = []
-    protected: List[StorageRecord] = []
-    manual: List[StorageRecord] = []
+    pending: List[Tuple[str, Path, str, str, str]] = []
 
     def add_record(label: str, path: Path, family: str, classification: str, notes: str) -> None:
+        # Defer sizing — collect candidates now, du them all in parallel below.
         if not path.exists():
             return
-        record = StorageRecord(
-            label=label,
-            path=str(path),
-            family=family,
-            classification=classification,
-            size_bytes=du_bytes(path),
-            notes=notes,
-        )
-        records.append(record)
-        if classification == "PROTECTED_STATE":
-            protected.append(record)
-        elif classification == "REVIEW_VM":
-            manual.append(record)
+        pending.append((label, path, family, classification, notes))
 
     for label, path in SAFE_CACHE_PATHS.items():
         add_record(label, path, "system", "SAFE_CACHE", "Regenerable cache or developer artifact.")
@@ -921,6 +940,24 @@ def gather_storage_records(family_summaries: Dict[str, Dict[str, Any]]) -> Tuple
             classification = "SAFE_CACHE" if family_summaries["codex"]["state"] == "inactive" else "PROTECTED_STATE"
             add_record(f"codex_support_cache:{dirname}", path, "codex", classification, "Codex support cache directory.")
 
+    size_map = du_bytes_many([path for _, path, _, _, _ in pending])
+    records: List[StorageRecord] = []
+    protected: List[StorageRecord] = []
+    manual: List[StorageRecord] = []
+    for label, path, family, classification, notes in pending:
+        record = StorageRecord(
+            label=label,
+            path=str(path),
+            family=family,
+            classification=classification,
+            size_bytes=size_map.get(str(path), 0),
+            notes=notes,
+        )
+        records.append(record)
+        if classification == "PROTECTED_STATE":
+            protected.append(record)
+        elif classification == "REVIEW_VM":
+            manual.append(record)
     return records, protected, manual
 
 

@@ -212,6 +212,20 @@ class CoreTests(unittest.TestCase):
         self.assertEqual(annotated[0]["active_project_count"], 1)
         self.assertEqual(annotated[1]["safety_state"], "visibility_only")
 
+    def test_du_bytes_many_parallel_sizes_and_dedups(self) -> None:
+        from dreamcleanr.core import du_bytes_many
+
+        calls = []
+
+        def fake(path: Path) -> int:
+            calls.append(str(path))
+            return 100
+
+        with patch("dreamcleanr.core.du_bytes", side_effect=fake):
+            result = du_bytes_many([Path("/a"), Path("/b"), Path("/a")])
+        self.assertEqual(result, {"/a": 100, "/b": 100})
+        self.assertEqual(len(calls), 2)  # deduped before sizing
+
     def test_apply_blocks_terminate_when_pid_identity_changed(self) -> None:
         snapshot = {"process_summary": {fam: {"protected_library_caches": []} for fam in ("claude", "codex")}}
         action = CleanupAction(
