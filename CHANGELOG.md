@@ -4,6 +4,31 @@ All notable DreamCleanr release-facing changes should be tracked here.
 
 ## [Unreleased]
 
+## [0.3.6] - 2026-05-25
+
+### Fixed
+
+- `dreamcleanr --version` (and the `__version__` attribute consumed by the
+  MCP server and receipts) now reports the correct release version. The
+  `0.3.5` release shipped with `dreamcleanr/__init__.py` still pinned to
+  `0.3.4` because the version string was duplicated and only `pyproject.toml`
+  was bumped, so installed `0.3.5` artifacts self-reported as `0.3.4`. The
+  package version and `__version__` are now both `0.3.6`, and a new
+  distribution test asserts they stay in lockstep so this cannot recur.
+
+### Added
+
+- Cleanup report JSON now stamps a `tool_version` field, so a receipt shared
+  in a support request is traceable to the exact build that produced it
+  (same traceability gap as the version-reporting bug above).
+
+### Removed
+
+- Dropped the vestigial `installer/DreamCleanr-0.3.5.pkg` stub (1.5 KB, no
+  build script, referenced by nothing). The supported install path is the
+  `scripts/install.sh` one-liner that resolves the latest signed wheel from
+  GitHub Releases; the release workflow has never produced a `.pkg`.
+
 ## [0.3.5] - 2026-05-04
 
 ### Fixed

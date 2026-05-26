@@ -3,6 +3,8 @@ from __future__ import annotations
 from dataclasses import asdict, dataclass, field
 from typing import Any, Dict, List, Optional
 
+from . import __version__
+
 
 @dataclass
 class _Dictable:
@@ -126,10 +128,12 @@ class CleanupReport:
     family_summaries: Dict[str, Dict[str, Any]]
     actions: List[CleanupAction]
     snapshot: Dict[str, Any]
+    tool_version: str = __version__
 
     def to_dict(self) -> Dict[str, Any]:
         return {
             "run_id": self.run_id,
+            "tool_version": self.tool_version,
             "started_at": self.started_at,
             "finished_at": self.finished_at,
             "mode": self.mode,
