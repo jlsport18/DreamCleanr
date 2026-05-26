@@ -14,12 +14,39 @@ from .core import (
     build_cleanup_report,
     capture_snapshot,
     default_report_dir,
+    human_bytes,
     plan_cleanup,
     apply_actions,
     now_iso,
     prune_history_files,
     prune_rotated_logs,
 )
+
+
+def _planned_deletions(actions: list) -> list:
+    """Actions that would actually delete/terminate (not preview-gated)."""
+    return [a for a in actions if a.details.get("apply_allowed", True)]
+
+
+def _confirm_apply(actions: list, mode: str) -> bool:
+    deletions = _planned_deletions(actions)
+    paths = [a for a in deletions if a.target_type != "process"]
+    procs = sum(1 for a in deletions if a.target_type == "process")
+    total = sum(a.bytes_reclaimed for a in paths)
+    print(f"DreamCleanr will apply {len(deletions)} action(s) in '{mode}' mode:")
+    for action in paths[:20]:
+        label = action.details.get("label", action.target)
+        print(f"  delete     {label}  (~{human_bytes(action.bytes_reclaimed)})")
+    if len(paths) > 20:
+        print(f"  … and {len(paths) - 20} more path(s)")
+    if procs:
+        print(f"  terminate  {procs} stale process(es)")
+    print(f"Estimated reclaim: ~{human_bytes(total)}")
+    try:
+        answer = input("Proceed? [y/N] ").strip().lower()
+    except EOFError:
+        return False
+    return answer in {"y", "yes"}
 from .reporting import build_receipt_summary, build_team_export, write_html, write_team_csv
 from .scheduler import install_launch_agent, uninstall_launch_agent, write_launch_agent
 
@@ -101,6 +128,18 @@ def command_clean(args: argparse.Namespace) -> int:
             planned_actions = [action for action in planned_actions if action.target_type == "process"]
         elif args.scope == "storage":
             planned_actions = [action for action in planned_actions if action.target_type != "process"]
+
+        if not dry_run and _planned_deletions(planned_actions):
+            if not getattr(args, "yes", False):
+                if not sys.stdin.isatty():
+                    print(
+                        "Refusing to --apply in a non-interactive session without --yes.",
+                        file=sys.stderr,
+                    )
+                    return 2
+                if not _confirm_apply(planned_actions, args.mode):
+                    print("Aborted — running a preview instead; no changes made.")
+                    dry_run = True
         actions = apply_actions(before, planned_actions, dry_run=dry_run)
         after = capture_snapshot(mode=args.mode)
         report = build_cleanup_report(before, after, actions, mode=args.mode, dry_run=dry_run)
@@ -206,6 +245,7 @@ def build_parser() -> argparse.ArgumentParser:
     clean.add_argument("--mode", choices=["safe", "balanced", "max"], default="balanced")
     clean.add_argument("--scope", choices=["all", "processes", "storage"], default="all")
     clean.add_argument("--apply", action="store_true", help="Apply cleanup actions instead of dry-run preview.")
+    clean.add_argument("--yes", "-y", action="store_true", help="Skip the confirmation prompt (required for non-interactive --apply, e.g. the scheduled job).")
     clean.add_argument("--output-dir", help="Directory for JSON and HTML reports.")
     clean.add_argument("--json-out", help="Write cleanup report JSON to a specific file.")
     clean.add_argument("--html-out", help="Write cleanup report HTML to a specific file.")

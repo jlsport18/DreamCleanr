@@ -5,10 +5,45 @@ import unittest
 from argparse import Namespace
 from pathlib import Path
 from tempfile import TemporaryDirectory
-from unittest.mock import patch
+from unittest.mock import MagicMock, patch
 
 from dreamcleanr import __version__
 from dreamcleanr.cli import build_parser, command_clean, command_export
+from dreamcleanr.models import CleanupAction
+
+
+class _StubReport:
+    run_id = "runGATE"
+
+    def to_dict(self) -> dict:
+        return {"run_id": "runGATE"}
+
+
+def _deletion_action() -> CleanupAction:
+    return CleanupAction(
+        target="/tmp/dreamcleanr-test-cache",
+        target_type="path",
+        family="system",
+        classification="SAFE_CACHE",
+        result="planned",
+        bytes_reclaimed=10,
+        reason="test",
+        details={"label": "uv_cache", "apply_allowed": True},
+    )
+
+
+def _apply_args(tmpdir: str, yes: bool) -> Namespace:
+    return Namespace(
+        mode="balanced",
+        apply=True,
+        yes=yes,
+        output_dir=tmpdir,
+        json_out=None,
+        html_out=None,
+        retention_count=21,
+        open=False,
+        scope="all",
+    )
 
 
 class CliTests(unittest.TestCase):
@@ -130,6 +165,54 @@ class CliTests(unittest.TestCase):
             self.assertEqual(result, 0)
             self.assertTrue((root / "report-team-export.json").exists())
             self.assertTrue((root / "report-team-export.csv").exists())
+
+
+    def test_clean_apply_refuses_noninteractive_without_yes(self) -> None:
+        apply_mock = MagicMock(return_value=[])
+        with TemporaryDirectory() as tmpdir:
+            args = _apply_args(tmpdir, yes=False)
+            with patch("dreamcleanr.cli.capture_snapshot", return_value={}), patch(
+                "dreamcleanr.cli.plan_cleanup", return_value=[_deletion_action()]
+            ), patch("dreamcleanr.cli.apply_actions", apply_mock), patch(
+                "sys.stdin.isatty", return_value=False
+            ):
+                result = command_clean(args)
+        self.assertEqual(result, 2)
+        apply_mock.assert_not_called()
+
+    def test_clean_apply_with_yes_skips_confirmation(self) -> None:
+        apply_mock = MagicMock(return_value=[])
+        confirm_mock = MagicMock(return_value=True)
+        with TemporaryDirectory() as tmpdir:
+            args = _apply_args(tmpdir, yes=True)
+            with patch("dreamcleanr.cli.capture_snapshot", return_value={}), patch(
+                "dreamcleanr.cli.plan_cleanup", return_value=[_deletion_action()]
+            ), patch("dreamcleanr.cli.apply_actions", apply_mock), patch(
+                "dreamcleanr.cli.build_cleanup_report", return_value=_StubReport()
+            ), patch("dreamcleanr.cli.build_receipt_summary", return_value={}), patch(
+                "dreamcleanr.cli.write_html"
+            ), patch("dreamcleanr.cli._confirm_apply", confirm_mock):
+                result = command_clean(args)
+        self.assertEqual(result, 0)
+        confirm_mock.assert_not_called()
+        self.assertFalse(apply_mock.call_args.kwargs["dry_run"])
+
+    def test_clean_apply_decline_falls_back_to_preview(self) -> None:
+        apply_mock = MagicMock(return_value=[])
+        with TemporaryDirectory() as tmpdir:
+            args = _apply_args(tmpdir, yes=False)
+            with patch("dreamcleanr.cli.capture_snapshot", return_value={}), patch(
+                "dreamcleanr.cli.plan_cleanup", return_value=[_deletion_action()]
+            ), patch("dreamcleanr.cli.apply_actions", apply_mock), patch(
+                "dreamcleanr.cli.build_cleanup_report", return_value=_StubReport()
+            ), patch("dreamcleanr.cli.build_receipt_summary", return_value={}), patch(
+                "dreamcleanr.cli.write_html"
+            ), patch("sys.stdin.isatty", return_value=True), patch(
+                "dreamcleanr.cli._confirm_apply", return_value=False
+            ):
+                result = command_clean(args)
+        self.assertEqual(result, 0)
+        self.assertTrue(apply_mock.call_args.kwargs["dry_run"])
 
 
 if __name__ == "__main__":

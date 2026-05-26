@@ -44,6 +44,7 @@ def write_launch_agent(
     <string>dreamcleanr</string>
     <string>clean</string>
     <string>--apply</string>
+    <string>--yes</string>
     <string>--mode</string>
     <string>{mode}</string>
     <string>--output-dir</string>
