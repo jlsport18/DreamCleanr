@@ -29,10 +29,14 @@ No cleaning capability was removed — it was re-tiered.
 | `security(core): guard termination against PID reuse` | High | `core.py`, `test_core.py` | +2 |
 | `feat(cli): exclusive run lock` | Medium | `cli.py`, `test_cli.py` | +1 |
 | `test(models): assert to_dict field parity` | Medium | `test_distribution.py` | +1 |
+| `perf(core): parallelize path sizing for faster scans` | High | `core.py`, `test_core.py` | +1 |
+| `feat(cli): macOS Trash safety net for deletes` | High | `core.py`, `cli.py`, `README.md`, tests | +4 |
+| `feat(core): smart model-cache reclaim (surface + regenerable-only)` | High | `core.py`, `models.py`, `reporting.py`, `test_core.py` | +4 |
 
 ## Verification
 
-- [x] `python -m unittest discover -s tests` → **42 pass** (was 33).
+- [x] `python -m unittest discover -s tests` → **51 pass** (was 33).
+- [x] Real scan on this Mac: surfaces 885 MB node regenerable cache ("safe to clear in max"); Ollama/HF model data surfaced for review, never auto-deleted; HTML report renders with new fields.
 - [x] `compileall` clean.
 - [x] `clean --mode balanced` previews (the corrected README command).
 - [x] Interactive `--apply` prompts; non-interactive `--apply` proceeds — **no regression for the installed daily LaunchAgent** (verified this Mac's plist lacks `--yes`; the gate no longer requires it).

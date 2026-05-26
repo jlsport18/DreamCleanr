@@ -14,8 +14,13 @@ steer. All low-risk, additive or safety-improving. No push (human reviews).
 | ROBUST-1 | High | `security(core): guard termination against PID reuse` | `test_apply_blocks_terminate_when_pid_identity_changed`, `_marks_already_exited_process_terminated` |
 | ROBUST-2 | Medium | `feat(cli): exclusive run lock` | `test_clean_apply_skipped_when_report_dir_locked` |
 | ROBUST-3 | Medium | `test(models): assert to_dict field parity` | `test_cleanup_report_to_dict_covers_every_field` |
+| B (perf) | High | `perf(core): parallelize path sizing` | `test_du_bytes_many_parallel_sizes_and_dedups` |
+| C (trash) | High | `feat(cli): macOS Trash safety net` | `test_path_delete_trash_*`, `test_trash_defaults_*`, `test_no_trash_flag_*` |
+| A (smart) | High | `feat(core): smart model-cache reclaim` | `test_detector_findings_carry_reclaim_metadata`, `test_plan_cleanup_max_*` (reclaim / skip guarded-fresh-model / overlap) |
 
-**Result:** 42 tests pass (was 33). `--version`=0.3.6. `clean --mode balanced` previews.
+**Result:** 51 tests pass (was 33). Verified on this Mac: real scan surfaces 885 MB
+node regenerable cache ("safe to clear in max"); model_data (Ollama/HF) surfaced for
+review, never auto-deleted; report renders cleanly with the new fields. `--version`=0.3.6. `clean --mode balanced` previews.
 Interactive `--apply` prompts `[y/N]`; scripted/scheduled `--apply` (no TTY) proceeds, so an
 **already-installed LaunchAgent keeps working** after upgrade (no `--yes` required).
 
