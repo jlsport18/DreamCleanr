@@ -9,14 +9,13 @@
 - **MODEL-1 — Reclaim model caches (HF/Ollama).** The market wedge is 20GB+ of model/dataset
   caches that are currently *visibility-only* (`cleanup_ready=False`). Age- and reference-aware
   cleanup here is the single biggest reclaim the tool can't yet do.
-- **ROBUST-1 — PID-identity re-verify before SIGTERM** (kill-the-right-process safety).
 - **WEB-1 — Soft-404 fix.** `dreamcleanr.jonlynchfinancial.com` returns 200+homepage for every
   unknown path → set CF Pages `not_found_handling` to "404 page". Separate project; needs
   dashboard/API; portfolio deploy-risk — do deliberately.
 
 ## Medium
 
-- **ROBUST-2** run lockfile · **ROBUST-3** to_dict field-parity test · **CFG-1** user config file.
+- **CFG-1** user config file (custom protected/safe paths, per-family flags).
 
 ## Native macOS app (NAT-1…NAT-10) — roadmap, not this quarter's CLI work
 

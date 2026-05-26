@@ -18,7 +18,7 @@ prototype), not defects.
 | --- | --- | --- | --- | --- |
 | DOC-1 | Fix broken `--dry-run` example + document tiers | XS | `README.md:81` | argparse rejects `--dry-run`. **Shipped.** |
 | SAFE-1 | Symlink-safe deletes | XS | `core.py` `path_delete` | rmtree on symlinked dir raised; could follow links out of tree. **Shipped.** |
-| ROBUST-1 | Re-verify PID identity before SIGTERM | S | `core.py` `apply_actions`/`terminate_process` | Snapshot→apply gap; recycled PID could kill an unrelated process. Defer. |
+| ROBUST-1 | Re-verify PID identity before SIGTERM | S | `core.py` `apply_actions`/`process_family` | Snapshot→apply gap; recycled PID could kill an unrelated process. **Shipped.** |
 | MODEL-1 | Make HF/Ollama detectors cleanup-capable (age/size aware) | M | `core.py` `detector_registry` (`cleanup_ready=False`) | The market wedge (20GB+ model caches) is currently visibility-only. Defer. |
 | QUAR-1 | Quarantine-with-restore (reversibility moat) | M | `core.py` `path_delete`; Brief §moats | Hard-delete today; staging bin is the brief's #1 moat + bridge to native APFS staging. Defer. |
 | WEB-1 | Fix site-wide soft-404 on dreamcleanr.jonlynchfinancial.com | XS | live: any unknown path → 200+homepage | CF Pages `not_found_handling`=SPA. Separate project; needs dashboard. Defer. |
@@ -28,8 +28,8 @@ prototype), not defects.
 | ID | Title | Eff | Evidence | Note |
 | --- | --- | --- | --- | --- |
 | RCPT-1 | Stop receipts inflating reclaimed bytes | XS | `core.py` `build_cleanup_report` | `max(host-delta, planned)` overstated. **Shipped** (bundled into TIER commit). |
-| ROBUST-2 | Run lock to prevent concurrent destructive runs | S | `scheduler.py` + `cli.py` | Scheduled + manual run can overlap on same paths. Defer. |
-| ROBUST-3 | Field-parity test for `CleanupReport.to_dict` | XS | `models.py:133` | Hand-maintained dict; add-a-field-forget risk. Defer. |
+| ROBUST-2 | Run lock to prevent concurrent destructive runs | S | `cli.py` `_acquire_run_lock` | Scheduled + manual run can overlap on same paths. **Shipped.** |
+| ROBUST-3 | Field-parity test for `CleanupReport.to_dict` | XS | `models.py:133` | Hand-maintained dict; add-a-field-forget risk. **Shipped.** |
 | CFG-1 | User config: custom protected/safe paths, per-family flags | M | everything hardcoded in `core.py` | Power-dev ICP will want to extend detectors. Defer. |
 
 ## Native macOS app — roadmap (build plan, not defects)

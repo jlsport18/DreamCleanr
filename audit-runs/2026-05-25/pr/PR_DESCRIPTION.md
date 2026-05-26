@@ -25,10 +25,14 @@ No cleaning capability was removed — it was re-tiered.
 | `feat(core): re-tier aggressive deletions to max-only; safe is preview` | Critical | `core.py`, `test_core.py` | +2 (`library_sweep_is_max_only`, `safe_mode_is_preview_only`) |
 | `feat(cli): confirm before destructive --apply; require --yes when non-interactive` | Critical | `cli.py`, `scheduler.py`, `test_cli.py` | +3 (refuse / yes-skips / decline-preview) |
 | `docs: fix broken --dry-run example; document cleanup tiers` | High | `README.md` | n/a |
+| `fix(cli): confirm only for interactive --apply` | Critical | `cli.py`, `README.md` | (revises gate to not break installed scheduler) |
+| `security(core): guard termination against PID reuse` | High | `core.py`, `test_core.py` | +2 |
+| `feat(cli): exclusive run lock` | Medium | `cli.py`, `test_cli.py` | +1 |
+| `test(models): assert to_dict field parity` | Medium | `test_distribution.py` | +1 |
 
 ## Verification
 
-- [x] `python -m unittest discover -s tests` → **38 pass** (was 33).
+- [x] `python -m unittest discover -s tests` → **42 pass** (was 33).
 - [x] `compileall` clean.
 - [x] `clean --mode balanced` previews (the corrected README command).
 - [x] Interactive `--apply` prompts; non-interactive `--apply` proceeds — **no regression for the installed daily LaunchAgent** (verified this Mac's plist lacks `--yes`; the gate no longer requires it).
