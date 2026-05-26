@@ -13,6 +13,7 @@ from dreamcleanr.core import (
     gather_detector_findings,
     gather_project_signals,
     parse_elapsed_to_seconds,
+    plan_cleanup,
     prune_history_files,
     summarize_family,
 )
@@ -210,6 +211,43 @@ class CoreTests(unittest.TestCase):
         self.assertEqual(annotated[0]["safety_state"], "guarded_by_active_projects")
         self.assertEqual(annotated[0]["active_project_count"], 1)
         self.assertEqual(annotated[1]["safety_state"], "visibility_only")
+
+    def test_plan_cleanup_library_sweep_is_max_only(self) -> None:
+        snapshot = {
+            "processes": [],
+            "process_summary": {
+                fam: {"state": "inactive", "recommended_action": "protect_only"}
+                for fam in ("docker", "claude", "codex")
+            },
+        }
+        with patch("dreamcleanr.core.du_bytes", return_value=0):
+            balanced = plan_cleanup(snapshot, mode="balanced")
+            aggressive = plan_cleanup(snapshot, mode="max")
+        balanced_labels = {a.details.get("label") for a in balanced}
+        max_labels = {a.details.get("label") for a in aggressive}
+        # Regenerable dev caches stay in the standard tier...
+        self.assertIn("uv_cache", balanced_labels)
+        self.assertIn("npm_cache", balanced_labels)
+        # ...but the wholesale ~/Library/Caches sweep is aggressive-only.
+        self.assertNotIn("library_caches", balanced_labels)
+        self.assertIn("library_caches", max_labels)
+
+    def test_plan_cleanup_safe_mode_is_preview_only(self) -> None:
+        snapshot = {
+            "processes": [],
+            "process_summary": {
+                fam: {"state": "inactive", "recommended_action": "protect_only"}
+                for fam in ("docker", "claude", "codex")
+            },
+        }
+        with patch("dreamcleanr.core.du_bytes", return_value=0):
+            safe = plan_cleanup(snapshot, mode="safe")
+        self.assertTrue(safe, "safe mode should still surface a preview of standard actions")
+        self.assertTrue(
+            all(not action.details.get("apply_allowed", True) for action in safe),
+            "every safe-mode action must be preview-only (apply_allowed=False)",
+        )
+        self.assertNotIn("library_caches", {a.details.get("label") for a in safe})
 
     def test_prune_history_files_keeps_most_recent_artifacts(self) -> None:
         with TemporaryDirectory() as tmpdir:

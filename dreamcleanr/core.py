@@ -1067,29 +1067,29 @@ def family_summary_from_actions(
 
 
 def plan_cleanup(snapshot: Dict[str, Any], mode: str = "balanced") -> List[CleanupAction]:
+    """Plan cleanup actions for the requested tier.
+
+    Tiers (cleaning power is never removed — only re-characterized by tier):
+
+    * ``safe``     — previews the standard tier without deleting anything. Every
+                     action is marked ``apply_allowed=False`` so ``--apply`` is a
+                     no-op guarantee.
+    * ``balanced`` — the default. Standard, low-blast-radius reclaim: regenerable
+                     developer/tool caches, Docker prune, and stale-process trim.
+    * ``max``      — aggressive. Everything ``balanced`` does PLUS the broad
+                     ``~/Library/Caches`` sweep and inactive app support caches.
+
+    The wholesale ``~/Library/Caches`` sweep lived in ``balanced`` (and even ran
+    in ``safe``); it is now ``max``-only so the default and the unattended
+    scheduled run stay fast but conservative.
+    """
     actions: List[CleanupAction] = []
+    preview_only = mode == "safe"
+    applies = not preview_only
+
     processes = [ProcessRecord(**item) for item in snapshot["processes"]]
     for process in processes:
         if process.classification not in {"STALE_CLI", "STALE_HELPER"}:
-            continue
-        if mode == "safe":
-            actions.append(
-                CleanupAction(
-                    target=str(process.pid),
-                    target_type="process",
-                    family=process.family,
-                    classification=process.classification,
-                    result="planned",
-                    bytes_reclaimed=process.rss_kb * 1024,
-                    reason="Would terminate stale helper or CLI probe process in balanced or max mode.",
-                    details={
-                        "pid": process.pid,
-                        "args": process.args,
-                        "elapsed_seconds": process.elapsed_seconds,
-                        "apply_allowed": False,
-                    },
-                )
-            )
             continue
         actions.append(
             CleanupAction(
@@ -1099,17 +1099,21 @@ def plan_cleanup(snapshot: Dict[str, Any], mode: str = "balanced") -> List[Clean
                 classification=process.classification,
                 result="planned",
                 bytes_reclaimed=process.rss_kb * 1024,
-                reason="Stale helper or CLI probe process with low activity and no active parent chain.",
+                reason=(
+                    "Would terminate stale helper or CLI probe process; preview only in safe mode."
+                    if preview_only
+                    else "Stale helper or CLI probe process with low activity and no active parent chain."
+                ),
                 details={
                     "pid": process.pid,
                     "args": process.args,
                     "elapsed_seconds": process.elapsed_seconds,
-                    "apply_allowed": True,
+                    "apply_allowed": applies,
                 },
             )
         )
 
-    def safe_delete_action(label: str, path: Path, family: str, reason: str) -> None:
+    def safe_delete_action(label: str, path: Path, family: str, reason: str, apply_allowed: bool = True) -> None:
         actions.append(
             CleanupAction(
                 target=str(path),
@@ -1119,19 +1123,20 @@ def plan_cleanup(snapshot: Dict[str, Any], mode: str = "balanced") -> List[Clean
                 result="planned",
                 bytes_reclaimed=du_bytes(path),
                 reason=reason,
-                details={"label": label, "apply_allowed": True},
+                details={"label": label, "apply_allowed": apply_allowed},
             )
         )
 
-    safe_delete_action("uv_cache", SAFE_CACHE_PATHS["uv_cache"], "system", "Regenerable uv cache.")
-    safe_delete_action("trunk_cache", SAFE_CACHE_PATHS["trunk_cache"], "system", "Regenerable trunk cache.")
-    safe_delete_action("gradle_cache", SAFE_CACHE_PATHS["gradle_cache"], "system", "Regenerable Gradle cache.")
-    safe_delete_action("npm_cache", SAFE_CACHE_PATHS["npm_cache"], "system", "Regenerable npm cache.")
-    safe_delete_action("npx_cache", SAFE_CACHE_PATHS["npx_cache"], "system", "Regenerable npx cache.")
-    safe_delete_action("library_caches", SAFE_CACHE_PATHS["library_caches"], "system", "Remove unprotected library caches.")
+    # Standard tier — regenerable developer/tool caches (re-download on demand).
+    # Present in balanced and max; previewed (never deleted) in safe.
+    safe_delete_action("uv_cache", SAFE_CACHE_PATHS["uv_cache"], "system", "Regenerable uv cache.", apply_allowed=applies)
+    safe_delete_action("trunk_cache", SAFE_CACHE_PATHS["trunk_cache"], "system", "Regenerable trunk cache.", apply_allowed=applies)
+    safe_delete_action("gradle_cache", SAFE_CACHE_PATHS["gradle_cache"], "system", "Regenerable Gradle cache.", apply_allowed=applies)
+    safe_delete_action("npm_cache", SAFE_CACHE_PATHS["npm_cache"], "system", "Regenerable npm cache.", apply_allowed=applies)
+    safe_delete_action("npx_cache", SAFE_CACHE_PATHS["npx_cache"], "system", "Regenerable npx cache.", apply_allowed=applies)
 
     process_summary = snapshot["process_summary"]
-    if mode in {"balanced", "max"} and process_summary["docker"]["recommended_action"] == "docker_system_prune":
+    if process_summary["docker"]["recommended_action"] == "docker_system_prune":
         actions.append(
             CleanupAction(
                 target="docker_system_prune",
@@ -1142,13 +1147,20 @@ def plan_cleanup(snapshot: Dict[str, Any], mode: str = "balanced") -> List[Clean
                 bytes_reclaimed=0,
                 reason="Prune stopped containers, dangling images, and build cache via Docker daemon.",
                 details={
-                    "apply_allowed": True,
+                    "apply_allowed": applies,
                     "inventory_counts": process_summary["docker"].get("inventory_counts", {}),
                 },
             )
         )
 
+    # Aggressive tier (max only) — broad caches with a wider blast radius.
     if mode == "max":
+        safe_delete_action(
+            "library_caches",
+            SAFE_CACHE_PATHS["library_caches"],
+            "system",
+            "Remove all unprotected ~/Library/Caches entries (aggressive; max mode only).",
+        )
         claude_state = process_summary["claude"]["state"]
         codex_state = process_summary["codex"]["state"]
         if claude_state in {"inactive", "residual_data_only"}:
@@ -1164,6 +1176,11 @@ def plan_cleanup(snapshot: Dict[str, Any], mode: str = "balanced") -> List[Clean
 
 
 def path_delete(path: Path) -> None:
+    # Remove a symlink itself rather than following it — never traverse out of
+    # the intended tree (and avoid shutil.rmtree raising on a symlinked dir).
+    if path.is_symlink():
+        path.unlink(missing_ok=True)
+        return
     if not path.exists():
         return
     if path.is_dir():
@@ -1302,8 +1319,11 @@ def build_cleanup_report(
 ) -> CleanupReport:
     storage_before = before_snapshot["host_disk_used_bytes"]
     storage_after = after_snapshot["host_disk_used_bytes"]
+    # Attribute only the bytes DreamCleanr actually acted on. The previous
+    # max(host-disk-delta, planned) could overstate the receipt when unrelated
+    # processes freed disk during the run — receipts must not inflate.
     planned_bytes = sum(action.bytes_reclaimed for action in actions)
-    storage_reclaimed = planned_bytes if dry_run else max(storage_before - storage_after, planned_bytes)
+    storage_reclaimed = planned_bytes
 
     memory_before = sum(item["rss_kb"] for item in before_snapshot["processes"]) / 1024.0
     memory_reclaimed = sum(action.bytes_reclaimed for action in actions if action.target_type == "process") / (1024.0 * 1024.0)
