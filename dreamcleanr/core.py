@@ -1252,6 +1252,31 @@ def terminate_process(pid: int) -> bool:
     return False
 
 
+def process_args(pid: int) -> Optional[str]:
+    """Current argument string for a live PID, or None if it no longer exists."""
+    result = run_command(["ps", "-p", str(pid), "-o", "args="], timeout=3)
+    if not result["ok"]:
+        return None
+    text = result["stdout"].strip()
+    return text or None
+
+
+def process_family(pid: int) -> Optional[str]:
+    """Re-classify a live PID's family now, to guard against PID reuse.
+
+    Returns None if the PID no longer exists.
+    """
+    args = process_args(pid)
+    if args is None:
+        return None
+    record = ProcessRecord(
+        pid=pid, ppid=0, etime="", elapsed_seconds=0,
+        cpu_percent=0.0, mem_percent=0.0, rss_kb=0, command="", args=args,
+    )
+    classify_process_role(record)
+    return record.family
+
+
 def apply_actions(
     snapshot: Dict[str, Any],
     actions: List[CleanupAction],
@@ -1274,10 +1299,23 @@ def apply_actions(
                 continue
             if action.target_type == "process":
                 pid = int(action.target)
-                success = terminate_process(pid)
-                realized.result = "terminated" if success else "blocked"
-                if not success:
-                    realized.reason = "Process could not be terminated safely."
+                # Guard against PID reuse between scan and apply: confirm the PID
+                # still belongs to the family we classified before sending a signal.
+                current_family = process_family(pid)
+                if current_family is None:
+                    realized.result = "terminated"
+                    realized.reason = "Process already exited before apply."
+                elif current_family != action.family:
+                    realized.result = "blocked"
+                    realized.reason = (
+                        f"PID {pid} now classifies as '{current_family}', not "
+                        f"'{action.family}' — likely reused; not terminated."
+                    )
+                else:
+                    success = terminate_process(pid)
+                    realized.result = "terminated" if success else "blocked"
+                    if not success:
+                        realized.reason = "Process could not be terminated safely."
             elif action.target_type == "path":
                 path = Path(action.target)
                 if action.target.endswith("Library/Caches"):

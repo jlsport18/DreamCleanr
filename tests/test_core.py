@@ -212,6 +212,29 @@ class CoreTests(unittest.TestCase):
         self.assertEqual(annotated[0]["active_project_count"], 1)
         self.assertEqual(annotated[1]["safety_state"], "visibility_only")
 
+    def test_apply_blocks_terminate_when_pid_identity_changed(self) -> None:
+        snapshot = {"process_summary": {fam: {"protected_library_caches": []} for fam in ("claude", "codex")}}
+        action = CleanupAction(
+            target="4242", target_type="process", family="docker",
+            classification="STALE_CLI", result="planned", bytes_reclaimed=1024,
+            reason="stale", details={"args": "docker info", "apply_allowed": True},
+        )
+        with patch("dreamcleanr.core.process_args", return_value="/usr/bin/some-unrelated-binary --foo"):
+            applied = apply_actions(snapshot, [action], dry_run=False)
+        self.assertEqual(applied[0].result, "blocked")
+        self.assertIn("reused", applied[0].reason)
+
+    def test_apply_marks_already_exited_process_terminated(self) -> None:
+        snapshot = {"process_summary": {fam: {"protected_library_caches": []} for fam in ("claude", "codex")}}
+        action = CleanupAction(
+            target="4242", target_type="process", family="docker",
+            classification="STALE_CLI", result="planned", bytes_reclaimed=0,
+            reason="stale", details={"args": "docker info", "apply_allowed": True},
+        )
+        with patch("dreamcleanr.core.process_args", return_value=None):
+            applied = apply_actions(snapshot, [action], dry_run=False)
+        self.assertEqual(applied[0].result, "terminated")
+
     def test_plan_cleanup_library_sweep_is_max_only(self) -> None:
         snapshot = {
             "processes": [],
