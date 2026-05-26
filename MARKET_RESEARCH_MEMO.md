@@ -1,8 +1,130 @@
 # DreamCleanr Market Research Memo
 
-Last updated: `2026-04-05`
+Last updated: `2026-05-25`
 
 This memo supports [MONETIZATION_PLAN.md](MONETIZATION_PLAN.md) and [MARKET_STRATEGY.md](MARKET_STRATEGY.md).
+
+---
+
+## 2026-05-25 Refresh
+
+This refresh supplements — does not replace — the `2026-04-05` memo that follows
+below. The earlier memo only benchmarks consumer Mac cleaners
+(CleanMyMac/DaisyDisk/Hazel/OnyX). This refresh adds (a) market sizing, (b) the
+**developer-tool** competitors that are DreamCleanr's actual nearest neighbors,
+(c) the distribution reality for a tool that needs Full Disk Access, and (d)
+three pricing/GTM **deltas** that are flagged as explicit decisions for the
+operator rather than silent changes to the canonical strategy.
+
+### Bottom line
+
+The canonical decision — **open-core, free CLI, one-time Pro, later Team,
+local-first, no subscription dependency** — is **validated** by current market
+data. Keep it. The refresh sharpens *how* to execute it, not *whether*.
+
+### Market sizing (was missing entirely)
+
+- ~47.2M developers worldwide (SlashData, early 2025); ~36.5M professional.
+- macOS ≈ 30–33% of developers (Stack Overflow 2024) → **~10–14M macOS devs**.
+- 76% of developers use or plan to use AI tools; 62% actively (SO 2024).
+- **Local-LLM curve is the wedge:** Ollama ~170K GitHub stars, monthly model
+  downloads grew from ~100K (Q1 2023) to ~52M (Q1 2026); a single Ollama model
+  cache can exceed 20 GB. Apple Silicon (>80% of Mac devs) and its unified
+  memory are *why* local-LLM dev concentrated on Mac — making Mac the correct
+  beachhead, not a limitation.
+- **SAM:** even 5–10% of ~12M Mac devs running local AI/containers/heavy builds
+  = **0.6–1.2M high-pain users**, and that pool is growing with the local-LLM
+  curve. A 1–2% one-time-Pro conversion is a real indie-to-small-team business.
+
+### The competitor set the old memo missed (developer tools)
+
+DreamCleanr's nearest neighbors are **not** CleanMyMac — they are free,
+single-purpose, often-unsigned dev utilities. This is where the real wedge is:
+
+| Tool | Price | Scope | Why DreamCleanr beats it |
+|---|---|---|---|
+| `npkill` (9.2K★) | Free OSS | `node_modules` only | DreamCleanr unifies node + Docker + AI caches + agent logs with a safety net |
+| DevCleaner for Xcode | Free (MAS) | Xcode DerivedData/sims only | Not AI/container aware; no modes, no MCP |
+| `dev-cleaner` | Free OSS | Xcode/Flutter/Gradle/npm | **Closest analog** — but no AI-model-cache focus, no safe/balanced/max, no MCP, unsigned |
+| `docker system prune` | Free (built-in) | Docker only, manual | DreamCleanr orchestrates it inside a project-safe, receipted flow |
+
+**The gap:** no tool unifies AI model caches (Ollama/HF/llama.cpp) + container
+layers + dependency stores + build outputs + **AI-agent session logs**
+(Claude Code/Cursor/Codeium/Codex) with project protection, dry-run default,
+modes, and an MCP server. Today a dev hand-assembles the above and gets no
+safety net. Most OSS competitors ship **unsigned** binaries that trip
+Gatekeeper — a notarized DreamCleanr is a concrete trust edge.
+
+### Distribution reality: Mac App Store is structurally closed
+
+A cleaner needs broad filesystem reach; the App Sandbox **cannot** grant Full
+Disk Access, so the Mac App Store is not an option. This **confirms** the
+current direct-distribution model (signed Developer ID + notarization, served
+via GitHub Releases). Marketing must reassure users about the one-time
+Gatekeeper "downloaded from the internet" step. Note this also bounds the
+roadmap's iPhone/iPad companion: it can be a *receipts/status viewer*, never the
+cleaner itself.
+
+### Sharpened GTM (top 3)
+
+1. **MCP server is the distribution wedge — lead with it.** "Claude Code /
+   Cursor can clean your disk" is a demo no competitor has, and it is the
+   feature MacPaw structurally will not build. Ship a one-line
+   `claude mcp add dreamcleanr`.
+2. **Homebrew on day one.** `brew install dreamcleanr` is table stakes for a dev
+   CLI and a channel the incumbent cannot use. *(Delta — see below.)*
+3. **Show HN with a specific number** ("recovered 80 GB of Ollama caches Mac
+   cleaners miss") → Product Hunt 2–4 weeks later → dev newsletters (TLDR,
+   Bytes, Console).
+
+### Three deltas flagged for explicit operator decision
+
+These differ from the canonical docs. They are **proposals**, not applied
+changes — the canonical strategy stays as-is until the operator chooses.
+
+1. **Homebrew timing.** Canonical lists package managers as a *later* (#4)
+   distribution priority. Recommendation: **move Homebrew to day-one.** It is
+   free distribution, needs no backend or paid shell, and is how you
+   out-distribute CleanMyMac to the dev audience. Low risk, high leverage.
+2. **Team seat price.** Canonical = `$199/yr` per 5 Macs (~$40/seat).
+   Competitive data suggests **~$99/yr per 5 (~$19/seat)** converts better for
+   bottom-up team adoption, with the value framed as TB/quarter reclaimed across
+   a fleet **plus SSD-longevity** (repeated multi-GB AI-cache overwrite causes
+   real write-amplification/wear — a concrete IT/CFO argument). Decision: hold
+   $199 for higher ACV vs. drop to ~$99 for faster land-and-expand.
+3. **Optional annual on Pro.** Canonical is one-time-only and explicitly rejects
+   subscription. Research suggests offering **$29 one-time (12 mo of updates)
+   *or* $19/yr** as a funding mechanism for ongoing detection-rule maintenance
+   (Ollama/HF/agent paths churn). ⚠️ This partially conflicts with the
+   "one-time first, no subscription" stance and with the
+   `test_distribution.py` guard that asserts the comparison page stays
+   "one-time" and excludes monthly pricing. If adopted, message it as
+   "one-time, or pay-yearly for continuous updates" and update the guard
+   deliberately. Recommendation: **defer** until the premium shell ships; the
+   one-time lane is the right launch.
+
+### Top risk (unchanged but worth stating)
+
+MacPaw bolts an "AI Dev Caches" module onto CleanMyMac (1–2 quarters out — they
+own the engine, signing, brand). Moat = dev-safety depth (project/lockfile
+awareness, agent-session protection) + MCP integration, none of which is their
+ICP. Defensibility comes from *depth on AI-dev safety + breadth across all dev
+bloat + agent integration*, not from generic cleanup claims.
+
+### New sources (2026-05-25)
+
+- SlashData developer population: https://www.slashdata.co/post/global-developer-population-trends-2025-how-many-developers-are-there
+- Stack Overflow 2024 AI survey: https://survey.stackoverflow.co/2024/ai/
+- Ollama repo (stars/downloads): https://github.com/ollama/ollama
+- npkill: https://github.com/voidcosmos/npkill
+- xcode-dev-cleaner (DevCleaner): https://github.com/vashpan/xcode-dev-cleaner
+- dev-cleaner: https://github.com/jemishavasoya/dev-cleaner
+- Docker pruning docs: https://docs.docker.com/engine/manage-resources/pruning/
+- Setapp revenue distribution: https://docs.setapp.com/docs/distributing-revenue
+- App Sandbox / Full Disk Access constraints: https://www.appcoda.com/mac-app-sandbox/
+- macOS developer statistics: https://www.techlila.com/macos-developer-statistics/
+
+---
 
 It is intentionally grounded in official vendor sources and keeps DreamCleanr's current strategy intact:
 
