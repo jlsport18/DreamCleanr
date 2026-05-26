@@ -13,6 +13,7 @@ from dreamcleanr.core import (
     gather_detector_findings,
     gather_project_signals,
     parse_elapsed_to_seconds,
+    parse_size_to_bytes,
     plan_cleanup,
     prune_history_files,
     summarize_family,
@@ -41,6 +42,12 @@ class CoreTests(unittest.TestCase):
         self.assertEqual(parse_elapsed_to_seconds("05:10"), 310)
         self.assertEqual(parse_elapsed_to_seconds("1:05:10"), 3910)
         self.assertEqual(parse_elapsed_to_seconds("2-01:00:00"), 176400)
+
+    def test_parse_size_to_bytes_handles_multichar_units(self) -> None:
+        self.assertEqual(parse_size_to_bytes("40 GB"), 40 * 1024 ** 3)
+        self.assertEqual(parse_size_to_bytes("5.5GB"), int(5.5 * 1024 ** 3))
+        self.assertEqual(parse_size_to_bytes("512MB"), 512 * 1024 ** 2)
+        self.assertEqual(parse_size_to_bytes("100B"), 100)
 
     def test_docker_active_backend_vs_stale_probe(self) -> None:
         processes = [
@@ -377,6 +384,76 @@ class CoreTests(unittest.TestCase):
         labels = {a.details.get("label") for a in actions}
         self.assertIn("library_caches", labels)        # wholesale sweep present
         self.assertNotIn("python:pip_cache", labels)    # overlapping path not double-planned
+
+    def test_capture_memory_state_parses_vm_stat(self) -> None:
+        from dreamcleanr.core import capture_memory_state
+
+        vm = (
+            "Mach Virtual Memory Statistics: (page size of 16384 bytes)\n"
+            "Pages free: 100.\nPages active: 200.\nPages inactive: 50.\n"
+            "Pages wired down: 300.\nPages occupied by compressor: 25.\n"
+        )
+
+        def fake_run(cmd, timeout=5):
+            if cmd[0] == "sysctl":
+                return {"ok": True, "timed_out": False, "returncode": 0, "stdout": str(16384 * 1000), "stderr": ""}
+            if cmd[0] == "vm_stat":
+                return {"ok": True, "timed_out": False, "returncode": 0, "stdout": vm, "stderr": ""}
+            return {"ok": False, "timed_out": False, "returncode": 1, "stdout": "", "stderr": ""}
+
+        with patch("dreamcleanr.core.run_command", side_effect=fake_run):
+            state = capture_memory_state()
+        self.assertTrue(state["available"])
+        self.assertEqual(state["wired_bytes"], 300 * 16384)
+        self.assertEqual(state["used_bytes"], (300 + 200 + 25) * 16384)  # inactive excluded
+        self.assertEqual(state["inactive_bytes"], 50 * 16384)  # reported, not counted as used
+
+    def test_list_loaded_models_parses_ollama_ps(self) -> None:
+        from dreamcleanr.core import list_loaded_models
+
+        out = (
+            "NAME            ID    SIZE     PROCESSOR    UNTIL\n"
+            "llama3:70b      abc   40 GB    100% GPU     4 minutes from now\n"
+            "qwen2:7b        def   5.5 GB   100% CPU     Forever\n"
+        )
+        with patch("dreamcleanr.core.shutil.which", return_value="/usr/local/bin/ollama"), patch(
+            "dreamcleanr.core.run_command",
+            return_value={"ok": True, "timed_out": False, "returncode": 0, "stdout": out, "stderr": ""},
+        ):
+            models = list_loaded_models()
+        self.assertEqual([m["name"] for m in models], ["llama3:70b", "qwen2:7b"])
+        self.assertEqual(models[0]["size_bytes"], 40 * 1024 ** 3)
+        self.assertEqual(models[0]["action"], "ollama stop llama3:70b")
+        self.assertTrue(models[0]["reversible"])
+
+    def test_list_loaded_models_empty_without_ollama(self) -> None:
+        from dreamcleanr.core import list_loaded_models
+
+        with patch("dreamcleanr.core.shutil.which", return_value=None):
+            self.assertEqual(list_loaded_models(), [])
+
+    def test_reclaim_ceiling_sums_only_named_actionable_sources(self) -> None:
+        from dreamcleanr.core import reclaim_ceiling
+
+        snapshot = {
+            "processes": [
+                {"classification": "STALE_CLI", "family": "docker", "pid": 5, "rss_kb": 1024},
+                {"classification": "ACTIVE_PRIMARY", "family": "claude", "pid": 6, "rss_kb": 9999},
+            ],
+            "loaded_models": [{"name": "llama3", "size_bytes": 8 * 1024 ** 3, "action": "ollama stop llama3"}],
+            "storage_records": [
+                {"label": "uv_cache", "classification": "SAFE_CACHE", "size_bytes": 2048},
+                {"label": "library_cache:foo", "classification": "SAFE_CACHE", "size_bytes": 999},  # child → skipped
+                {"label": "claude_home", "classification": "PROTECTED_STATE", "size_bytes": 500},  # protected → skipped
+            ],
+            "detector_findings": [
+                {"key": "node", "reclaimable_bytes": 4096, "safety_state": "visibility_only"},
+                {"key": "python", "reclaimable_bytes": 100, "safety_state": "guarded_by_active_projects"},  # guarded
+            ],
+        }
+        ceiling = reclaim_ceiling(snapshot)
+        self.assertEqual(ceiling["ram_bytes"], 1024 * 1024 + 8 * 1024 ** 3)  # stale proc + model (active excluded)
+        self.assertEqual(ceiling["disk_bytes"], 2048 + 4096)  # uv + node; child/protected/guarded excluded
 
     def test_prune_history_files_keeps_most_recent_artifacts(self) -> None:
         with TemporaryDirectory() as tmpdir:

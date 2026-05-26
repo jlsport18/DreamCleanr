@@ -21,7 +21,25 @@ from .core import (
     now_iso,
     prune_history_files,
     prune_rotated_logs,
+    reclaim_ceiling,
 )
+
+
+def _print_ceiling(snapshot: Dict[str, Any], stream) -> None:
+    try:
+        ceiling = reclaim_ceiling(snapshot)
+    except Exception:  # display is non-critical — never let it break a cleanup run
+        return
+    print(
+        f"DreamCleanr can reclaim up to {human_bytes(ceiling['ram_bytes'])} RAM "
+        f"and {human_bytes(ceiling['disk_bytes'])} disk right now.",
+        file=stream,
+    )
+    for source in ceiling["ram_sources"][:5]:
+        tag = "  (reversible)" if source.get("reversible") else ""
+        print(f"  RAM   {source['source']}  ~{human_bytes(source['bytes'])}  → {source['action']}{tag}", file=stream)
+    for source in ceiling["disk_sources"][:3]:
+        print(f"  disk  {source['source']}  ~{human_bytes(source['bytes'])}", file=stream)
 
 
 def _planned_deletions(actions: list) -> list:
@@ -107,6 +125,7 @@ def _failure_payload(exc: Exception, mode: str, dry_run: bool) -> Dict[str, Any]
 
 def command_scan(args: argparse.Namespace) -> int:
     snapshot = capture_snapshot(mode=args.mode)
+    _print_ceiling(snapshot, sys.stderr)  # human summary on stderr; stdout stays pure JSON
     payload = snapshot
     if args.json_out:
         _write_json(Path(args.json_out), payload)
@@ -157,6 +176,7 @@ def command_clean(args: argparse.Namespace) -> int:
 
     try:
         before = capture_snapshot(mode=args.mode)
+        _print_ceiling(before, sys.stdout)  # lead with the wow number
         planned_actions = plan_cleanup(before, mode=args.mode)
         if args.scope == "processes":
             planned_actions = [action for action in planned_actions if action.target_type == "process"]

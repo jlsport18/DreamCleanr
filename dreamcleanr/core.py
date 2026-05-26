@@ -200,14 +200,16 @@ def parse_size_to_bytes(text: str) -> int:
     if not raw:
         return 0
     raw = raw.replace(" ", "")
-    units = {
-        "B": 1,
-        "KB": 1024,
-        "MB": 1024 ** 2,
-        "GB": 1024 ** 3,
-        "TB": 1024 ** 4,
-    }
-    for unit, scale in units.items():
+    # Longest units first — otherwise "40GB" matches the "B" suffix and "40G"
+    # fails to parse (returning 0).
+    units = [
+        ("TB", 1024 ** 4),
+        ("GB", 1024 ** 3),
+        ("MB", 1024 ** 2),
+        ("KB", 1024),
+        ("B", 1),
+    ]
+    for unit, scale in units:
         if raw.endswith(unit):
             number = raw[: -len(unit)]
             try:
@@ -1065,6 +1067,87 @@ def list_docker_inventory() -> DockerInventory:
     return inventory
 
 
+def capture_memory_state() -> Dict[str, Any]:
+    """Honest macOS RAM breakdown via vm_stat (stdlib). Inactive/cached memory is
+    reported but explicitly NOT counted as reclaimable — the kernel reuses it."""
+    state: Dict[str, Any] = {"available": False, "total_bytes": 0}
+    sysctl = run_command(["sysctl", "-n", "hw.memsize"], timeout=3)
+    if sysctl["ok"]:
+        try:
+            state["total_bytes"] = int(sysctl["stdout"].strip())
+        except ValueError:
+            pass
+    result = run_command(["vm_stat"], timeout=3)
+    if not result["ok"]:
+        return state
+    page_size = 4096
+    pages: Dict[str, int] = {}
+    for line in result["stdout"].splitlines():
+        match = re.search(r"page size of (\d+) bytes", line)
+        if match:
+            page_size = int(match.group(1))
+            continue
+        key, _, value = line.partition(":")
+        number = value.strip().rstrip(".")
+        if number.isdigit():
+            pages[key.strip()] = int(number)
+
+    def by(key: str) -> int:
+        return pages.get(key, 0) * page_size
+
+    wired = by("Pages wired down")
+    active = by("Pages active")
+    compressed = by("Pages occupied by compressor")
+    used = wired + active + compressed
+    total = state["total_bytes"]
+    state.update(
+        {
+            "available": True,
+            "wired_bytes": wired,
+            "active_bytes": active,
+            "inactive_bytes": by("Pages inactive"),  # kernel-managed; not "wasted"
+            "compressed_bytes": compressed,
+            "free_bytes": by("Pages free") + by("Pages speculative"),
+            "used_bytes": used,
+            "pressure_pct": round(100.0 * used / total, 1) if total else 0.0,
+        }
+    )
+    return state
+
+
+def list_loaded_models() -> List[Dict[str, Any]]:
+    """Ollama models currently resident in RAM (`ollama ps`), each reclaimable
+    with `ollama stop <name>` — reversible (re-loads on next inference). Empty if
+    ollama isn't installed. This is usually the single biggest RAM line item."""
+    if not shutil.which("ollama"):
+        return []
+    result = run_command(["ollama", "ps"], timeout=4)
+    if not result["ok"]:
+        return []
+    lines = [line for line in result["stdout"].splitlines() if line.strip()]
+    if len(lines) <= 1:
+        return []
+    models: List[Dict[str, Any]] = []
+    for line in lines[1:]:  # skip header (NAME ID SIZE PROCESSOR UNTIL)
+        parts = line.split()
+        if len(parts) < 3:
+            continue
+        size_bytes = 0
+        for index, token in enumerate(parts[:-1]):
+            if re.match(r"^\d+(\.\d+)?$", token) and parts[index + 1].upper() in {"B", "KB", "MB", "GB", "TB"}:
+                size_bytes = parse_size_to_bytes(token + parts[index + 1])
+                break
+        models.append(
+            {
+                "name": parts[0],
+                "size_bytes": size_bytes,
+                "action": f"ollama stop {parts[0]}",
+                "reversible": True,
+            }
+        )
+    return models
+
+
 def capture_snapshot(mode: str = "balanced") -> Dict[str, Any]:
     started_at = now_iso()
     run_id = uuid.uuid4().hex[:12]
@@ -1091,9 +1174,13 @@ def capture_snapshot(mode: str = "balanced") -> Dict[str, Any]:
     project_signals = gather_project_signals(processes)
     detector_findings = annotate_detector_findings(gather_detector_findings(), project_signals)
     project_summary = project_activity_summary(project_signals)
+    memory_state = capture_memory_state()
+    loaded_models = list_loaded_models()
 
     return {
         "run_id": run_id,
+        "memory_state": memory_state,
+        "loaded_models": loaded_models,
         "started_at": started_at,
         "finished_at": now_iso(),
         "mode": mode,
@@ -1284,6 +1371,57 @@ def plan_cleanup(snapshot: Dict[str, Any], mode: str = "balanced") -> List[Clean
                 planned_paths.add(candidate)
 
     return actions
+
+
+def reclaim_ceiling(snapshot: Dict[str, Any]) -> Dict[str, Any]:
+    """The maximum reclaimable right now as a sum of NAMED, actionable sources —
+    never an unattributed aggregate. RAM = stale-terminable processes + loaded
+    Ollama models; disk = everything a max-mode plan would clear. Inactive/cached
+    memory is deliberately excluded (kernel-managed, not 'wasted')."""
+    ram_sources: List[Dict[str, Any]] = []
+    for proc in snapshot.get("processes", []):
+        if proc.get("classification") in {"STALE_CLI", "STALE_HELPER"}:
+            ram_sources.append(
+                {
+                    "source": f"idle {proc.get('family', 'tool')} process (pid {proc.get('pid')})",
+                    "bytes": int(proc.get("rss_kb", 0)) * 1024,
+                    "action": "terminate",
+                    "reversible": False,
+                }
+            )
+    for model in snapshot.get("loaded_models", []):
+        ram_sources.append(
+            {
+                "source": f"Ollama model '{model['name']}' resident in RAM",
+                "bytes": int(model.get("size_bytes", 0)),
+                "action": model.get("action", "ollama stop"),
+                "reversible": True,
+            }
+        )
+    # Disk from already-measured snapshot data — no second du pass, no re-plan.
+    disk_sources: List[Dict[str, Any]] = []
+    for record in snapshot.get("storage_records", []):
+        label = record.get("label", "")
+        # Skip per-basename children — the whole "library_caches" record covers them.
+        if record.get("classification") != "SAFE_CACHE" or label.startswith("library_cache:"):
+            continue
+        size = record.get("size_bytes", 0)
+        if size > 0:
+            disk_sources.append({"source": label, "bytes": size, "action": "trash/delete", "reversible": False})
+    for finding in snapshot.get("detector_findings", []):
+        reclaimable = finding.get("reclaimable_bytes", 0)
+        if reclaimable > 0 and finding.get("safety_state") != "guarded_by_active_projects":
+            disk_sources.append(
+                {"source": f"{finding.get('key')} cache", "bytes": reclaimable, "action": "trash/delete", "reversible": False}
+            )
+    ram_sources.sort(key=lambda item: item["bytes"], reverse=True)
+    disk_sources.sort(key=lambda item: item["bytes"], reverse=True)
+    return {
+        "ram_bytes": sum(item["bytes"] for item in ram_sources),
+        "disk_bytes": sum(item["bytes"] for item in disk_sources),
+        "ram_sources": ram_sources[:8],
+        "disk_sources": disk_sources[:8],
+    }
 
 
 def _trash_dir() -> Path:
