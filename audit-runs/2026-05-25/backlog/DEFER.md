@@ -20,8 +20,11 @@
 
 ## Native macOS app (NAT-1…NAT-10) — roadmap, not this quarter's CLI work
 
-Deferred because the native side is an 887-LOC SwiftUI prototype, not a shipping app; these
-are greenfield build tickets, not defects. Sequence: NAT-5 (zero-network audit, cheap) →
+Deferred because the native side is an 887-LOC SwiftUI prototype (real code — 42 types: 1
+actor, 4 classes, 22 funcs, 15 structs across `apple/Sources` + `macos/DreamCleanrMenubar`),
+not a shipping app; these are greenfield build tickets, not defects. A faithful native audit
+must read those Swift sources (this run inferred scope from the package layout + READMEs).
+Sequence: NAT-5 (zero-network audit, cheap) →
 NAT-9 (instrument) → NAT-2 (sandbox+helper) → NAT-1/QUAR-1 (staging) → NAT-3 (Sparkle) →
 NAT-7/NAT-8 (catalog + StoreKit) → NAT-4/NAT-6/NAT-10 (surfaces, Universal 2, FSEvents).
 **Prerequisite for a faithful native audit: an actual Strategic Brief in `docs/strategy/`.**

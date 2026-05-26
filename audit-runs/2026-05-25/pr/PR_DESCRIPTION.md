@@ -5,9 +5,10 @@
 Re-characterizes DreamCleanr's cleanup tiers so the **default (`balanced`) and the unattended
 daily job stay fast but conservative**, while preserving every bit of cleaning power in `max`.
 The broad `~/Library/Caches` sweep — which previously ran in the default tier *and* even in
-`safe` — is now `max`-only. `safe` is now a true preview (never deletes), and destructive
-`--apply` now requires confirmation (or `--yes` for the scheduled job). Also fixes a broken
-README example, makes deletes symlink-safe, and stops receipts overstating reclaimed bytes.
+`safe` — is now `max`-only. `safe` is now a true preview (never deletes), and an interactive
+`--apply` prompts for confirmation (scripted/scheduled runs proceed, so an installed
+LaunchAgent keeps working). Also fixes a broken README example, makes deletes symlink-safe,
+and stops receipts overstating reclaimed bytes.
 
 No cleaning capability was removed — it was re-tiered.
 
@@ -30,9 +31,9 @@ No cleaning capability was removed — it was re-tiered.
 - [x] `python -m unittest discover -s tests` → **38 pass** (was 33).
 - [x] `compileall` clean.
 - [x] `clean --mode balanced` previews (the corrected README command).
-- [x] `--apply` without `--yes` in a non-interactive shell **refuses, writes nothing**.
+- [x] Interactive `--apply` prompts; non-interactive `--apply` proceeds — **no regression for the installed daily LaunchAgent** (verified this Mac's plist lacks `--yes`; the gate no longer requires it).
 - [x] No new dependencies; no network calls; pure-Python stdlib only.
-- [x] Did **not** run `--apply --yes` on the dev machine (would delete real caches).
+- [x] Did **not** run a real `--apply` deletion on the dev machine (only `safe`/dry-run).
 
 ## Open questions (human judgment)
 

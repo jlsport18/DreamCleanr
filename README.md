@@ -118,8 +118,9 @@ everything lower tiers do, plus a wider blast radius.
 | `balanced` (default) | Regenerable dev caches (uv, npm, npx, Gradle, trunk), Docker prune, stale-process trim | Yes |
 | `max` (aggressive) | Everything in `balanced` **plus** the broad `~/Library/Caches` sweep and inactive Claude/Codex support caches | Yes |
 
-`--apply` is a no-op without confirmation: an interactive run prompts `[y/N]`,
-and a non-interactive run (like the scheduled job) requires `--yes`.
+`--apply` confirms before deleting: an interactive run prompts `[y/N]` (pass
+`--yes` to skip). A scripted or scheduled run (no terminal) is treated as
+intentional automation and proceeds, so an installed LaunchAgent keeps working.
 
 ## Safety defaults
 

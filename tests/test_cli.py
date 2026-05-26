@@ -167,18 +167,26 @@ class CliTests(unittest.TestCase):
             self.assertTrue((root / "report-team-export.csv").exists())
 
 
-    def test_clean_apply_refuses_noninteractive_without_yes(self) -> None:
+    def test_clean_apply_noninteractive_proceeds_without_prompt(self) -> None:
+        # Scripted / scheduled runs (no TTY) apply without prompting — this is
+        # what keeps an already-installed LaunchAgent working after upgrade.
         apply_mock = MagicMock(return_value=[])
+        confirm_mock = MagicMock(return_value=True)
         with TemporaryDirectory() as tmpdir:
             args = _apply_args(tmpdir, yes=False)
             with patch("dreamcleanr.cli.capture_snapshot", return_value={}), patch(
                 "dreamcleanr.cli.plan_cleanup", return_value=[_deletion_action()]
             ), patch("dreamcleanr.cli.apply_actions", apply_mock), patch(
+                "dreamcleanr.cli.build_cleanup_report", return_value=_StubReport()
+            ), patch("dreamcleanr.cli.build_receipt_summary", return_value={}), patch(
+                "dreamcleanr.cli.write_html"
+            ), patch("dreamcleanr.cli._confirm_apply", confirm_mock), patch(
                 "sys.stdin.isatty", return_value=False
             ):
                 result = command_clean(args)
-        self.assertEqual(result, 2)
-        apply_mock.assert_not_called()
+        self.assertEqual(result, 0)
+        confirm_mock.assert_not_called()
+        self.assertFalse(apply_mock.call_args.kwargs["dry_run"])
 
     def test_clean_apply_with_yes_skips_confirmation(self) -> None:
         apply_mock = MagicMock(return_value=[])

@@ -130,13 +130,10 @@ def command_clean(args: argparse.Namespace) -> int:
             planned_actions = [action for action in planned_actions if action.target_type != "process"]
 
         if not dry_run and _planned_deletions(planned_actions):
-            if not getattr(args, "yes", False):
-                if not sys.stdin.isatty():
-                    print(
-                        "Refusing to --apply in a non-interactive session without --yes.",
-                        file=sys.stderr,
-                    )
-                    return 2
+            # Interactive runs confirm before deleting. Scripted / scheduled runs
+            # (no TTY) are intentional automation and proceed — this preserves an
+            # already-installed LaunchAgent. --yes skips the prompt explicitly.
+            if not getattr(args, "yes", False) and sys.stdin.isatty():
                 if not _confirm_apply(planned_actions, args.mode):
                     print("Aborted — running a preview instead; no changes made.")
                     dry_run = True
@@ -245,7 +242,7 @@ def build_parser() -> argparse.ArgumentParser:
     clean.add_argument("--mode", choices=["safe", "balanced", "max"], default="balanced")
     clean.add_argument("--scope", choices=["all", "processes", "storage"], default="all")
     clean.add_argument("--apply", action="store_true", help="Apply cleanup actions instead of dry-run preview.")
-    clean.add_argument("--yes", "-y", action="store_true", help="Skip the confirmation prompt (required for non-interactive --apply, e.g. the scheduled job).")
+    clean.add_argument("--yes", "-y", action="store_true", help="Skip the interactive confirmation prompt before --apply.")
     clean.add_argument("--output-dir", help="Directory for JSON and HTML reports.")
     clean.add_argument("--json-out", help="Write cleanup report JSON to a specific file.")
     clean.add_argument("--html-out", help="Write cleanup report HTML to a specific file.")
