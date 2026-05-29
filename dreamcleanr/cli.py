@@ -25,6 +25,18 @@ from .core import (
 )
 
 
+def _actions_caused_state_change(actions) -> bool:
+    """True if any action mutated host state (deleted disk / terminated proc /
+    unloaded model). Per issue #8 — skip the duplicate-snapshot rescan when
+    nothing happened.
+
+    Excludes: planned (dry-run), kept (preview-only), blocked, failed,
+    missing, skipped — none of those touched disk or RAM.
+    """
+    successful = {"deleted", "terminated", "unloaded"}
+    return any(action.result in successful for action in actions)
+
+
 def _print_ceiling(snapshot: Dict[str, Any], stream) -> None:
     try:
         ceiling = reclaim_ceiling(snapshot)
@@ -202,7 +214,19 @@ def command_clean(args: argparse.Namespace) -> int:
                     print("Aborted — running a preview instead; no changes made.")
                     dry_run = True
         actions = apply_actions(before, planned_actions, dry_run=dry_run, trash=use_trash)
-        after = capture_snapshot(mode=args.mode)
+
+        # Issue #8: skip the duplicate-snapshot cost when nothing actually
+        # changed. In dry-run mode AND when no action mutated state
+        # (all blocked/failed/skipped/kept), the after snapshot would be
+        # identical to before — re-use it and stamp a fresh finished_at.
+        # Saves ~half the wall-clock time on dry-run flows (the second
+        # capture_snapshot is the largest single cost per profiling on
+        # issue #8: balanced scan ~29s, full apply path ~56s).
+        if dry_run or not _actions_caused_state_change(actions):
+            after = dict(before)
+            after["finished_at"] = now_iso()
+        else:
+            after = capture_snapshot(mode=args.mode)
         report = build_cleanup_report(before, after, actions, mode=args.mode, dry_run=dry_run)
         report_dict = report.to_dict()
 

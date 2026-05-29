@@ -8,7 +8,7 @@ from tempfile import TemporaryDirectory
 from unittest.mock import MagicMock, patch
 
 from dreamcleanr import __version__
-from dreamcleanr.cli import build_parser, command_clean, command_export
+from dreamcleanr.cli import _actions_caused_state_change, build_parser, command_clean, command_export
 from dreamcleanr.models import CleanupAction
 
 
@@ -48,6 +48,50 @@ def _apply_args(tmpdir: str, yes: bool, mode: str = "balanced", trash=None) -> N
 
 
 class CliTests(unittest.TestCase):
+    # Issue #8 — _actions_caused_state_change drives the "skip the
+    # duplicate after-snapshot" optimization. Contract: returns True iff
+    # at least one action actually mutated host state.
+
+    def test_actions_caused_state_change_true_on_deletion(self) -> None:
+        actions = [CleanupAction(target="x", target_type="path", family="f",
+                                 classification="C", result="deleted",
+                                 bytes_reclaimed=1, reason="r", details={})]
+        self.assertTrue(_actions_caused_state_change(actions))
+
+    def test_actions_caused_state_change_true_on_termination(self) -> None:
+        actions = [CleanupAction(target="123", target_type="process", family="f",
+                                 classification="C", result="terminated",
+                                 bytes_reclaimed=1, reason="r", details={})]
+        self.assertTrue(_actions_caused_state_change(actions))
+
+    def test_actions_caused_state_change_false_on_dry_run_planned(self) -> None:
+        actions = [
+            CleanupAction(target="x", target_type="path", family="f",
+                          classification="C", result="planned",
+                          bytes_reclaimed=1, reason="r", details={}),
+            CleanupAction(target="y", target_type="path", family="f",
+                          classification="C", result="kept",
+                          bytes_reclaimed=1, reason="r", details={}),
+        ]
+        self.assertFalse(_actions_caused_state_change(actions))
+
+    def test_actions_caused_state_change_false_when_all_blocked_failed(self) -> None:
+        actions = [
+            CleanupAction(target="a", target_type="path", family="f",
+                          classification="C", result="blocked",
+                          bytes_reclaimed=1, reason="r", details={}),
+            CleanupAction(target="b", target_type="path", family="f",
+                          classification="C", result="failed",
+                          bytes_reclaimed=1, reason="r", details={}),
+            CleanupAction(target="c", target_type="path", family="f",
+                          classification="C", result="missing",
+                          bytes_reclaimed=1, reason="r", details={}),
+        ]
+        self.assertFalse(_actions_caused_state_change(actions))
+
+    def test_actions_caused_state_change_false_on_empty(self) -> None:
+        self.assertFalse(_actions_caused_state_change([]))
+
     def test_version_flag_matches_package_version(self) -> None:
         parser = build_parser()
         with self.assertRaises(SystemExit) as exc:
