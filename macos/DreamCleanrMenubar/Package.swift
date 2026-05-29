@@ -15,7 +15,11 @@ import PackageDescription
 
 let package = Package(
     name: "DreamCleanrMenubar",
-    platforms: [.macOS(.v13)],   // macOS 13+ for MenuBarExtra
+    // macOS 14+ — for the two-arg `.onChange(of:_:)` closure used in the
+    // schedule-toggle. Pre-existing code already used this API; bumping the
+    // declared minimum to match what the code requires. macOS 14 shipped
+    // 2023-09, well within the AI-dev support window.
+    platforms: [.macOS(.v14)],
     products: [
         .executable(name: "DreamCleanrMenubar", targets: ["DreamCleanrMenubar"])
     ],
