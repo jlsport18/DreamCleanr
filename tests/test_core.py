@@ -546,6 +546,74 @@ class CoreTests(unittest.TestCase):
         self.assertEqual(report.storage_reclaimed_bytes, 999)  # trashed excluded
         self.assertEqual(report.objects_pruned, 2)  # both still count as "trimmed" objects
 
+    # Process-fixture coverage per issue #1 — updater + crashpad +
+    # Docker-engine-only states. Pins the new families and roles.
+
+    def test_classify_generic_crashpad_handler(self) -> None:
+        # Generic crashpad helper that isn't bundled with claude/codex
+        # should land in the crashpad family, not be misattributed.
+        record = proc(901, 1, "00:30:00", 0.0, 120, "crashpad_handler",
+                      "/Library/Application Support/SomeApp/crashpad_handler --database=/tmp/x")
+        self.assertEqual(record.family, "crashpad")
+        self.assertEqual(record.role, "crashpad")
+
+    def test_classify_claude_crashpad_stays_in_claude(self) -> None:
+        # Cross-product crashpad rule must NOT steal claude's own helpers.
+        record = proc(902, 1, "00:30:00", 0.0, 120, "crashpad_handler",
+                      "/Applications/Claude.app/Contents/Frameworks/Claude Helper/crashpad_handler --database=/tmp/x")
+        self.assertEqual(record.family, "claude")
+        self.assertEqual(record.role, "crashpad")
+
+    def test_classify_sparkle_updater(self) -> None:
+        record = proc(910, 1, "00:00:30", 0.0, 80, "Sparkle",
+                      "/Library/Sparkle.app/Contents/MacOS/Sparkle --updater")
+        self.assertEqual(record.family, "updater")
+        self.assertEqual(record.role, "sparkle")
+
+    def test_classify_macos_softwareupdate(self) -> None:
+        record = proc(911, 1, "00:00:30", 0.0, 80, "softwareupdate",
+                      "/usr/sbin/softwareupdate --install --recommended")
+        self.assertEqual(record.family, "updater")
+        self.assertEqual(record.role, "macos_softwareupdate")
+
+    def test_classify_shipit_updater(self) -> None:
+        record = proc(912, 1, "00:00:30", 0.0, 80, "ShipIt",
+                      "/Applications/Foo.app/Contents/Frameworks/ShipIt /tmp/shipit-state.plist")
+        self.assertEqual(record.family, "updater")
+        self.assertEqual(record.role, "shipit")
+
+    def test_classify_microsoft_autoupdate(self) -> None:
+        record = proc(913, 1, "00:00:30", 0.0, 80, "msupdate",
+                      "/Library/Application Support/Microsoft AutoUpdate/MAU.app/Contents/MacOS/Microsoft AutoUpdate")
+        self.assertEqual(record.family, "updater")
+        self.assertEqual(record.role, "msupdate")
+
+    def test_classify_google_software_update(self) -> None:
+        record = proc(914, 1, "00:00:30", 0.0, 80, "GoogleSoftwareUpdate",
+                      "/Library/Google/GoogleSoftwareUpdate/GoogleSoftwareUpdate.bundle/Contents/Resources/GoogleSoftwareUpdateAgent.app/Contents/MacOS/GoogleSoftwareUpdateAgent")
+        self.assertEqual(record.family, "updater")
+        self.assertEqual(record.role, "google_software_update")
+
+    def test_classify_docker_engine_only_no_containers(self) -> None:
+        # Docker daemon up + no containers — still docker family, classified
+        # by role; summarize_family handles the engine-only state via the
+        # docker_inventory hint.
+        processes = [
+            proc(57788, 1, "06:00:00", 0.0, 1200, "/Applications/Do",
+                 "/Applications/Docker.app/Contents/MacOS/com.docker.backend"),
+            proc(57859, 57788, "06:00:00", 0.0, 900, "/Applications/Do",
+                 "/Applications/Docker.app/Contents/MacOS/com.docker.virtualization --disk /tmp/Docker.raw"),
+        ]
+        by_pid = {p.pid: p for p in processes}
+        # Empty inventory = engine is up but nothing to clean
+        from dreamcleanr.models import DockerInventory
+        empty_inv = DockerInventory(engine_available=True, engine_state="reachable")
+        with patch("dreamcleanr.core.run_command",
+                   return_value={"ok": True, "timed_out": False, "returncode": 0, "stdout": "{}", "stderr": ""}):
+            summary = summarize_family("docker", processes, by_pid, {99999}, docker_inventory=empty_inv)
+        # The two backend processes still classify
+        self.assertGreaterEqual(len(summary["matches"]), 2)
+
     def test_build_cleanup_report_dry_run_counts_planned(self) -> None:
         from dreamcleanr.core import build_cleanup_report
         before = {"run_id": "r", "started_at": "s", "host_disk_used_bytes": 1000, "processes": [],

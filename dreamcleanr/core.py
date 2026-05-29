@@ -577,6 +577,54 @@ def classify_process_role(record: ProcessRecord) -> None:
         record.role = "probe"
         return
 
+    # Cross-product crashpad handlers + autoupdaters that don't belong to a
+    # known AI-dev product family. Classifying these in their own family
+    # keeps them eligible for stale-helper detection without misattributing
+    # them to claude/codex/docker. Per issue #1 — updater + crashpad coverage.
+    if (
+        ("crashpad_handler" in args or "crashpad-handler" in args)
+        and not any(t in args for t in ("/applications/claude.app/", "/applications/codex.app/",
+                                        "anthropic.claude-code", "openai.chatgpt-", "com.openai.codex"))
+    ):
+        record.family = "crashpad"
+        record.role = "crashpad"
+        return
+    if has_any_token(
+        args,
+        (
+            "/sparkle ",
+            "sparkle.app/contents",
+            "softwareupdate ",
+            "shipit ",
+            " shipit",
+            "/microsoft autoupdate/",
+            "msupdate",
+            "homebrew autoupdate",
+            "brew autoupdate",
+            "/google software update.app/",
+            "googlesoftwareupdate",
+        ),
+    ):
+        record.family = "updater"
+        # Order: more-specific brands first; `softwareupdate` substring
+        # is shared by macOS softwareupdate AND GoogleSoftwareUpdate, so
+        # google must be checked before the generic match.
+        if "google" in args:
+            record.role = "google_software_update"
+        elif "microsoft" in args or "msupdate" in args:
+            record.role = "msupdate"
+        elif "brew" in args or "homebrew" in args:
+            record.role = "brew_autoupdate"
+        elif "shipit" in args:
+            record.role = "shipit"
+        elif "sparkle" in args:
+            record.role = "sparkle"
+        elif "softwareupdate" in args:
+            record.role = "macos_softwareupdate"
+        else:
+            record.role = "generic_updater"
+        return
+
     if has_any_token(
         args,
         (
@@ -623,7 +671,10 @@ def classify_process_role(record: ProcessRecord) -> None:
             "/resources/codex app-server",
             "openai.chatgpt-",
             "com.openai.codex",
-            "crashpad_handler",
+            # Note: crashpad_handler removed as a generic trigger here per
+            # issue #1 — generic crashpads belong in the 'crashpad' family,
+            # codex-bundled crashpads still match via 'codex helper' or the
+            # codex.app/ paths and get role=crashpad below.
         ),
     ):
         record.family = "codex"
@@ -652,7 +703,10 @@ def classify_process_role(record: ProcessRecord) -> None:
             "/resources/native-binary/claude",
             "claude --output-format",
             "--mcp-config",
-            "crashpad_handler",
+            # Note: crashpad_handler removed as a generic trigger here per
+            # issue #1 — claude-bundled crashpads match via the claude.app
+            # path or 'claude helper' below; generic crashpads land in
+            # the 'crashpad' family.
         ),
     ):
         record.family = "claude"
@@ -686,16 +740,23 @@ _STRONG_ROLES: Dict[str, frozenset] = {
     "docker": frozenset({"vmnetd", "backend", "backend_service", "virtualization", "sandbox", "docker_helper"}),
     "claude": frozenset({"claude_app", "vscode_cli"}),
     "codex": frozenset({"codex_app", "helper", "renderer", "cli_service"}),
+    "crashpad": frozenset(),  # crashpad is never "strong" — it's always a helper
+    "updater": frozenset(),   # updaters are never "strong" primary
 }
 _WEAK_ROLES: Dict[str, frozenset] = {
     "docker": frozenset({"docker_cli", "docker_cli_probe", "shell_docker_probe", "shell_docker_session"}),
     "claude": frozenset({"shipit", "crashpad"}),
     "codex": frozenset({"updater", "crashpad"}),
+    "crashpad": frozenset({"crashpad"}),
+    "updater": frozenset({"sparkle", "macos_softwareupdate", "shipit", "msupdate", "brew_autoupdate",
+                           "google_software_update", "generic_updater"}),
 }
 _PRIMARY_ROLES: Dict[str, frozenset] = {
     "docker": frozenset({"vmnetd", "backend", "virtualization"}),
     "claude": frozenset({"claude_app", "vscode_cli"}),
     "codex": frozenset({"codex_app", "cli_service"}),
+    "crashpad": frozenset(),  # crashpad is never primary
+    "updater": frozenset(),   # autoupdaters are not "active primary" — they're transient
 }
 # Flat union used by classify_processes; derived from _PRIMARY_ROLES so both stay in sync.
 _PRIMARY_ROLES_FLAT: frozenset = frozenset().union(*_PRIMARY_ROLES.values())
