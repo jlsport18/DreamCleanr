@@ -505,6 +505,64 @@ class CoreTests(unittest.TestCase):
         expected_mem_mb = round((8 * 1024 ** 3 + 2 * 1024 * 1024) / (1024 * 1024), 2)
         self.assertEqual(report.memory_reclaimed_estimate_mb, expected_mem_mb)  # model + process
 
+    # Regression tests for PR #30 review (Gemini HIGH + Codex P2): the
+    # storage/memory accounting must exclude actions that didn't actually
+    # happen, AND trashed paths shouldn't count as freed disk.
+    def test_build_cleanup_report_excludes_blocked_failed_planned(self) -> None:
+        from dreamcleanr.core import build_cleanup_report
+        before = {"run_id": "r", "started_at": "s", "host_disk_used_bytes": 1000, "processes": [],
+                  "protected_items": [], "manual_review_items": [], "process_summary": {}}
+        after = {"finished_at": "f", "host_disk_used_bytes": 1000}
+        actions = [
+            # Should NOT count toward any reclaim total
+            CleanupAction(target="a", target_type="path",    family="x", classification="C", result="blocked",  bytes_reclaimed=1000, reason="r", details={}),
+            CleanupAction(target="b", target_type="path",    family="x", classification="C", result="failed",   bytes_reclaimed=2000, reason="r", details={}),
+            CleanupAction(target="c", target_type="path",    family="x", classification="C", result="missing",  bytes_reclaimed=4000, reason="r", details={}),
+            CleanupAction(target="d", target_type="path",    family="x", classification="C", result="kept",     bytes_reclaimed=8000, reason="r", details={}),
+            CleanupAction(target="e", target_type="process", family="x", classification="C", result="blocked",  bytes_reclaimed=1 * 1024 ** 2, reason="r", details={}),
+            CleanupAction(target="f", target_type="memory",  family="x", classification="C", result="blocked",  bytes_reclaimed=4 * 1024 ** 3, reason="r", details={}),
+            # SHOULD count
+            CleanupAction(target="g", target_type="path",    family="x", classification="C", result="deleted",  bytes_reclaimed=500, reason="r", details={}),
+        ]
+        report = build_cleanup_report(before, after, actions, mode="max", dry_run=False)
+        self.assertEqual(report.storage_reclaimed_bytes, 500)
+        self.assertEqual(report.memory_reclaimed_estimate_mb, 0.0)
+        self.assertEqual(report.processes_trimmed, 0)
+        self.assertEqual(report.objects_pruned, 1)
+
+    def test_build_cleanup_report_excludes_trashed_paths_from_disk(self) -> None:
+        """Trashing moves to ~/.Trash on the same volume — disk isn't freed."""
+        from dreamcleanr.core import build_cleanup_report
+        before = {"run_id": "r", "started_at": "s", "host_disk_used_bytes": 1000, "processes": [],
+                  "protected_items": [], "manual_review_items": [], "process_summary": {}}
+        after = {"finished_at": "f", "host_disk_used_bytes": 1000}
+        actions = [
+            CleanupAction(target="t", target_type="path", family="x", classification="C", result="deleted",
+                          bytes_reclaimed=12345, reason="r", details={"trashed": True}),
+            CleanupAction(target="r", target_type="path", family="x", classification="C", result="deleted",
+                          bytes_reclaimed=999, reason="r", details={}),
+        ]
+        report = build_cleanup_report(before, after, actions, mode="max", dry_run=False)
+        self.assertEqual(report.storage_reclaimed_bytes, 999)  # trashed excluded
+        self.assertEqual(report.objects_pruned, 2)  # both still count as "trimmed" objects
+
+    def test_build_cleanup_report_dry_run_counts_planned(self) -> None:
+        from dreamcleanr.core import build_cleanup_report
+        before = {"run_id": "r", "started_at": "s", "host_disk_used_bytes": 1000, "processes": [],
+                  "protected_items": [], "manual_review_items": [], "process_summary": {}}
+        after = {"finished_at": "f", "host_disk_used_bytes": 1000}
+        actions = [
+            CleanupAction(target="a", target_type="path",    family="x", classification="C", result="planned", bytes_reclaimed=100, reason="r", details={}),
+            CleanupAction(target="b", target_type="process", family="x", classification="C", result="planned", bytes_reclaimed=200, reason="r", details={}),
+        ]
+        report = build_cleanup_report(before, after, actions, mode="max", dry_run=True)
+        # planned counts toward _trimmed/_pruned (estimates), but NOT toward
+        # the byte totals — bytes only count when actions actually run.
+        self.assertEqual(report.storage_reclaimed_bytes, 0)
+        self.assertEqual(report.memory_reclaimed_estimate_mb, 0.0)
+        self.assertEqual(report.processes_trimmed, 1)
+        self.assertEqual(report.objects_pruned, 1)
+
     def test_prune_history_files_keeps_most_recent_artifacts(self) -> None:
         with TemporaryDirectory() as tmpdir:
             root = Path(tmpdir)

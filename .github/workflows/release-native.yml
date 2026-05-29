@@ -6,6 +6,11 @@ name: Release (native macOS)
 on:
   workflow_dispatch:
 
+# Least-privilege per CodeQL on PR #30. This workflow only reads source +
+# builds; no write needs.
+permissions:
+  contents: read
+
 jobs:
   build-native:
     runs-on: [self-hosted, macOS, arm64, native-build]

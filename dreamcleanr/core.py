@@ -1548,10 +1548,24 @@ def terminate_process(pid: int) -> bool:
 
 
 def process_args(pid: int) -> Optional[str]:
-    """Current argument string for a live PID, or None if it no longer exists."""
+    """Current argument string for a live PID, or None if it no longer exists.
+
+    Distinguishes "PID gone" (ps exits 0, stdout empty) from "ps failed for
+    other reasons" (non-zero exit). When ps fails — permissions, timeout,
+    command-not-found — we raise rather than return None, because the
+    caller's interpretation of None is "process exited," which would lead
+    apply_actions() to wrongly record a 'terminated' result for a process
+    we never actually terminated (Codex P1 review on PR #30).
+    """
     result = run_command(["ps", "-p", str(pid), "-o", "args="], timeout=3)
     if not result["ok"]:
-        return None
+        # ps -p <pid> returns exit code 1 when the PID doesn't exist —
+        # that's the only "ok=False" we treat as "gone." Anything else
+        # (timeout, error message in stderr) we surface so the caller can
+        # decide not to record termination.
+        if result.get("returncode") == 1 and not result.get("stderr", "").strip():
+            return None
+        raise RuntimeError(f"ps -p {pid} failed: {result.get('stderr', '?')[:200]}")
     text = result["stdout"].strip()
     return text or None
 
@@ -1597,7 +1611,15 @@ def apply_actions(
                 pid = int(action.target)
                 # Guard against PID reuse between scan and apply: confirm the PID
                 # still belongs to the family we classified before sending a signal.
-                current_family = process_family(pid)
+                try:
+                    current_family = process_family(pid)
+                except RuntimeError as e:
+                    # ps lookup failed for a non-"process-gone" reason — don't
+                    # claim termination on what we can't observe.
+                    realized.result = "blocked"
+                    realized.reason = f"Could not verify process state via ps: {e}"
+                    applied.append(realized)
+                    continue
                 if current_family is None:
                     realized.result = "terminated"
                     realized.reason = "Process already exited before apply."
@@ -1664,18 +1686,46 @@ def build_cleanup_report(
 ) -> CleanupReport:
     storage_before = before_snapshot["host_disk_used_bytes"]
     storage_after = after_snapshot["host_disk_used_bytes"]
-    # Honestly separate disk vs RAM: caches/docker are disk; terminated processes
-    # and unloaded models are RAM. Don't conflate the two in the receipt.
-    storage_reclaimed = sum(action.bytes_reclaimed for action in actions if action.target_type in {"path", "docker"})
+    # Disk reclamation only counts actions that ACTUALLY freed disk on this
+    # filesystem. Excludes:
+    #   - blocked / failed / skipped / missing / kept / planned (didn't happen)
+    #   - trashed paths (still occupy disk under ~/.Trash until emptied)
+    # Per PR #30 review (Gemini HIGH + Codex P2 on core.py:1642/1669).
+    storage_reclaimed = sum(
+        action.bytes_reclaimed
+        for action in actions
+        if action.target_type in {"path", "docker"}
+        and action.result == "deleted"
+        and not action.details.get("trashed", False)
+    )
 
     memory_before = sum(item["rss_kb"] for item in before_snapshot["processes"]) / 1024.0
+    # RAM reclamation only counts actions that ACTUALLY unloaded RAM:
+    #   - process: result == 'terminated' (NOT planned/blocked/failed/kept)
+    #   - memory:  result == 'unloaded'    (NOT skipped/blocked)
     memory_reclaimed = sum(
-        action.bytes_reclaimed for action in actions if action.target_type in {"process", "memory"}
+        action.bytes_reclaimed
+        for action in actions
+        if (action.target_type == "process" and action.result == "terminated")
+        or (action.target_type == "memory" and action.result == "unloaded")
     ) / (1024.0 * 1024.0)
     memory_after = max(0.0, memory_before - memory_reclaimed)
 
-    processes_trimmed = sum(1 for action in actions if action.target_type == "process" and action.result in {"planned", "terminated"})
-    objects_pruned = sum(1 for action in actions if action.target_type != "process" and action.result in {"planned", "deleted"})
+    # planned counts toward "would do" stats only in dry_run; otherwise only
+    # actually-completed actions count toward trim/prune.
+    success_results_disk = {"deleted"}
+    success_results_proc = {"terminated"}
+    if dry_run:
+        success_results_disk = success_results_disk | {"planned"}
+        success_results_proc = success_results_proc | {"planned"}
+    processes_trimmed = sum(
+        1 for action in actions
+        if action.target_type == "process" and action.result in success_results_proc
+    )
+    objects_pruned = sum(
+        1 for action in actions
+        if action.target_type != "process" and action.result in success_results_disk
+    )
 
     return CleanupReport(
         run_id=before_snapshot["run_id"],
