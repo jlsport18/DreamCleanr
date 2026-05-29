@@ -1,0 +1,30 @@
+name: Release (native macOS)
+
+# SCAFFOLD — dormant until the native menu-bar app is ready. Runs ONLY on an
+# on-demand self-hosted macOS runner (your Mac), since Apple's build/codesign/
+# notarize toolchain cannot run on the Linux getupsoft runner. Manual trigger only.
+on:
+  workflow_dispatch:
+
+# Least-privilege per CodeQL on PR #30. This workflow only reads source +
+# builds; no write needs.
+permissions:
+  contents: read
+
+jobs:
+  build-native:
+    runs-on: [self-hosted, macOS, arm64, native-build]
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build SwiftUI menu-bar package
+        run: |
+          cd macos/DreamCleanrMenubar
+          swift build -c release
+      # TODO (when shipping a notarized .app):
+      #   - codesign with Developer ID Application
+      #   - xcrun notarytool submit --wait
+      #   - xcrun stapler staple
+      #   - attach the signed/notarized artifact to the GitHub Release
+      - name: Note
+        run: echo "Native build compiled. Codesign + notarize steps are TODO before public release."

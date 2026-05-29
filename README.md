@@ -78,8 +78,9 @@ git pull --ff-only
 ```bash
 dreamcleanr --version
 dreamcleanr scan --mode balanced
-dreamcleanr clean --dry-run --mode balanced
-dreamcleanr clean --apply --mode balanced
+dreamcleanr clean --mode balanced            # preview only (dry-run is the default)
+dreamcleanr clean --apply --yes --mode balanced   # standard reclaim
+dreamcleanr clean --apply --yes --mode max        # aggressive sweep (see Cleanup tiers)
 dreamcleanr report --input ~/Library/Logs/DreamCleanr/reports/latest.json
 dreamcleanr export --input ~/Library/Logs/DreamCleanr/reports/latest.json
 dreamcleanr schedule install --mode balanced
@@ -106,13 +107,35 @@ Current MCP tools:
 
 The MCP surface is preview-first. Destructive cleanup is intentionally not exposed by default.
 
+## Cleanup tiers
+
+Cleaning power is never removed — it is characterized by tier. Higher tiers do
+everything lower tiers do, plus a wider blast radius.
+
+| Tier | What it cleans | Applies on `--apply`? |
+| --- | --- | --- |
+| `safe` | Previews the standard tier only | No — preview always, even with `--apply` |
+| `balanced` (default) | Regenerable dev caches (uv, npm, npx, Gradle, trunk), Docker prune, stale-process trim | Yes |
+| `max` (aggressive) | Everything in `balanced` **plus** the broad `~/Library/Caches` sweep and inactive Claude/Codex support caches | Yes |
+
+`--apply` confirms before deleting: an interactive run prompts `[y/N]` (pass
+`--yes` to skip). A scripted or scheduled run (no terminal) is treated as
+intentional automation and proceeds, so an installed LaunchAgent keeps working.
+
+**Reversibility:** `--trash` moves deleted items to the macOS Trash (restore from
+Finder) instead of removing them — default **on** for `--mode max` (the aggressive
+tier), **off** for `balanced` (regenerable caches free space immediately). Use
+`--no-trash` to hard-delete in `max`, or `--trash` to stage any tier. Trashed space
+is reclaimed when you empty the Trash.
+
 ## Safety defaults
 
 - auto-trims only stale helper and stale CLI probe processes
 - keeps interactive Docker CLI sessions and updater/crashpad-style background helpers conservative by default
 - protects active `Codex` and `Claude` cache roots
 - never auto-deletes `~/.codex`, `~/.claude`, the Claude VM bundle, or Docker raw VM storage
-- keeps scheduled cleanup on a balanced-safe profile with canonical `latest.*` artifacts and bounded history
+- the broad `~/Library/Caches` sweep is `max`-only, so the default `balanced` profile and the unattended scheduled job stay conservative
+- keeps scheduled cleanup on the `balanced` profile with canonical `latest.*` artifacts and bounded history
 
 ## Output
 

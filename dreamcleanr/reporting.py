@@ -124,6 +124,10 @@ def build_receipt_summary(report: Dict[str, Any]) -> Dict[str, Any]:
                 "path_count": finding.get("path_count", 0),
                 "safety_state": finding.get("safety_state", "visibility_only"),
                 "active_project_count": finding.get("active_project_count", 0),
+                "reclaim_policy": finding.get("reclaim_policy", "regenerable"),
+                "reclaimable_bytes": finding.get("reclaimable_bytes", 0),
+                "last_touched_days": finding.get("last_touched_days"),
+                "recommendation": finding.get("recommendation", ""),
             }
         )
     top_storage_targets = []

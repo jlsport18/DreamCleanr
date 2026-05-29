@@ -5,13 +5,93 @@ import unittest
 from argparse import Namespace
 from pathlib import Path
 from tempfile import TemporaryDirectory
-from unittest.mock import patch
+from unittest.mock import MagicMock, patch
 
 from dreamcleanr import __version__
-from dreamcleanr.cli import build_parser, command_clean, command_export
+from dreamcleanr.cli import _actions_caused_state_change, build_parser, command_clean, command_export
+from dreamcleanr.models import CleanupAction
+
+
+class _StubReport:
+    run_id = "runGATE"
+
+    def to_dict(self) -> dict:
+        return {"run_id": "runGATE"}
+
+
+def _deletion_action() -> CleanupAction:
+    return CleanupAction(
+        target="/tmp/dreamcleanr-test-cache",
+        target_type="path",
+        family="system",
+        classification="SAFE_CACHE",
+        result="planned",
+        bytes_reclaimed=10,
+        reason="test",
+        details={"label": "uv_cache", "apply_allowed": True},
+    )
+
+
+def _apply_args(tmpdir: str, yes: bool, mode: str = "balanced", trash=None) -> Namespace:
+    return Namespace(
+        mode=mode,
+        apply=True,
+        yes=yes,
+        trash=trash,
+        output_dir=tmpdir,
+        json_out=None,
+        html_out=None,
+        retention_count=21,
+        open=False,
+        scope="all",
+    )
 
 
 class CliTests(unittest.TestCase):
+    # Issue #8 — _actions_caused_state_change drives the "skip the
+    # duplicate after-snapshot" optimization. Contract: returns True iff
+    # at least one action actually mutated host state.
+
+    def test_actions_caused_state_change_true_on_deletion(self) -> None:
+        actions = [CleanupAction(target="x", target_type="path", family="f",
+                                 classification="C", result="deleted",
+                                 bytes_reclaimed=1, reason="r", details={})]
+        self.assertTrue(_actions_caused_state_change(actions))
+
+    def test_actions_caused_state_change_true_on_termination(self) -> None:
+        actions = [CleanupAction(target="123", target_type="process", family="f",
+                                 classification="C", result="terminated",
+                                 bytes_reclaimed=1, reason="r", details={})]
+        self.assertTrue(_actions_caused_state_change(actions))
+
+    def test_actions_caused_state_change_false_on_dry_run_planned(self) -> None:
+        actions = [
+            CleanupAction(target="x", target_type="path", family="f",
+                          classification="C", result="planned",
+                          bytes_reclaimed=1, reason="r", details={}),
+            CleanupAction(target="y", target_type="path", family="f",
+                          classification="C", result="kept",
+                          bytes_reclaimed=1, reason="r", details={}),
+        ]
+        self.assertFalse(_actions_caused_state_change(actions))
+
+    def test_actions_caused_state_change_false_when_all_blocked_failed(self) -> None:
+        actions = [
+            CleanupAction(target="a", target_type="path", family="f",
+                          classification="C", result="blocked",
+                          bytes_reclaimed=1, reason="r", details={}),
+            CleanupAction(target="b", target_type="path", family="f",
+                          classification="C", result="failed",
+                          bytes_reclaimed=1, reason="r", details={}),
+            CleanupAction(target="c", target_type="path", family="f",
+                          classification="C", result="missing",
+                          bytes_reclaimed=1, reason="r", details={}),
+        ]
+        self.assertFalse(_actions_caused_state_change(actions))
+
+    def test_actions_caused_state_change_false_on_empty(self) -> None:
+        self.assertFalse(_actions_caused_state_change([]))
+
     def test_version_flag_matches_package_version(self) -> None:
         parser = build_parser()
         with self.assertRaises(SystemExit) as exc:
@@ -130,6 +210,109 @@ class CliTests(unittest.TestCase):
             self.assertEqual(result, 0)
             self.assertTrue((root / "report-team-export.json").exists())
             self.assertTrue((root / "report-team-export.csv").exists())
+
+
+    def test_clean_apply_noninteractive_proceeds_without_prompt(self) -> None:
+        # Scripted / scheduled runs (no TTY) apply without prompting — this is
+        # what keeps an already-installed LaunchAgent working after upgrade.
+        apply_mock = MagicMock(return_value=[])
+        confirm_mock = MagicMock(return_value=True)
+        with TemporaryDirectory() as tmpdir:
+            args = _apply_args(tmpdir, yes=False)
+            with patch("dreamcleanr.cli.capture_snapshot", return_value={}), patch(
+                "dreamcleanr.cli.plan_cleanup", return_value=[_deletion_action()]
+            ), patch("dreamcleanr.cli.apply_actions", apply_mock), patch(
+                "dreamcleanr.cli.build_cleanup_report", return_value=_StubReport()
+            ), patch("dreamcleanr.cli.build_receipt_summary", return_value={}), patch(
+                "dreamcleanr.cli.write_html"
+            ), patch("dreamcleanr.cli._confirm_apply", confirm_mock), patch(
+                "sys.stdin.isatty", return_value=False
+            ):
+                result = command_clean(args)
+        self.assertEqual(result, 0)
+        confirm_mock.assert_not_called()
+        self.assertFalse(apply_mock.call_args.kwargs["dry_run"])
+
+    def test_clean_apply_with_yes_skips_confirmation(self) -> None:
+        apply_mock = MagicMock(return_value=[])
+        confirm_mock = MagicMock(return_value=True)
+        with TemporaryDirectory() as tmpdir:
+            args = _apply_args(tmpdir, yes=True)
+            with patch("dreamcleanr.cli.capture_snapshot", return_value={}), patch(
+                "dreamcleanr.cli.plan_cleanup", return_value=[_deletion_action()]
+            ), patch("dreamcleanr.cli.apply_actions", apply_mock), patch(
+                "dreamcleanr.cli.build_cleanup_report", return_value=_StubReport()
+            ), patch("dreamcleanr.cli.build_receipt_summary", return_value={}), patch(
+                "dreamcleanr.cli.write_html"
+            ), patch("dreamcleanr.cli._confirm_apply", confirm_mock):
+                result = command_clean(args)
+        self.assertEqual(result, 0)
+        confirm_mock.assert_not_called()
+        self.assertFalse(apply_mock.call_args.kwargs["dry_run"])
+
+    def test_trash_defaults_on_for_max_off_for_balanced(self) -> None:
+        for mode, expected_trash in (("max", True), ("balanced", False)):
+            apply_mock = MagicMock(return_value=[])
+            with TemporaryDirectory() as tmpdir:
+                args = _apply_args(tmpdir, yes=True, mode=mode)
+                with patch("dreamcleanr.cli.capture_snapshot", return_value={}), patch(
+                    "dreamcleanr.cli.plan_cleanup", return_value=[_deletion_action()]
+                ), patch("dreamcleanr.cli.apply_actions", apply_mock), patch(
+                    "dreamcleanr.cli.build_cleanup_report", return_value=_StubReport()
+                ), patch("dreamcleanr.cli.build_receipt_summary", return_value={}), patch(
+                    "dreamcleanr.cli.write_html"
+                ):
+                    command_clean(args)
+            self.assertEqual(apply_mock.call_args.kwargs["trash"], expected_trash, f"mode={mode}")
+
+    def test_no_trash_flag_overrides_max_default(self) -> None:
+        apply_mock = MagicMock(return_value=[])
+        with TemporaryDirectory() as tmpdir:
+            args = _apply_args(tmpdir, yes=True, mode="max", trash=False)
+            with patch("dreamcleanr.cli.capture_snapshot", return_value={}), patch(
+                "dreamcleanr.cli.plan_cleanup", return_value=[_deletion_action()]
+            ), patch("dreamcleanr.cli.apply_actions", apply_mock), patch(
+                "dreamcleanr.cli.build_cleanup_report", return_value=_StubReport()
+            ), patch("dreamcleanr.cli.build_receipt_summary", return_value={}), patch(
+                "dreamcleanr.cli.write_html"
+            ):
+                command_clean(args)
+        self.assertFalse(apply_mock.call_args.kwargs["trash"])
+
+    def test_clean_apply_skipped_when_report_dir_locked(self) -> None:
+        import fcntl
+
+        apply_mock = MagicMock(return_value=[])
+        with TemporaryDirectory() as tmpdir:
+            holder = open(Path(tmpdir) / ".dreamcleanr.lock", "w")
+            fcntl.flock(holder.fileno(), fcntl.LOCK_EX | fcntl.LOCK_NB)
+            try:
+                args = _apply_args(tmpdir, yes=True)
+                with patch("dreamcleanr.cli.capture_snapshot", return_value={}), patch(
+                    "dreamcleanr.cli.plan_cleanup", return_value=[_deletion_action()]
+                ), patch("dreamcleanr.cli.apply_actions", apply_mock):
+                    result = command_clean(args)
+            finally:
+                holder.close()
+        self.assertEqual(result, 0)
+        apply_mock.assert_not_called()
+
+    def test_clean_apply_decline_falls_back_to_preview(self) -> None:
+        apply_mock = MagicMock(return_value=[])
+        with TemporaryDirectory() as tmpdir:
+            args = _apply_args(tmpdir, yes=False)
+            with patch("dreamcleanr.cli.capture_snapshot", return_value={}), patch(
+                "dreamcleanr.cli.plan_cleanup", return_value=[_deletion_action()]
+            ), patch("dreamcleanr.cli.apply_actions", apply_mock), patch(
+                "dreamcleanr.cli.build_cleanup_report", return_value=_StubReport()
+            ), patch("dreamcleanr.cli.build_receipt_summary", return_value={}), patch(
+                "dreamcleanr.cli.write_html"
+            ), patch("sys.stdin.isatty", return_value=True), patch(
+                "dreamcleanr.cli._confirm_apply", return_value=False
+            ):
+                result = command_clean(args)
+        self.assertEqual(result, 0)
+        self.assertTrue(apply_mock.call_args.kwargs["dry_run"])
 
 
 if __name__ == "__main__":

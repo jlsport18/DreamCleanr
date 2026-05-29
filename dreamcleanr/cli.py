@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import argparse
+import fcntl
 import json
 import sys
 import traceback
@@ -14,12 +15,99 @@ from .core import (
     build_cleanup_report,
     capture_snapshot,
     default_report_dir,
+    human_bytes,
     plan_cleanup,
     apply_actions,
     now_iso,
     prune_history_files,
     prune_rotated_logs,
+    reclaim_ceiling,
 )
+
+
+def _actions_caused_state_change(actions) -> bool:
+    """True if any action mutated host state (deleted disk / terminated proc /
+    unloaded model). Per issue #8 — skip the duplicate-snapshot rescan when
+    nothing happened.
+
+    Excludes: planned (dry-run), kept (preview-only), blocked, failed,
+    missing, skipped — none of those touched disk or RAM.
+    """
+    successful = {"deleted", "terminated", "unloaded"}
+    return any(action.result in successful for action in actions)
+
+
+def _print_ceiling(snapshot: Dict[str, Any], stream) -> None:
+    try:
+        ceiling = reclaim_ceiling(snapshot)
+    except Exception:  # display is non-critical — never let it break a cleanup run
+        return
+    print(
+        f"DreamCleanr can reclaim up to {human_bytes(ceiling['ram_bytes'])} RAM "
+        f"and {human_bytes(ceiling['disk_bytes'])} disk right now.",
+        file=stream,
+    )
+    for source in ceiling["ram_sources"][:5]:
+        tag = "  (reversible)" if source.get("reversible") else ""
+        print(f"  RAM   {source['source']}  ~{human_bytes(source['bytes'])}  → {source['action']}{tag}", file=stream)
+    for source in ceiling["disk_sources"][:3]:
+        print(f"  disk  {source['source']}  ~{human_bytes(source['bytes'])}", file=stream)
+
+
+def _planned_deletions(actions: list) -> list:
+    """Actions that would actually delete/terminate (not preview-gated)."""
+    return [a for a in actions if a.details.get("apply_allowed", True)]
+
+
+def _confirm_apply(actions: list, mode: str, use_trash: bool = False) -> bool:
+    deletions = _planned_deletions(actions)
+    mem = [a for a in deletions if a.target_type == "memory"]
+    paths = [a for a in deletions if a.target_type not in {"process", "memory"}]
+    procs = sum(1 for a in deletions if a.target_type == "process")
+    disk_total = sum(a.bytes_reclaimed for a in paths)
+    ram_total = sum(a.bytes_reclaimed for a in mem)
+    verb = "trash" if use_trash else "delete"
+    print(f"DreamCleanr will apply {len(deletions)} action(s) in '{mode}' mode:")
+    for action in mem[:10]:
+        print(f"  unload    {action.target}  (~{human_bytes(action.bytes_reclaimed)} RAM)  (reversible)")
+    for action in paths[:20]:
+        label = action.details.get("label", action.target)
+        print(f"  {verb:<9} {label}  (~{human_bytes(action.bytes_reclaimed)})")
+    if len(paths) > 20:
+        print(f"  … and {len(paths) - 20} more path(s)")
+    if procs:
+        print(f"  terminate {procs} stale process(es)")
+    if use_trash:
+        print("Paths go to the macOS Trash (restore from Finder); empty the Trash to reclaim space.")
+    reclaim = f"~{human_bytes(disk_total)} disk"
+    if ram_total:
+        reclaim += f" + ~{human_bytes(ram_total)} RAM"
+    print(f"Estimated reclaim: {reclaim}")
+    try:
+        answer = input("Proceed? [y/N] ").strip().lower()
+    except EOFError:
+        return False
+    return answer in {"y", "yes"}
+
+
+def _acquire_run_lock(output_dir: Path):
+    """Non-blocking exclusive lock so a manual run and the scheduled job don't
+    apply concurrently to the same report dir. Returns the held handle or None."""
+    lock_path = output_dir / ".dreamcleanr.lock"
+    handle = open(lock_path, "w")
+    try:
+        fcntl.flock(handle.fileno(), fcntl.LOCK_EX | fcntl.LOCK_NB)
+    except OSError:
+        handle.close()
+        return None
+    return handle
+
+
+def _release_run_lock(handle) -> None:
+    try:
+        fcntl.flock(handle.fileno(), fcntl.LOCK_UN)
+    finally:
+        handle.close()
 from .reporting import build_receipt_summary, build_team_export, write_html, write_team_csv
 from .scheduler import install_launch_agent, uninstall_launch_agent, write_launch_agent
 
@@ -56,6 +144,7 @@ def _failure_payload(exc: Exception, mode: str, dry_run: bool) -> Dict[str, Any]
 
 def command_scan(args: argparse.Namespace) -> int:
     snapshot = capture_snapshot(mode=args.mode)
+    _print_ceiling(snapshot, sys.stderr)  # human summary on stderr; stdout stays pure JSON
     payload = snapshot
     if args.json_out:
         _write_json(Path(args.json_out), payload)
@@ -94,15 +183,50 @@ def command_clean(args: argparse.Namespace) -> int:
     output_dir.mkdir(parents=True, exist_ok=True)
     latest = _latest_paths(output_dir)
 
+    lock_handle = None
+    if not dry_run:
+        lock_handle = _acquire_run_lock(output_dir)
+        if lock_handle is None:
+            print(
+                "Another DreamCleanr apply is in progress for this report dir; skipping.",
+                file=sys.stderr,
+            )
+            return 0
+
     try:
         before = capture_snapshot(mode=args.mode)
+        _print_ceiling(before, sys.stdout)  # lead with the wow number
         planned_actions = plan_cleanup(before, mode=args.mode)
         if args.scope == "processes":
             planned_actions = [action for action in planned_actions if action.target_type == "process"]
         elif args.scope == "storage":
             planned_actions = [action for action in planned_actions if action.target_type != "process"]
-        actions = apply_actions(before, planned_actions, dry_run=dry_run)
-        after = capture_snapshot(mode=args.mode)
+
+        # Trash (restorable) vs hard-delete. Default: on for the aggressive max
+        # tier, off for balanced (regenerable caches free space immediately).
+        use_trash = args.trash if getattr(args, "trash", None) is not None else (args.mode == "max")
+        if not dry_run and _planned_deletions(planned_actions):
+            # Interactive runs confirm before deleting. Scripted / scheduled runs
+            # (no TTY) are intentional automation and proceed — this preserves an
+            # already-installed LaunchAgent. --yes skips the prompt explicitly.
+            if not getattr(args, "yes", False) and sys.stdin.isatty():
+                if not _confirm_apply(planned_actions, args.mode, use_trash):
+                    print("Aborted — running a preview instead; no changes made.")
+                    dry_run = True
+        actions = apply_actions(before, planned_actions, dry_run=dry_run, trash=use_trash)
+
+        # Issue #8: skip the duplicate-snapshot cost when nothing actually
+        # changed. In dry-run mode AND when no action mutated state
+        # (all blocked/failed/skipped/kept), the after snapshot would be
+        # identical to before — re-use it and stamp a fresh finished_at.
+        # Saves ~half the wall-clock time on dry-run flows (the second
+        # capture_snapshot is the largest single cost per profiling on
+        # issue #8: balanced scan ~29s, full apply path ~56s).
+        if dry_run or not _actions_caused_state_change(actions):
+            after = dict(before)
+            after["finished_at"] = now_iso()
+        else:
+            after = capture_snapshot(mode=args.mode)
         report = build_cleanup_report(before, after, actions, mode=args.mode, dry_run=dry_run)
         report_dict = report.to_dict()
 
@@ -153,6 +277,9 @@ def command_clean(args: argparse.Namespace) -> int:
         print(f"DreamCleanr clean failed: {exc}", file=sys.stderr)
         print(f"Failure report: {failure_path}", file=sys.stderr)
         return 1
+    finally:
+        if lock_handle is not None:
+            _release_run_lock(lock_handle)
 
 
 def command_schedule_install(args: argparse.Namespace) -> int:
@@ -206,6 +333,9 @@ def build_parser() -> argparse.ArgumentParser:
     clean.add_argument("--mode", choices=["safe", "balanced", "max"], default="balanced")
     clean.add_argument("--scope", choices=["all", "processes", "storage"], default="all")
     clean.add_argument("--apply", action="store_true", help="Apply cleanup actions instead of dry-run preview.")
+    clean.add_argument("--yes", "-y", action="store_true", help="Skip the interactive confirmation prompt before --apply.")
+    clean.add_argument("--trash", dest="trash", action="store_true", default=None, help="Move deleted items to the macOS Trash (restorable) instead of removing them. Default: on for --mode max.")
+    clean.add_argument("--no-trash", dest="trash", action="store_false", help="Hard-delete to reclaim space immediately, even in --mode max.")
     clean.add_argument("--output-dir", help="Directory for JSON and HTML reports.")
     clean.add_argument("--json-out", help="Write cleanup report JSON to a specific file.")
     clean.add_argument("--html-out", help="Write cleanup report HTML to a specific file.")

@@ -8,6 +8,7 @@ import signal
 import subprocess
 import time
 import uuid
+from concurrent.futures import ThreadPoolExecutor
 from dataclasses import asdict
 from datetime import datetime, timezone
 from pathlib import Path
@@ -21,6 +22,15 @@ DEFAULT_RETENTION_COUNT = 21
 DEFAULT_LOG_RETENTION_COUNT = 5
 STALE_PROCESS_MIN_ELAPSED_SECONDS = 300
 STALE_PROCESS_MAX_CPU_PERCENT = 1.0
+
+# Smart-reclaim policy. Downloaded models are user assets (expensive to refetch),
+# never auto-deleted — surfaced for review only. Everything else is a regenerable
+# cache. RECLAIMABLE_CACHE_LABELS are the regenerable detector caches safe to
+# auto-clear in max: they live OUTSIDE ~/Library/Caches and are not in
+# SAFE_CACHE_PATHS, so they never overlap the wholesale sweep or other actions.
+STALE_DETECTOR_DAYS = 14
+MODEL_DATA_DETECTORS = {"huggingface", "ollama", "lm_studio", "git_lfs"}
+RECLAIMABLE_CACHE_LABELS = {"pip_cache", "pnpm_store", "library_pnpm_store", "yarn_cache"}
 
 PROTECTED_STATE_PATHS = {
     "codex_home": Path.home() / ".codex",
@@ -190,14 +200,16 @@ def parse_size_to_bytes(text: str) -> int:
     if not raw:
         return 0
     raw = raw.replace(" ", "")
-    units = {
-        "B": 1,
-        "KB": 1024,
-        "MB": 1024 ** 2,
-        "GB": 1024 ** 3,
-        "TB": 1024 ** 4,
-    }
-    for unit, scale in units.items():
+    # Longest units first — otherwise "40GB" matches the "B" suffix and "40G"
+    # fails to parse (returning 0).
+    units = [
+        ("TB", 1024 ** 4),
+        ("GB", 1024 ** 3),
+        ("MB", 1024 ** 2),
+        ("KB", 1024),
+        ("B", 1),
+    ]
+    for unit, scale in units:
         if raw.endswith(unit):
             number = raw[: -len(unit)]
             try:
@@ -273,12 +285,34 @@ def du_bytes(path: Path) -> int:
         return 0
 
 
+def du_bytes_many(paths: Iterable[Path]) -> Dict[str, int]:
+    """Size many paths concurrently. du is subprocess/IO-bound, so a small thread
+    pool turns a serial sweep of large model/cache dirs into a parallel one."""
+    unique: List[Path] = []
+    seen = set()
+    for path in paths:
+        key = str(path)
+        if key not in seen:
+            seen.add(key)
+            unique.append(path)
+    if not unique:
+        return {}
+    with ThreadPoolExecutor(max_workers=min(8, len(unique))) as pool:
+        sizes = list(pool.map(du_bytes, unique))
+    return {str(path): size for path, size in zip(unique, sizes)}
+
+
 def gather_detector_findings(home: Optional[Path] = None) -> List[Dict[str, Any]]:
     home = home or Path.home()
-    findings: List[DetectorFinding] = []
-    for key, detector in detector_registry(home).items():
-        observed_paths: List[Dict[str, Any]] = []
-        total_bytes = 0
+    registry = detector_registry(home)
+
+    # First pass: collect existing paths (deduped per detector); size them all
+    # together in parallel so big model dirs don't serialize the scan.
+    per_detector: Dict[str, List[Tuple[str, Path]]] = {}
+    all_paths: List[Path] = []
+    mtime_map: Dict[str, float] = {}
+    for key, detector in registry.items():
+        items: List[Tuple[str, Path]] = []
         seen_paths = set()
         for label, path in detector["paths"]:
             normalized = str(path)
@@ -287,7 +321,22 @@ def gather_detector_findings(home: Optional[Path] = None) -> List[Dict[str, Any]
             seen_paths.add(normalized)
             if not path.exists():
                 continue
-            size_bytes = du_bytes(path)
+            items.append((label, path))
+            all_paths.append(path)
+            try:
+                mtime_map[normalized] = path.stat().st_mtime
+            except OSError:
+                pass
+        per_detector[key] = items
+    size_map = du_bytes_many(all_paths)
+    now = time.time()
+
+    findings: List[DetectorFinding] = []
+    for key, detector in registry.items():
+        observed_paths: List[Dict[str, Any]] = []
+        total_bytes = 0
+        for label, path in per_detector[key]:
+            size_bytes = size_map.get(str(path), 0)
             observed_paths.append(
                 {
                     "label": label,
@@ -298,6 +347,12 @@ def gather_detector_findings(home: Optional[Path] = None) -> List[Dict[str, Any]
             total_bytes += size_bytes
         if not observed_paths:
             continue
+        reclaim_policy = "model_data" if key in MODEL_DATA_DETECTORS else "regenerable"
+        reclaimable_bytes = sum(
+            item["size_bytes"] for item in observed_paths if item["label"] in RECLAIMABLE_CACHE_LABELS
+        )
+        mtimes = [mtime_map[item["path"]] for item in observed_paths if item["path"] in mtime_map]
+        last_touched_days = int((now - max(mtimes)) // 86400) if mtimes else None
         findings.append(
             DetectorFinding(
                 key=key,
@@ -308,6 +363,9 @@ def gather_detector_findings(home: Optional[Path] = None) -> List[Dict[str, Any]
                 cleanup_ready=detector["cleanup_ready"],
                 notes=detector["notes"],
                 observed_paths=observed_paths,
+                reclaim_policy=reclaim_policy,
+                last_touched_days=last_touched_days,
+                reclaimable_bytes=reclaimable_bytes,
             )
         )
     findings.sort(key=lambda item: item.total_bytes, reverse=True)
@@ -428,7 +486,22 @@ def annotate_detector_findings(
         item = dict(finding)
         item["active_project_roots"] = unique_roots[:5]
         item["active_project_count"] = len(unique_roots)
-        item["safety_state"] = "guarded_by_active_projects" if unique_roots else "visibility_only"
+        guarded = bool(unique_roots)
+        item["safety_state"] = "guarded_by_active_projects" if guarded else "visibility_only"
+        # Smart recommendation, and gate reclaim on the active-project guard.
+        if guarded:
+            item["reclaimable_bytes"] = 0
+        if item.get("reclaim_policy") == "model_data":
+            item["recommendation"] = (
+                "Review — downloaded models are expensive to refetch; prune unused ones "
+                "with the tool itself (e.g. `ollama rm`, `huggingface-cli delete-cache`)."
+            )
+        elif guarded:
+            item["recommendation"] = "Guarded — tied to an active project; left alone."
+        elif item.get("reclaimable_bytes", 0) > 0:
+            item["recommendation"] = "Regenerable cache — safe to clear in --mode max."
+        else:
+            item["recommendation"] = "Visibility only."
         annotated.append(item)
     return annotated
 
@@ -504,6 +577,54 @@ def classify_process_role(record: ProcessRecord) -> None:
         record.role = "probe"
         return
 
+    # Cross-product crashpad handlers + autoupdaters that don't belong to a
+    # known AI-dev product family. Classifying these in their own family
+    # keeps them eligible for stale-helper detection without misattributing
+    # them to claude/codex/docker. Per issue #1 — updater + crashpad coverage.
+    if (
+        ("crashpad_handler" in args or "crashpad-handler" in args)
+        and not any(t in args for t in ("/applications/claude.app/", "/applications/codex.app/",
+                                        "anthropic.claude-code", "openai.chatgpt-", "com.openai.codex"))
+    ):
+        record.family = "crashpad"
+        record.role = "crashpad"
+        return
+    if has_any_token(
+        args,
+        (
+            "/sparkle ",
+            "sparkle.app/contents",
+            "softwareupdate ",
+            "shipit ",
+            " shipit",
+            "/microsoft autoupdate/",
+            "msupdate",
+            "homebrew autoupdate",
+            "brew autoupdate",
+            "/google software update.app/",
+            "googlesoftwareupdate",
+        ),
+    ):
+        record.family = "updater"
+        # Order: more-specific brands first; `softwareupdate` substring
+        # is shared by macOS softwareupdate AND GoogleSoftwareUpdate, so
+        # google must be checked before the generic match.
+        if "google" in args:
+            record.role = "google_software_update"
+        elif "microsoft" in args or "msupdate" in args:
+            record.role = "msupdate"
+        elif "brew" in args or "homebrew" in args:
+            record.role = "brew_autoupdate"
+        elif "shipit" in args:
+            record.role = "shipit"
+        elif "sparkle" in args:
+            record.role = "sparkle"
+        elif "softwareupdate" in args:
+            record.role = "macos_softwareupdate"
+        else:
+            record.role = "generic_updater"
+        return
+
     if has_any_token(
         args,
         (
@@ -550,7 +671,10 @@ def classify_process_role(record: ProcessRecord) -> None:
             "/resources/codex app-server",
             "openai.chatgpt-",
             "com.openai.codex",
-            "crashpad_handler",
+            # Note: crashpad_handler removed as a generic trigger here per
+            # issue #1 — generic crashpads belong in the 'crashpad' family,
+            # codex-bundled crashpads still match via 'codex helper' or the
+            # codex.app/ paths and get role=crashpad below.
         ),
     ):
         record.family = "codex"
@@ -579,7 +703,10 @@ def classify_process_role(record: ProcessRecord) -> None:
             "/resources/native-binary/claude",
             "claude --output-format",
             "--mcp-config",
-            "crashpad_handler",
+            # Note: crashpad_handler removed as a generic trigger here per
+            # issue #1 — claude-bundled crashpads match via the claude.app
+            # path or 'claude helper' below; generic crashpads land in
+            # the 'crashpad' family.
         ),
     ):
         record.family = "claude"
@@ -613,16 +740,23 @@ _STRONG_ROLES: Dict[str, frozenset] = {
     "docker": frozenset({"vmnetd", "backend", "backend_service", "virtualization", "sandbox", "docker_helper"}),
     "claude": frozenset({"claude_app", "vscode_cli"}),
     "codex": frozenset({"codex_app", "helper", "renderer", "cli_service"}),
+    "crashpad": frozenset(),  # crashpad is never "strong" — it's always a helper
+    "updater": frozenset(),   # updaters are never "strong" primary
 }
 _WEAK_ROLES: Dict[str, frozenset] = {
     "docker": frozenset({"docker_cli", "docker_cli_probe", "shell_docker_probe", "shell_docker_session"}),
     "claude": frozenset({"shipit", "crashpad"}),
     "codex": frozenset({"updater", "crashpad"}),
+    "crashpad": frozenset({"crashpad"}),
+    "updater": frozenset({"sparkle", "macos_softwareupdate", "shipit", "msupdate", "brew_autoupdate",
+                           "google_software_update", "generic_updater"}),
 }
 _PRIMARY_ROLES: Dict[str, frozenset] = {
     "docker": frozenset({"vmnetd", "backend", "virtualization"}),
     "claude": frozenset({"claude_app", "vscode_cli"}),
     "codex": frozenset({"codex_app", "cli_service"}),
+    "crashpad": frozenset(),  # crashpad is never primary
+    "updater": frozenset(),   # autoupdaters are not "active primary" — they're transient
 }
 # Flat union used by classify_processes; derived from _PRIMARY_ROLES so both stay in sync.
 _PRIMARY_ROLES_FLAT: frozenset = frozenset().union(*_PRIMARY_ROLES.values())
@@ -869,26 +1003,13 @@ def attach_classification_counts(processes: List[ProcessRecord], family_summarie
 
 
 def gather_storage_records(family_summaries: Dict[str, Dict[str, Any]]) -> Tuple[List[StorageRecord], List[StorageRecord], List[StorageRecord]]:
-    records: List[StorageRecord] = []
-    protected: List[StorageRecord] = []
-    manual: List[StorageRecord] = []
+    pending: List[Tuple[str, Path, str, str, str]] = []
 
     def add_record(label: str, path: Path, family: str, classification: str, notes: str) -> None:
+        # Defer sizing — collect candidates now, du them all in parallel below.
         if not path.exists():
             return
-        record = StorageRecord(
-            label=label,
-            path=str(path),
-            family=family,
-            classification=classification,
-            size_bytes=du_bytes(path),
-            notes=notes,
-        )
-        records.append(record)
-        if classification == "PROTECTED_STATE":
-            protected.append(record)
-        elif classification == "REVIEW_VM":
-            manual.append(record)
+        pending.append((label, path, family, classification, notes))
 
     for label, path in SAFE_CACHE_PATHS.items():
         add_record(label, path, "system", "SAFE_CACHE", "Regenerable cache or developer artifact.")
@@ -921,6 +1042,24 @@ def gather_storage_records(family_summaries: Dict[str, Dict[str, Any]]) -> Tuple
             classification = "SAFE_CACHE" if family_summaries["codex"]["state"] == "inactive" else "PROTECTED_STATE"
             add_record(f"codex_support_cache:{dirname}", path, "codex", classification, "Codex support cache directory.")
 
+    size_map = du_bytes_many([path for _, path, _, _, _ in pending])
+    records: List[StorageRecord] = []
+    protected: List[StorageRecord] = []
+    manual: List[StorageRecord] = []
+    for label, path, family, classification, notes in pending:
+        record = StorageRecord(
+            label=label,
+            path=str(path),
+            family=family,
+            classification=classification,
+            size_bytes=size_map.get(str(path), 0),
+            notes=notes,
+        )
+        records.append(record)
+        if classification == "PROTECTED_STATE":
+            protected.append(record)
+        elif classification == "REVIEW_VM":
+            manual.append(record)
     return records, protected, manual
 
 
@@ -989,6 +1128,87 @@ def list_docker_inventory() -> DockerInventory:
     return inventory
 
 
+def capture_memory_state() -> Dict[str, Any]:
+    """Honest macOS RAM breakdown via vm_stat (stdlib). Inactive/cached memory is
+    reported but explicitly NOT counted as reclaimable — the kernel reuses it."""
+    state: Dict[str, Any] = {"available": False, "total_bytes": 0}
+    sysctl = run_command(["sysctl", "-n", "hw.memsize"], timeout=3)
+    if sysctl["ok"]:
+        try:
+            state["total_bytes"] = int(sysctl["stdout"].strip())
+        except ValueError:
+            pass
+    result = run_command(["vm_stat"], timeout=3)
+    if not result["ok"]:
+        return state
+    page_size = 4096
+    pages: Dict[str, int] = {}
+    for line in result["stdout"].splitlines():
+        match = re.search(r"page size of (\d+) bytes", line)
+        if match:
+            page_size = int(match.group(1))
+            continue
+        key, _, value = line.partition(":")
+        number = value.strip().rstrip(".")
+        if number.isdigit():
+            pages[key.strip()] = int(number)
+
+    def by(key: str) -> int:
+        return pages.get(key, 0) * page_size
+
+    wired = by("Pages wired down")
+    active = by("Pages active")
+    compressed = by("Pages occupied by compressor")
+    used = wired + active + compressed
+    total = state["total_bytes"]
+    state.update(
+        {
+            "available": True,
+            "wired_bytes": wired,
+            "active_bytes": active,
+            "inactive_bytes": by("Pages inactive"),  # kernel-managed; not "wasted"
+            "compressed_bytes": compressed,
+            "free_bytes": by("Pages free") + by("Pages speculative"),
+            "used_bytes": used,
+            "pressure_pct": round(100.0 * used / total, 1) if total else 0.0,
+        }
+    )
+    return state
+
+
+def list_loaded_models() -> List[Dict[str, Any]]:
+    """Ollama models currently resident in RAM (`ollama ps`), each reclaimable
+    with `ollama stop <name>` — reversible (re-loads on next inference). Empty if
+    ollama isn't installed. This is usually the single biggest RAM line item."""
+    if not shutil.which("ollama"):
+        return []
+    result = run_command(["ollama", "ps"], timeout=4)
+    if not result["ok"]:
+        return []
+    lines = [line for line in result["stdout"].splitlines() if line.strip()]
+    if len(lines) <= 1:
+        return []
+    models: List[Dict[str, Any]] = []
+    for line in lines[1:]:  # skip header (NAME ID SIZE PROCESSOR UNTIL)
+        parts = line.split()
+        if len(parts) < 3:
+            continue
+        size_bytes = 0
+        for index, token in enumerate(parts[:-1]):
+            if re.match(r"^\d+(\.\d+)?$", token) and parts[index + 1].upper() in {"B", "KB", "MB", "GB", "TB"}:
+                size_bytes = parse_size_to_bytes(token + parts[index + 1])
+                break
+        models.append(
+            {
+                "name": parts[0],
+                "size_bytes": size_bytes,
+                "action": f"ollama stop {parts[0]}",
+                "reversible": True,
+            }
+        )
+    return models
+
+
 def capture_snapshot(mode: str = "balanced") -> Dict[str, Any]:
     started_at = now_iso()
     run_id = uuid.uuid4().hex[:12]
@@ -1015,9 +1235,13 @@ def capture_snapshot(mode: str = "balanced") -> Dict[str, Any]:
     project_signals = gather_project_signals(processes)
     detector_findings = annotate_detector_findings(gather_detector_findings(), project_signals)
     project_summary = project_activity_summary(project_signals)
+    memory_state = capture_memory_state()
+    loaded_models = list_loaded_models()
 
     return {
         "run_id": run_id,
+        "memory_state": memory_state,
+        "loaded_models": loaded_models,
         "started_at": started_at,
         "finished_at": now_iso(),
         "mode": mode,
@@ -1066,30 +1290,40 @@ def family_summary_from_actions(
     return summary
 
 
+def _path_overlaps_any(candidate: Path, planned: Iterable[str]) -> bool:
+    """True if candidate equals, contains, or is contained by any planned path —
+    so two cleanup actions can't target overlapping trees (double-count/missing)."""
+    for planned_str in planned:
+        other = Path(planned_str)
+        if candidate == other or other in candidate.parents or candidate in other.parents:
+            return True
+    return False
+
+
 def plan_cleanup(snapshot: Dict[str, Any], mode: str = "balanced") -> List[CleanupAction]:
+    """Plan cleanup actions for the requested tier.
+
+    Tiers (cleaning power is never removed — only re-characterized by tier):
+
+    * ``safe``     — previews the standard tier without deleting anything. Every
+                     action is marked ``apply_allowed=False`` so ``--apply`` is a
+                     no-op guarantee.
+    * ``balanced`` — the default. Standard, low-blast-radius reclaim: regenerable
+                     developer/tool caches, Docker prune, and stale-process trim.
+    * ``max``      — aggressive. Everything ``balanced`` does PLUS the broad
+                     ``~/Library/Caches`` sweep and inactive app support caches.
+
+    The wholesale ``~/Library/Caches`` sweep lived in ``balanced`` (and even ran
+    in ``safe``); it is now ``max``-only so the default and the unattended
+    scheduled run stay fast but conservative.
+    """
     actions: List[CleanupAction] = []
+    preview_only = mode == "safe"
+    applies = not preview_only
+
     processes = [ProcessRecord(**item) for item in snapshot["processes"]]
     for process in processes:
         if process.classification not in {"STALE_CLI", "STALE_HELPER"}:
-            continue
-        if mode == "safe":
-            actions.append(
-                CleanupAction(
-                    target=str(process.pid),
-                    target_type="process",
-                    family=process.family,
-                    classification=process.classification,
-                    result="planned",
-                    bytes_reclaimed=process.rss_kb * 1024,
-                    reason="Would terminate stale helper or CLI probe process in balanced or max mode.",
-                    details={
-                        "pid": process.pid,
-                        "args": process.args,
-                        "elapsed_seconds": process.elapsed_seconds,
-                        "apply_allowed": False,
-                    },
-                )
-            )
             continue
         actions.append(
             CleanupAction(
@@ -1099,17 +1333,21 @@ def plan_cleanup(snapshot: Dict[str, Any], mode: str = "balanced") -> List[Clean
                 classification=process.classification,
                 result="planned",
                 bytes_reclaimed=process.rss_kb * 1024,
-                reason="Stale helper or CLI probe process with low activity and no active parent chain.",
+                reason=(
+                    "Would terminate stale helper or CLI probe process; preview only in safe mode."
+                    if preview_only
+                    else "Stale helper or CLI probe process with low activity and no active parent chain."
+                ),
                 details={
                     "pid": process.pid,
                     "args": process.args,
                     "elapsed_seconds": process.elapsed_seconds,
-                    "apply_allowed": True,
+                    "apply_allowed": applies,
                 },
             )
         )
 
-    def safe_delete_action(label: str, path: Path, family: str, reason: str) -> None:
+    def safe_delete_action(label: str, path: Path, family: str, reason: str, apply_allowed: bool = True) -> None:
         actions.append(
             CleanupAction(
                 target=str(path),
@@ -1119,19 +1357,20 @@ def plan_cleanup(snapshot: Dict[str, Any], mode: str = "balanced") -> List[Clean
                 result="planned",
                 bytes_reclaimed=du_bytes(path),
                 reason=reason,
-                details={"label": label, "apply_allowed": True},
+                details={"label": label, "apply_allowed": apply_allowed},
             )
         )
 
-    safe_delete_action("uv_cache", SAFE_CACHE_PATHS["uv_cache"], "system", "Regenerable uv cache.")
-    safe_delete_action("trunk_cache", SAFE_CACHE_PATHS["trunk_cache"], "system", "Regenerable trunk cache.")
-    safe_delete_action("gradle_cache", SAFE_CACHE_PATHS["gradle_cache"], "system", "Regenerable Gradle cache.")
-    safe_delete_action("npm_cache", SAFE_CACHE_PATHS["npm_cache"], "system", "Regenerable npm cache.")
-    safe_delete_action("npx_cache", SAFE_CACHE_PATHS["npx_cache"], "system", "Regenerable npx cache.")
-    safe_delete_action("library_caches", SAFE_CACHE_PATHS["library_caches"], "system", "Remove unprotected library caches.")
+    # Standard tier — regenerable developer/tool caches (re-download on demand).
+    # Present in balanced and max; previewed (never deleted) in safe.
+    safe_delete_action("uv_cache", SAFE_CACHE_PATHS["uv_cache"], "system", "Regenerable uv cache.", apply_allowed=applies)
+    safe_delete_action("trunk_cache", SAFE_CACHE_PATHS["trunk_cache"], "system", "Regenerable trunk cache.", apply_allowed=applies)
+    safe_delete_action("gradle_cache", SAFE_CACHE_PATHS["gradle_cache"], "system", "Regenerable Gradle cache.", apply_allowed=applies)
+    safe_delete_action("npm_cache", SAFE_CACHE_PATHS["npm_cache"], "system", "Regenerable npm cache.", apply_allowed=applies)
+    safe_delete_action("npx_cache", SAFE_CACHE_PATHS["npx_cache"], "system", "Regenerable npx cache.", apply_allowed=applies)
 
     process_summary = snapshot["process_summary"]
-    if mode in {"balanced", "max"} and process_summary["docker"]["recommended_action"] == "docker_system_prune":
+    if process_summary["docker"]["recommended_action"] == "docker_system_prune":
         actions.append(
             CleanupAction(
                 target="docker_system_prune",
@@ -1142,13 +1381,20 @@ def plan_cleanup(snapshot: Dict[str, Any], mode: str = "balanced") -> List[Clean
                 bytes_reclaimed=0,
                 reason="Prune stopped containers, dangling images, and build cache via Docker daemon.",
                 details={
-                    "apply_allowed": True,
+                    "apply_allowed": applies,
                     "inventory_counts": process_summary["docker"].get("inventory_counts", {}),
                 },
             )
         )
 
+    # Aggressive tier (max only) — broad caches with a wider blast radius.
     if mode == "max":
+        safe_delete_action(
+            "library_caches",
+            SAFE_CACHE_PATHS["library_caches"],
+            "system",
+            "Remove all unprotected ~/Library/Caches entries (aggressive; max mode only).",
+        )
         claude_state = process_summary["claude"]["state"]
         codex_state = process_summary["codex"]["state"]
         if claude_state in {"inactive", "residual_data_only"}:
@@ -1160,11 +1406,138 @@ def plan_cleanup(snapshot: Dict[str, Any], mode: str = "balanced") -> List[Clean
                 path = PROTECTED_STATE_PATHS["codex_support"] / dirname
                 safe_delete_action(f"codex_support_cache:{dirname}", path, "codex", "Codex support cache while inactive.")
 
+        # Smart reclaim: stale, regenerable, unguarded detector caches that live
+        # outside ~/Library/Caches. Model data is never auto-deleted (review only).
+        planned_paths = {action.target for action in actions if action.target_type == "path"}
+        for finding in snapshot.get("detector_findings", []):
+            if finding.get("reclaim_policy") != "regenerable":
+                continue
+            if finding.get("safety_state") == "guarded_by_active_projects":
+                continue
+            touched = finding.get("last_touched_days")
+            if touched is None or touched < STALE_DETECTOR_DAYS:
+                continue
+            for observed in finding.get("observed_paths", []):
+                if observed.get("label") not in RECLAIMABLE_CACHE_LABELS:
+                    continue
+                candidate = observed.get("path", "")
+                if not candidate or _path_overlaps_any(Path(candidate), planned_paths):
+                    continue
+                safe_delete_action(
+                    f"{finding['key']}:{observed['label']}",
+                    Path(candidate),
+                    "system",
+                    f"Stale regenerable {finding['key']} cache (last touched {touched}d ago).",
+                )
+                planned_paths.add(candidate)
+
+        # Memory reclaim: unload RAM-resident Ollama models (reversible — re-loads
+        # on next inference). Aggressive tier + confirm; never deletes the model.
+        for model in snapshot.get("loaded_models", []):
+            actions.append(
+                CleanupAction(
+                    target=model["name"],
+                    target_type="memory",
+                    family="ollama",
+                    classification="LOADED_MODEL",
+                    result="planned",
+                    bytes_reclaimed=int(model.get("size_bytes", 0)),
+                    reason="Unload idle Ollama model from RAM (reversible — re-loads on next use).",
+                    details={
+                        "apply_allowed": True,
+                        "action": model.get("action", f"ollama stop {model['name']}"),
+                        "reversible": True,
+                    },
+                )
+            )
+
     return actions
 
 
-def path_delete(path: Path) -> None:
+def reclaim_ceiling(snapshot: Dict[str, Any]) -> Dict[str, Any]:
+    """The maximum reclaimable right now as a sum of NAMED, actionable sources —
+    never an unattributed aggregate. RAM = stale-terminable processes + loaded
+    Ollama models; disk = everything a max-mode plan would clear. Inactive/cached
+    memory is deliberately excluded (kernel-managed, not 'wasted')."""
+    ram_sources: List[Dict[str, Any]] = []
+    for proc in snapshot.get("processes", []):
+        if proc.get("classification") in {"STALE_CLI", "STALE_HELPER"}:
+            ram_sources.append(
+                {
+                    "source": f"idle {proc.get('family', 'tool')} process (pid {proc.get('pid')})",
+                    "bytes": int(proc.get("rss_kb", 0)) * 1024,
+                    "action": "terminate",
+                    "reversible": False,
+                }
+            )
+    for model in snapshot.get("loaded_models", []):
+        ram_sources.append(
+            {
+                "source": f"Ollama model '{model['name']}' resident in RAM",
+                "bytes": int(model.get("size_bytes", 0)),
+                "action": model.get("action", "ollama stop"),
+                "reversible": True,
+            }
+        )
+    # Disk from already-measured snapshot data — no second du pass, no re-plan.
+    disk_sources: List[Dict[str, Any]] = []
+    for record in snapshot.get("storage_records", []):
+        label = record.get("label", "")
+        # Skip per-basename children — the whole "library_caches" record covers them.
+        if record.get("classification") != "SAFE_CACHE" or label.startswith("library_cache:"):
+            continue
+        size = record.get("size_bytes", 0)
+        if size > 0:
+            disk_sources.append({"source": label, "bytes": size, "action": "trash/delete", "reversible": False})
+    for finding in snapshot.get("detector_findings", []):
+        reclaimable = finding.get("reclaimable_bytes", 0)
+        if reclaimable > 0 and finding.get("safety_state") != "guarded_by_active_projects":
+            disk_sources.append(
+                {"source": f"{finding.get('key')} cache", "bytes": reclaimable, "action": "trash/delete", "reversible": False}
+            )
+    ram_sources.sort(key=lambda item: item["bytes"], reverse=True)
+    disk_sources.sort(key=lambda item: item["bytes"], reverse=True)
+    return {
+        "ram_bytes": sum(item["bytes"] for item in ram_sources),
+        "disk_bytes": sum(item["bytes"] for item in disk_sources),
+        "ram_sources": ram_sources[:8],
+        "disk_sources": disk_sources[:8],
+    }
+
+
+def _trash_dir() -> Path:
+    return Path.home() / ".Trash"
+
+
+def trash_path(path: Path) -> Optional[Path]:
+    """Move a path into the macOS Trash (restorable via Finder). On the same
+    volume this is a fast rename, not a copy. Returns the destination or None."""
+    trash_dir = _trash_dir()
+    try:
+        trash_dir.mkdir(exist_ok=True)
+    except OSError:
+        return None
+    dest = trash_dir / path.name
+    if dest.exists():
+        stamp = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%S")
+        dest = trash_dir / f"{path.name}.{stamp}-{uuid.uuid4().hex[:6]}"
+    shutil.move(str(path), str(dest))
+    return dest
+
+
+def path_delete(path: Path, trash: bool = False) -> None:
+    # Remove a symlink itself rather than following it — never traverse out of
+    # the intended tree (and avoid shutil.rmtree raising on a symlinked dir).
+    if path.is_symlink():
+        if trash:
+            trash_path(path)
+        else:
+            path.unlink(missing_ok=True)
+        return
     if not path.exists():
+        return
+    if trash:
+        trash_path(path)
         return
     if path.is_dir():
         shutil.rmtree(path)
@@ -1196,7 +1569,7 @@ def prune_rotated_logs(output_dir: Path, keep: int = DEFAULT_LOG_RETENTION_COUNT
     return removed
 
 
-def remove_unprotected_library_caches(protected_basenames: List[str]) -> int:
+def remove_unprotected_library_caches(protected_basenames: List[str], trash: bool = False) -> int:
     cache_root = SAFE_CACHE_PATHS["library_caches"]
     if not cache_root.exists():
         return 0
@@ -1205,7 +1578,7 @@ def remove_unprotected_library_caches(protected_basenames: List[str]) -> int:
         if child.name in protected_basenames:
             continue
         reclaimed += du_bytes(child)
-        path_delete(child)
+        path_delete(child, trash=trash)
     return reclaimed
 
 
@@ -1235,10 +1608,50 @@ def terminate_process(pid: int) -> bool:
     return False
 
 
+def process_args(pid: int) -> Optional[str]:
+    """Current argument string for a live PID, or None if it no longer exists.
+
+    Distinguishes "PID gone" (ps exits 0, stdout empty) from "ps failed for
+    other reasons" (non-zero exit). When ps fails — permissions, timeout,
+    command-not-found — we raise rather than return None, because the
+    caller's interpretation of None is "process exited," which would lead
+    apply_actions() to wrongly record a 'terminated' result for a process
+    we never actually terminated (Codex P1 review on PR #30).
+    """
+    result = run_command(["ps", "-p", str(pid), "-o", "args="], timeout=3)
+    if not result["ok"]:
+        # ps -p <pid> returns exit code 1 when the PID doesn't exist —
+        # that's the only "ok=False" we treat as "gone." Anything else
+        # (timeout, error message in stderr) we surface so the caller can
+        # decide not to record termination.
+        if result.get("returncode") == 1 and not result.get("stderr", "").strip():
+            return None
+        raise RuntimeError(f"ps -p {pid} failed: {result.get('stderr', '?')[:200]}")
+    text = result["stdout"].strip()
+    return text or None
+
+
+def process_family(pid: int) -> Optional[str]:
+    """Re-classify a live PID's family now, to guard against PID reuse.
+
+    Returns None if the PID no longer exists.
+    """
+    args = process_args(pid)
+    if args is None:
+        return None
+    record = ProcessRecord(
+        pid=pid, ppid=0, etime="", elapsed_seconds=0,
+        cpu_percent=0.0, mem_percent=0.0, rss_kb=0, command="", args=args,
+    )
+    classify_process_role(record)
+    return record.family
+
+
 def apply_actions(
     snapshot: Dict[str, Any],
     actions: List[CleanupAction],
     dry_run: bool,
+    trash: bool = False,
 ) -> List[CleanupAction]:
     protected_caches = protected_library_cache_basenames(snapshot)
     applied: List[CleanupAction] = []
@@ -1257,21 +1670,53 @@ def apply_actions(
                 continue
             if action.target_type == "process":
                 pid = int(action.target)
-                success = terminate_process(pid)
-                realized.result = "terminated" if success else "blocked"
-                if not success:
-                    realized.reason = "Process could not be terminated safely."
+                # Guard against PID reuse between scan and apply: confirm the PID
+                # still belongs to the family we classified before sending a signal.
+                try:
+                    current_family = process_family(pid)
+                except RuntimeError as e:
+                    # ps lookup failed for a non-"process-gone" reason — don't
+                    # claim termination on what we can't observe.
+                    realized.result = "blocked"
+                    realized.reason = f"Could not verify process state via ps: {e}"
+                    applied.append(realized)
+                    continue
+                if current_family is None:
+                    realized.result = "terminated"
+                    realized.reason = "Process already exited before apply."
+                elif current_family != action.family:
+                    realized.result = "blocked"
+                    realized.reason = (
+                        f"PID {pid} now classifies as '{current_family}', not "
+                        f"'{action.family}' — likely reused; not terminated."
+                    )
+                else:
+                    success = terminate_process(pid)
+                    realized.result = "terminated" if success else "blocked"
+                    if not success:
+                        realized.reason = "Process could not be terminated safely."
             elif action.target_type == "path":
                 path = Path(action.target)
                 if action.target.endswith("Library/Caches"):
-                    realized.bytes_reclaimed = remove_unprotected_library_caches(protected_caches)
+                    realized.bytes_reclaimed = remove_unprotected_library_caches(protected_caches, trash=trash)
                     realized.result = "deleted"
                 elif path.exists():
                     realized.bytes_reclaimed = du_bytes(path)
-                    path_delete(path)
+                    path_delete(path, trash=trash)
                     realized.result = "deleted"
                 else:
                     realized.result = "missing"
+                if trash and realized.result == "deleted":
+                    realized.details["trashed"] = True
+            elif action.target_type == "memory":
+                command = str(action.details.get("action", "")).split()
+                if not command:
+                    realized.result = "skipped"
+                else:
+                    outcome = run_command(command, timeout=10)
+                    realized.result = "unloaded" if outcome["ok"] else "blocked"
+                    if not outcome["ok"]:
+                        realized.reason = "Could not unload from RAM."
             elif action.target_type == "docker":
                 if snapshot["process_summary"]["docker"]["recommended_action"] != "docker_system_prune":
                     realized.result = "blocked"
@@ -1302,15 +1747,46 @@ def build_cleanup_report(
 ) -> CleanupReport:
     storage_before = before_snapshot["host_disk_used_bytes"]
     storage_after = after_snapshot["host_disk_used_bytes"]
-    planned_bytes = sum(action.bytes_reclaimed for action in actions)
-    storage_reclaimed = planned_bytes if dry_run else max(storage_before - storage_after, planned_bytes)
+    # Disk reclamation only counts actions that ACTUALLY freed disk on this
+    # filesystem. Excludes:
+    #   - blocked / failed / skipped / missing / kept / planned (didn't happen)
+    #   - trashed paths (still occupy disk under ~/.Trash until emptied)
+    # Per PR #30 review (Gemini HIGH + Codex P2 on core.py:1642/1669).
+    storage_reclaimed = sum(
+        action.bytes_reclaimed
+        for action in actions
+        if action.target_type in {"path", "docker"}
+        and action.result == "deleted"
+        and not action.details.get("trashed", False)
+    )
 
     memory_before = sum(item["rss_kb"] for item in before_snapshot["processes"]) / 1024.0
-    memory_reclaimed = sum(action.bytes_reclaimed for action in actions if action.target_type == "process") / (1024.0 * 1024.0)
+    # RAM reclamation only counts actions that ACTUALLY unloaded RAM:
+    #   - process: result == 'terminated' (NOT planned/blocked/failed/kept)
+    #   - memory:  result == 'unloaded'    (NOT skipped/blocked)
+    memory_reclaimed = sum(
+        action.bytes_reclaimed
+        for action in actions
+        if (action.target_type == "process" and action.result == "terminated")
+        or (action.target_type == "memory" and action.result == "unloaded")
+    ) / (1024.0 * 1024.0)
     memory_after = max(0.0, memory_before - memory_reclaimed)
 
-    processes_trimmed = sum(1 for action in actions if action.target_type == "process" and action.result in {"planned", "terminated"})
-    objects_pruned = sum(1 for action in actions if action.target_type != "process" and action.result in {"planned", "deleted"})
+    # planned counts toward "would do" stats only in dry_run; otherwise only
+    # actually-completed actions count toward trim/prune.
+    success_results_disk = {"deleted"}
+    success_results_proc = {"terminated"}
+    if dry_run:
+        success_results_disk = success_results_disk | {"planned"}
+        success_results_proc = success_results_proc | {"planned"}
+    processes_trimmed = sum(
+        1 for action in actions
+        if action.target_type == "process" and action.result in success_results_proc
+    )
+    objects_pruned = sum(
+        1 for action in actions
+        if action.target_type != "process" and action.result in success_results_disk
+    )
 
     return CleanupReport(
         run_id=before_snapshot["run_id"],

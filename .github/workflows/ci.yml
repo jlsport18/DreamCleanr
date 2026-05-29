@@ -9,6 +9,10 @@ env:
 
 jobs:
   test:
+    # Public repo on a self-hosted runner: never execute untrusted fork-PR code on getupsoft
+    # (it shares the box with production containers + a business partner). Same-repo PRs and
+    # pushes still run.
+    if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
     runs-on: [self-hosted, linux, x64, getupsoft]
     strategy:
       matrix:

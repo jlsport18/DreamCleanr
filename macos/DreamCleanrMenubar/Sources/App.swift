@@ -54,11 +54,22 @@ struct MenuBarContent: View {
 
     @State private var lastScanResult: String? = nil
     @State private var isWorking: Bool = false
+    @State private var latestReport: LatestReportSummary? = nil
 
     var body: some View {
         // Status row
         Text(diskMonitor.statusText)
             .font(.system(size: 12, weight: .medium))
+
+        // Latest receipt — shows the last cleanup's actual outcome without
+        // re-running the CLI. Loaded lazily; updates on every CLI run.
+        if let r = latestReport {
+            Text(r.menuLine)
+                .font(.system(size: 11))
+            Text(r.subline)
+                .font(.caption2)
+                .foregroundColor(.secondary)
+        }
 
         Divider()
 
@@ -124,6 +135,9 @@ struct MenuBarContent: View {
             Text(result).font(.caption2).foregroundColor(.secondary)
         }
     }
+    .task {
+        await loadLatestReport()
+    }
 
     private func runCli(_ args: [String]) async {
         isWorking = true
@@ -131,6 +145,14 @@ struct MenuBarContent: View {
         let result = await CliRunner.shared.run(args)
         lastScanResult = result
         diskMonitor.refresh()
+        // Pick up the receipt the CLI just wrote.
+        latestReport = await LatestReportReader.shared.read()
+    }
+
+    /// Called on view appearance so the menu shows the last cleanup
+    /// outcome immediately, even before the user runs anything.
+    func loadLatestReport() async {
+        latestReport = await LatestReportReader.shared.read()
     }
 
     private func openReportsFolder() {

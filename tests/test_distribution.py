@@ -35,6 +35,22 @@ class VersionConsistencyTests(unittest.TestCase):
         defaults = {f.name: f.default for f in fields(CleanupReport)}
         self.assertEqual(defaults["tool_version"], dreamcleanr.__version__)
 
+    def test_cleanup_report_to_dict_covers_every_field(self) -> None:
+        # to_dict is hand-maintained; guard against adding a field and silently
+        # dropping it from receipts/exports.
+        from dataclasses import fields
+
+        from dreamcleanr.models import CleanupReport
+
+        report = CleanupReport(
+            run_id="r", started_at="", finished_at="", mode="balanced", dry_run=True,
+            storage_before_bytes=0, storage_after_bytes=0, storage_reclaimed_bytes=0,
+            memory_before_estimate_mb=0.0, memory_after_estimate_mb=0.0, memory_reclaimed_estimate_mb=0.0,
+            processes_scanned=0, processes_trimmed=0, objects_pruned=0,
+            protected_items=[], manual_review_items=[], family_summaries={}, actions=[], snapshot={},
+        )
+        self.assertEqual(set(report.to_dict().keys()), {f.name for f in fields(CleanupReport)})
+
 
 class DistributionSurfaceTests(unittest.TestCase):
     def test_mcp_integration_configs_use_local_server_entrypoint(self) -> None:
