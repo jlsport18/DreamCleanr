@@ -10,6 +10,7 @@ from pathlib import Path
 from typing import Any, Dict
 
 from . import __version__
+from .license import activate as _activate_license, check_pro, get_license_info, deactivate as _deactivate_license
 from .core import (
     DEFAULT_RETENTION_COUNT,
     build_cleanup_report,
@@ -357,7 +358,56 @@ def build_parser() -> argparse.ArgumentParser:
     uninstall = schedule_subparsers.add_parser("uninstall", help="Remove the DreamCleanr LaunchAgent.")
     uninstall.set_defaults(func=command_schedule_uninstall)
 
+    # ── License subcommands ──────────────────────────────────────────────
+    license_cmd = subparsers.add_parser("license", help="Manage your Sweep Pro license.")
+    license_sub = license_cmd.add_subparsers(dest="license_command", required=True)
+
+    activate_cmd = license_sub.add_parser("activate", help="Activate a Sweep Pro license key.")
+    activate_cmd.add_argument("--key", required=True, help="License key from your receipt (SWEEP-...).")
+    activate_cmd.add_argument("--email", required=True, help="Email address used to purchase Sweep Pro.")
+    activate_cmd.set_defaults(func=command_license_activate)
+
+    status_cmd = license_sub.add_parser("status", help="Show current license status.")
+    status_cmd.set_defaults(func=command_license_status)
+
+    deactivate_cmd = license_sub.add_parser("deactivate", help="Remove the license from this machine.")
+    deactivate_cmd.set_defaults(func=command_license_deactivate)
+
     return parser
+
+
+def command_license_activate(args: Any) -> int:
+    try:
+        _activate_license(key=args.key, email=args.email)
+        print("✅ Sweep Pro activated. Welcome to the Pro tier.")
+        print("   Developer mode, scheduled cleaning, and priority support are now unlocked.")
+        return 0
+    except ValueError as exc:
+        print(f"❌ Activation failed: {exc}", file=sys.stderr)
+        return 1
+
+
+def command_license_status(args: Any) -> int:
+    info = get_license_info()
+    if info:
+        print(f"✅ Sweep Pro — active")
+        print(f"   Email:        {info.get('email', '?')}")
+        print(f"   Activated:    {info.get('activated_at', '?')[:10]}")
+        print(f"   Tier:         {info.get('tier', 'pro').upper()}")
+    else:
+        print("ℹ️  Sweep Community (free)")
+        print("   Purchase Sweep Pro at: https://buy.stripe.com/eVqbJ29JcfWT7nue5R93y0v")
+        print("   Then run: sweep license activate --key SWEEP-... --email you@example.com")
+    return 0
+
+
+def command_license_deactivate(args: Any) -> int:
+    removed = _deactivate_license()
+    if removed:
+        print("License removed from this machine.")
+    else:
+        print("No license found on this machine.")
+    return 0
 
 
 def main(argv: Any = None) -> int:
