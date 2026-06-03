@@ -606,23 +606,21 @@ def classify_process_role(record: ProcessRecord) -> None:
         ),
     ):
         record.family = "updater"
-        # Order: more-specific brands first; `softwareupdate` substring
-        # is shared by macOS softwareupdate AND GoogleSoftwareUpdate, so
-        # google must be checked before the generic match.
-        if "google" in args:
-            record.role = "google_software_update"
-        elif "microsoft" in args or "msupdate" in args:
-            record.role = "msupdate"
-        elif "brew" in args or "homebrew" in args:
-            record.role = "brew_autoupdate"
-        elif "shipit" in args:
-            record.role = "shipit"
-        elif "sparkle" in args:
-            record.role = "sparkle"
-        elif "softwareupdate" in args:
-            record.role = "macos_softwareupdate"
-        else:
-            record.role = "generic_updater"
+        # Order: more-specific brands first; `softwareupdate` is a substring
+        # shared by macOS softwareupdate AND GoogleSoftwareUpdate, so google
+        # must precede the generic match. Adding a new updater brand = one tuple.
+        _UPDATER_ROLE_RULES: List[Tuple[Any, str]] = [
+            (lambda a: "google" in a,                           "google_software_update"),
+            (lambda a: "microsoft" in a or "msupdate" in a,    "msupdate"),
+            (lambda a: "brew" in a or "homebrew" in a,         "brew_autoupdate"),
+            (lambda a: "shipit" in a,                           "shipit"),
+            (lambda a: "sparkle" in a,                          "sparkle"),
+            (lambda a: "softwareupdate" in a,                   "macos_softwareupdate"),
+        ]
+        record.role = next(
+            (role for pred, role in _UPDATER_ROLE_RULES if pred(args)),
+            "generic_updater",
+        )
         return
 
     if has_any_token(

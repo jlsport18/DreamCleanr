@@ -3,11 +3,14 @@ from __future__ import annotations
 import argparse
 import fcntl
 import json
+import logging
 import sys
 import traceback
 import webbrowser
 from pathlib import Path
 from typing import Any, Dict
+
+log = logging.getLogger(__name__)
 
 from . import __version__
 from .license import activate as _activate_license, check_pro, get_license_info, deactivate as _deactivate_license
@@ -42,6 +45,7 @@ def _print_ceiling(snapshot: Dict[str, Any], stream) -> None:
     try:
         ceiling = reclaim_ceiling(snapshot)
     except Exception:  # display is non-critical — never let it break a cleanup run
+        log.exception("reclaim_ceiling failed; skipping ceiling display")
         return
     print(
         f"DreamCleanr can reclaim up to {human_bytes(ceiling['ram_bytes'])} RAM "
