@@ -11,3 +11,5 @@ reports/generated/
 .venv/
 apple/.build/
 apple/.swiftpm/
+macos/DreamCleanrMenubar/.build/
+.claude/
