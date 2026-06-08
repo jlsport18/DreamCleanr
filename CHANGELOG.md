@@ -4,6 +4,31 @@ All notable DreamCleanr release-facing changes should be tracked here.
 
 ## [Unreleased]
 
+## [0.4.0] - unreleased (held until the purchase path is live)
+
+### Security
+
+- **License keys are now Ed25519 signatures, not forgeable HMACs.** The previous
+  scheme signed the buyer's email with a secret that defaulted to a public
+  constant (`sweep-community-default`), so anyone could mint a valid key for any
+  email. Keys are now Ed25519 signatures that only the holder of the private
+  signing seed can produce; the client embeds the public key and verifies offline.
+  Verification is performed by a vendored, zero-dependency pure-Python Ed25519
+  implementation (RFC 8032), anchored on the RFC test vectors. No telemetry, no
+  new dependencies. Legacy HMAC-format keys no longer validate (none were ever
+  issued — the purchase chain had not gone live).
+
+### Added
+
+- `check_pro()` is now enforced at the gate points it was always meant to guard:
+  developer mode (`clean --mode max`) is Pro-only and downgrades free users to
+  `balanced` with an upsell; `schedule install` shows an upsell nag for free
+  users; the HTML report footer carries Community branding until Pro is active.
+- Operator key-issuance tool (`scripts/issue_license.py`) — signs a key with the
+  private seed from the operator secret store. Not shipped in the wheel.
+- A distribution test that fails the build if any private-key material or the
+  issuance tool ever lands inside the shipped package.
+
 ## [0.3.6] - 2026-05-25
 
 ### Fixed

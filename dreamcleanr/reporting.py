@@ -7,6 +7,7 @@ from pathlib import Path
 from typing import Any, Dict, List
 
 from .core import human_bytes
+from .license import check_pro
 
 _CSS = """
 <style>
@@ -56,6 +57,8 @@ _CSS = """
   details{margin-top:14px;background:rgba(255,255,255,.55);border:1px solid var(--line);border-radius:14px;padding:12px 14px}
   summary{cursor:pointer;font-weight:700}
   pre{white-space:pre-wrap;word-break:break-word;font-size:.84rem;color:#334;background:#fff;padding:12px;border-radius:12px;border:1px solid var(--line);max-height:360px;overflow:auto}
+  .report-footer{margin-top:28px;padding-top:14px;border-top:1px solid var(--line);font-size:.8rem;color:var(--muted);text-align:center}
+  .report-footer a{color:var(--ink)}
 </style>
 """
 
@@ -232,7 +235,29 @@ def write_team_csv(export: Dict[str, Any], output_path: Path) -> None:
             )
 
 
-def render_html(report: Dict[str, Any]) -> str:
+_PRO_BUY_URL = "https://buy.stripe.com/eVqbJ29JcfWT7nue5R93y0v"
+
+
+def _report_footer(pro: bool) -> str:
+    """Pro removes the branding line; Community gets an unobtrusive upsell."""
+    if pro:
+        return (
+            '<footer class="report-footer">'
+            '<span>Sweep Pro</span>'
+            '</footer>'
+        )
+    return (
+        '<footer class="report-footer">'
+        'Made with <strong>Sweep Community</strong> · '
+        f'<a href="{_PRO_BUY_URL}">Upgrade to Pro</a> to remove this notice, '
+        'unlock developer mode, and schedule cleanups without prompts.'
+        '</footer>'
+    )
+
+
+def render_html(report: Dict[str, Any], pro: bool | None = None) -> str:
+    if pro is None:
+        pro = check_pro()
     snapshot = report["snapshot"]
     actions = report["actions"]
     dry_run = report["dry_run"]
@@ -468,11 +493,13 @@ def render_html(report: Dict[str, Any]) -> str:
       <summary>Process safety summary</summary>
       <pre>{html.escape(raw_snapshot)}</pre>
     </details>
+
+    {_report_footer(pro)}
   </div>
 </body>
 </html>"""
 
 
-def write_html(report: Dict[str, Any], output_path: Path) -> None:
+def write_html(report: Dict[str, Any], output_path: Path, pro: bool | None = None) -> None:
     output_path.parent.mkdir(parents=True, exist_ok=True)
-    output_path.write_text(render_html(report), encoding="utf-8")
+    output_path.write_text(render_html(report, pro=pro), encoding="utf-8")

@@ -29,6 +29,30 @@ from .core import (
 )
 
 
+_PRO_BUY_URL = "https://buy.stripe.com/eVqbJ29JcfWT7nue5R93y0v"
+
+
+def _print_max_gate() -> None:
+    """Developer mode (`--mode max`) is a Pro feature — hard-gated."""
+    print(
+        "⛔ Developer mode (--mode max) is a Sweep Pro feature.\n"
+        "   It targets Xcode DerivedData, node_modules, Docker, and AI model caches.\n"
+        f"   Unlock it: {_PRO_BUY_URL}\n"
+        "   Then run: sweep license activate --key SWEEP-... --email you@example.com\n"
+        "   Running 'balanced' mode instead.",
+        file=sys.stderr,
+    )
+
+
+def _print_schedule_nag() -> None:
+    """Scheduled cleaning works on Community, with an upsell nag."""
+    print(
+        "💡 Scheduled cleaning installed. Sweep Pro removes this notice and unlocks\n"
+        f"   developer mode. Upgrade: {_PRO_BUY_URL}",
+        file=sys.stderr,
+    )
+
+
 def _actions_caused_state_change(actions) -> bool:
     """True if any action mutated host state (deleted disk / terminated proc /
     unloaded model). Per issue #8 — skip the duplicate-snapshot rescan when
@@ -184,6 +208,10 @@ def command_export(args: argparse.Namespace) -> int:
 
 def command_clean(args: argparse.Namespace) -> int:
     dry_run = not args.apply
+    pro = check_pro()
+    if args.mode == "max" and not pro:
+        _print_max_gate()
+        args.mode = "balanced"
     output_dir = Path(args.output_dir) if args.output_dir else default_report_dir()
     output_dir.mkdir(parents=True, exist_ok=True)
     latest = _latest_paths(output_dir)
@@ -253,8 +281,8 @@ def command_clean(args: argparse.Namespace) -> int:
         _write_json(latest["after"], after)
         _write_json(latest["report"], report_dict)
         _write_json(latest["summary"], summary_dict)
-        write_html(report_dict, html_path)
-        write_html(report_dict, latest["html"])
+        write_html(report_dict, html_path, pro=pro)
+        write_html(report_dict, latest["html"], pro=pro)
 
         removed_reports = prune_history_files(output_dir, keep=args.retention_count)
         removed_logs = prune_rotated_logs(output_dir)
@@ -300,6 +328,8 @@ def command_schedule_install(args: argparse.Namespace) -> int:
     )
     install_launch_agent(plist_path)
     print(f"Installed LaunchAgent: {plist_path}")
+    if not check_pro():
+        _print_schedule_nag()
     return 0
 
 
