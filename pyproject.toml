@@ -7,7 +7,7 @@ name = "dreamcleanr"
 version = "0.3.6"
 description = "DreamCleanr: clean while you sleep with safe macOS cleanup, MCP tools, and one-page receipts."
 readme = "README.md"
-requires-python = ">=3.9"
+requires-python = ">=3.11"
 keywords = ["macos", "cleanup", "docker", "claude", "codex", "mcp", "developer-tools"]
 authors = [
   { name = "Jonathan Lynch" }
@@ -19,8 +19,6 @@ classifiers = [
   "Operating System :: MacOS :: MacOS X",
   "Programming Language :: Python :: 3",
   "Programming Language :: Python :: 3 :: Only",
-  "Programming Language :: Python :: 3.9",
-  "Programming Language :: Python :: 3.10",
   "Programming Language :: Python :: 3.11",
   "Programming Language :: Python :: 3.12",
   "Topic :: System :: Systems Administration",
@@ -47,6 +45,11 @@ Support = "https://jlsport18.github.io/DreamCleanr/support.html"
 [project.scripts]
 dreamcleanr = "dreamcleanr.cli:main"
 dreamcleanr-mcp = "dreamcleanr.mcp_server:main"
+# Brand alias — the product ships as "Sweep"; the CLI help + license docs already
+# instruct users to run `sweep …` (e.g. cli.py: "sweep license activate"). Expose
+# `sweep` as a first-class entry point so those instructions actually work, while
+# keeping `dreamcleanr` for back-compat.
+sweep = "dreamcleanr.cli:main"
 
 [tool.setuptools]
 packages = ["dreamcleanr"]
