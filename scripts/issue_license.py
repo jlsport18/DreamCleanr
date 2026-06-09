@@ -23,15 +23,17 @@ from pathlib import Path
 # Import from the in-repo package without installing it.
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
-SECRETS = Path.home() / ".config" / "jlfg" / "secrets.local.json"
+# Path to the operator secret store file. Holds only the location — the signing
+# seed value lives inside the file and is never logged.
+STORE_PATH = Path.home() / ".config" / "jlfg" / "secrets.local.json"
 
 
 def _ensure_seed_in_env() -> None:
     if os.environ.get("SWEEP_SIGNING_KEY", "").strip():
         return
-    if SECRETS.exists():
+    if STORE_PATH.exists():
         try:
-            data = json.loads(SECRETS.read_text())
+            data = json.loads(STORE_PATH.read_text())
         except json.JSONDecodeError:
             data = {}
         seed = data.get("SWEEP_SIGNING_KEY", "").strip()
@@ -53,7 +55,7 @@ def main(argv: list[str]) -> int:
         print(f"error: {exc}", file=sys.stderr)
         print(
             "Set SWEEP_SIGNING_KEY (hex seed) or add it to "
-            f"{SECRETS}.",
+            f"{STORE_PATH}.",
             file=sys.stderr,
         )
         return 1
