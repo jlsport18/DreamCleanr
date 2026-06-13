@@ -85,5 +85,44 @@ class DistributionSurfaceTests(unittest.TestCase):
         self.assertNotIn("$19/month", comparison)
 
 
+class SigningMaterialExclusionTests(unittest.TestCase):
+    """The shipped package (packages=["dreamcleanr"]) must contain ONLY the public
+    verifier — never a private seed or the issuance tool."""
+
+    PKG = ROOT / "dreamcleanr"
+
+    def test_issuance_tool_lives_outside_the_package(self) -> None:
+        self.assertTrue((ROOT / "scripts" / "issue_license.py").exists())
+        self.assertFalse((self.PKG / "issue_license.py").exists())
+
+    def test_no_private_seed_hex_embedded_in_package(self) -> None:
+        # A 32-byte Ed25519 seed serialises to a 64-char hex run. Guard against one
+        # ever being pasted into a shipped module.
+        seed_like = re.compile(r"(?<![0-9a-fA-F])[0-9a-fA-F]{64}(?![0-9a-fA-F])")
+        offenders = []
+        for path in self.PKG.rglob("*.py"):
+            for lineno, line in enumerate(path.read_text(encoding="utf-8").splitlines(), 1):
+                if seed_like.search(line):
+                    offenders.append(f"{path.name}:{lineno}")
+        self.assertEqual(offenders, [], f"possible private key material in wheel: {offenders}")
+
+    def test_client_verifies_without_signing_secret(self) -> None:
+        import os
+
+        from dreamcleanr import license as lic
+
+        saved = os.environ.pop("SWEEP_SIGNING_KEY", None)
+        try:
+            self.assertEqual(len(lic._PUBLIC_KEY), 32)
+            # Verification needs no secret...
+            self.assertFalse(lic._verify_key("SWEEP-BOGUS", "a@b.com"))
+            # ...but minting must be impossible on a client with no seed.
+            with self.assertRaises(RuntimeError):
+                lic.generate_key("a@b.com")
+        finally:
+            if saved is not None:
+                os.environ["SWEEP_SIGNING_KEY"] = saved
+
+
 if __name__ == "__main__":
     unittest.main()

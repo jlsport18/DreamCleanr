@@ -261,9 +261,27 @@ class CliTests(unittest.TestCase):
                     "dreamcleanr.cli.build_cleanup_report", return_value=_StubReport()
                 ), patch("dreamcleanr.cli.build_receipt_summary", return_value={}), patch(
                     "dreamcleanr.cli.write_html"
-                ):
+                ), patch("dreamcleanr.cli.check_pro", return_value=True):
                     command_clean(args)
             self.assertEqual(apply_mock.call_args.kwargs["trash"], expected_trash, f"mode={mode}")
+
+    def test_max_mode_downgrades_to_balanced_without_pro(self) -> None:
+        apply_mock = MagicMock(return_value=[])
+        with TemporaryDirectory() as tmpdir:
+            args = _apply_args(tmpdir, yes=True, mode="max")
+            with patch("dreamcleanr.cli.capture_snapshot", return_value={}) as snap, patch(
+                "dreamcleanr.cli.plan_cleanup", return_value=[_deletion_action()]
+            ) as plan, patch("dreamcleanr.cli.apply_actions", apply_mock), patch(
+                "dreamcleanr.cli.build_cleanup_report", return_value=_StubReport()
+            ), patch("dreamcleanr.cli.build_receipt_summary", return_value={}), patch(
+                "dreamcleanr.cli.write_html"
+            ), patch("dreamcleanr.cli.check_pro", return_value=False):
+                command_clean(args)
+        # Free users are silently downgraded: dev-mode is Pro-gated.
+        self.assertEqual(args.mode, "balanced")
+        self.assertEqual(snap.call_args.kwargs["mode"], "balanced")
+        self.assertEqual(plan.call_args.kwargs["mode"], "balanced")
+        self.assertFalse(apply_mock.call_args.kwargs["trash"])  # balanced default
 
     def test_no_trash_flag_overrides_max_default(self) -> None:
         apply_mock = MagicMock(return_value=[])
@@ -275,7 +293,7 @@ class CliTests(unittest.TestCase):
                 "dreamcleanr.cli.build_cleanup_report", return_value=_StubReport()
             ), patch("dreamcleanr.cli.build_receipt_summary", return_value={}), patch(
                 "dreamcleanr.cli.write_html"
-            ):
+            ), patch("dreamcleanr.cli.check_pro", return_value=True):
                 command_clean(args)
         self.assertFalse(apply_mock.call_args.kwargs["trash"])
 
