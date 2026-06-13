@@ -10,6 +10,7 @@ from dreamcleanr.core import (
     annotate_detector_findings,
     classify_process_role,
     classify_processes,
+    FAMILIES,
     gather_detector_findings,
     gather_project_signals,
     parse_elapsed_to_seconds,
@@ -118,6 +119,32 @@ class CoreTests(unittest.TestCase):
         summary = {"codex": summarize_family("codex", processes, by_pid, {99999})}
         classify_processes(processes, summary)
         self.assertEqual(processes[0].classification, "BACKGROUND_ONLY")
+
+    def test_generic_crashpad_and_updater_families_do_not_crash_classify(self) -> None:
+        # Regression: generic crashpad/updater handlers get family="crashpad"/"updater"
+        # (classify_process_role), but FAMILIES omitted them, so capture_snapshot built
+        # family_summaries without those keys and classify_processes raised
+        # KeyError: 'crashpad'. Every assignable family must be summarized.
+        crashpad = proc(
+            5101, 1, "08:00:00", 0.0, 64,
+            "chrome_crashpad_handler",
+            "/Applications/Google Chrome.app/Contents/Frameworks/chrome_crashpad_handler --monitor-self",
+        )
+        crashpad.family, crashpad.role = "crashpad", "crashpad"
+        updater = proc(
+            5102, 1, "08:00:00", 0.0, 64,
+            "GoogleSoftwareUpdateDaemon",
+            "/Library/Google/GoogleSoftwareUpdate/GoogleSoftwareUpdateDaemon",
+        )
+        updater.family, updater.role = "updater", "generic_updater"
+        processes = [crashpad, updater]
+        by_pid = {p.pid: p for p in processes}
+        # Built exactly as capture_snapshot does — over the production FAMILIES set.
+        summary = {fam: summarize_family(fam, processes, by_pid, {99999}) for fam in FAMILIES}
+        # Must not raise KeyError for an unsummarized family.
+        classify_processes(processes, summary)
+        self.assertIn("crashpad", FAMILIES)
+        self.assertIn("updater", FAMILIES)
 
     def test_docker_engine_inventory_promotes_active_state_without_primary_process_match(self) -> None:
         inventory = DockerInventory(
