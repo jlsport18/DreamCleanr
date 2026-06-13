@@ -16,7 +16,7 @@ from typing import Any, Dict, Iterable, List, Optional, Tuple
 
 from .models import CleanupAction, CleanupReport, DetectorFinding, DockerInventory, ProcessRecord, ProjectSignal, StorageRecord
 
-FAMILIES = ("docker", "claude", "codex")
+FAMILIES = ("docker", "claude", "codex", "crashpad", "updater")
 REPORT_ROOT = Path.home() / "Library" / "Logs" / "DreamCleanr" / "reports"
 DEFAULT_RETENTION_COUNT = 21
 DEFAULT_LOG_RETENTION_COUNT = 5
