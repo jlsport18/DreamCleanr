@@ -51,6 +51,16 @@ SAFE_CACHE_PATHS = {
     "npx_cache": Path.home() / ".npm" / "_npx",
 }
 
+# Standard-tier regenerable caches. Each entry: (SAFE_CACHE_PATHS key, reason).
+# Adding a new standard-tier cache = one tuple entry; no new function call to copy-paste.
+_STANDARD_TIER_CACHES: Tuple[Tuple[str, str], ...] = (
+    ("uv_cache",      "Regenerable uv cache."),
+    ("trunk_cache",   "Regenerable trunk cache."),
+    ("gradle_cache",  "Regenerable Gradle cache."),
+    ("npm_cache",     "Regenerable npm cache."),
+    ("npx_cache",     "Regenerable npx cache."),
+)
+
 CLAUDE_LIBRARY_CACHE_BASENAMES = [
     "claude-cli-nodejs",
     "com.anthropic.claudefordesktop",
@@ -1361,11 +1371,8 @@ def plan_cleanup(snapshot: Dict[str, Any], mode: str = "balanced") -> List[Clean
 
     # Standard tier — regenerable developer/tool caches (re-download on demand).
     # Present in balanced and max; previewed (never deleted) in safe.
-    safe_delete_action("uv_cache", SAFE_CACHE_PATHS["uv_cache"], "system", "Regenerable uv cache.", apply_allowed=applies)
-    safe_delete_action("trunk_cache", SAFE_CACHE_PATHS["trunk_cache"], "system", "Regenerable trunk cache.", apply_allowed=applies)
-    safe_delete_action("gradle_cache", SAFE_CACHE_PATHS["gradle_cache"], "system", "Regenerable Gradle cache.", apply_allowed=applies)
-    safe_delete_action("npm_cache", SAFE_CACHE_PATHS["npm_cache"], "system", "Regenerable npm cache.", apply_allowed=applies)
-    safe_delete_action("npx_cache", SAFE_CACHE_PATHS["npx_cache"], "system", "Regenerable npx cache.", apply_allowed=applies)
+    for _key, _reason in _STANDARD_TIER_CACHES:
+        safe_delete_action(_key, SAFE_CACHE_PATHS[_key], "system", _reason, apply_allowed=applies)
 
     process_summary = snapshot["process_summary"]
     if process_summary["docker"]["recommended_action"] == "docker_system_prune":
