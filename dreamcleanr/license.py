@@ -32,12 +32,15 @@ from __future__ import annotations
 import base64
 import binascii
 import json
+import logging
 import os
 from datetime import datetime, timezone
 from functools import lru_cache
 from pathlib import Path
 
 from . import _ed25519
+
+log = logging.getLogger(__name__)
 
 # ── Embedded public verification key ─────────────────────────────────────────
 # Generated 2026-06-08; private seed held in the operator secret store as
@@ -174,6 +177,7 @@ def check_pro() -> bool:
         email = record.get("email", "")
         return bool(key and email and _verify_key(key, email))
     except Exception:
+        log.exception("check_pro: failed to read or parse license file; treating as unlicensed")
         return False
 
 
@@ -186,7 +190,7 @@ def get_license_info() -> dict | None:
         if _verify_key(record.get("key", ""), record.get("email", "")):
             return record
     except Exception:
-        pass
+        log.exception("get_license_info: failed to read or parse license file")
     return None
 
 
