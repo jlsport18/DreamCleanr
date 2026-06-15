@@ -52,7 +52,7 @@ SAFE_CACHE_PATHS = {
 }
 
 # Standard-tier regenerable caches. Each entry: (SAFE_CACHE_PATHS key, reason).
-# Adding a new standard-tier cache = one tuple entry; no new function call to copy-paste.
+# Any key added here must also be defined in SAFE_CACHE_PATHS, or plan_cleanup will KeyError.
 _STANDARD_TIER_CACHES: Tuple[Tuple[str, str], ...] = (
     ("uv_cache",      "Regenerable uv cache."),
     ("trunk_cache",   "Regenerable trunk cache."),
@@ -1371,8 +1371,8 @@ def plan_cleanup(snapshot: Dict[str, Any], mode: str = "balanced") -> List[Clean
 
     # Standard tier — regenerable developer/tool caches (re-download on demand).
     # Present in balanced and max; previewed (never deleted) in safe.
-    for _key, _reason in _STANDARD_TIER_CACHES:
-        safe_delete_action(_key, SAFE_CACHE_PATHS[_key], "system", _reason, apply_allowed=applies)
+    for key, reason in _STANDARD_TIER_CACHES:
+        safe_delete_action(key, SAFE_CACHE_PATHS[key], "system", reason, apply_allowed=applies)
 
     process_summary = snapshot["process_summary"]
     if process_summary["docker"]["recommended_action"] == "docker_system_prune":
