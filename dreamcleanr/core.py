@@ -1380,8 +1380,8 @@ def plan_cleanup(snapshot: Dict[str, Any], mode: str = "balanced") -> List[Clean
 
     # Standard tier — regenerable developer/tool caches (re-download on demand).
     # Present in balanced and max; previewed (never deleted) in safe.
-    for _label, _reason in _STANDARD_TIER_CACHE_TARGETS:
-        safe_delete_action(_label, SAFE_CACHE_PATHS[_label], "system", _reason, apply_allowed=applies)
+    for label, reason in _STANDARD_TIER_CACHE_TARGETS:
+        safe_delete_action(label, SAFE_CACHE_PATHS[label], "system", reason, apply_allowed=applies)
 
     process_summary = snapshot["process_summary"]
     if process_summary["docker"]["recommended_action"] == "docker_system_prune":

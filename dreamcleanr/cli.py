@@ -27,6 +27,7 @@ from .core import (
     prune_rotated_logs,
     reclaim_ceiling,
 )
+from .reporting import PRO_BUY_URL as _PRO_BUY_URL
 
 
 
@@ -136,7 +137,7 @@ def _release_run_lock(handle) -> None:
         fcntl.flock(handle.fileno(), fcntl.LOCK_UN)
     finally:
         handle.close()
-from .reporting import PRO_BUY_URL as _PRO_BUY_URL, build_receipt_summary, build_team_export, write_html, write_team_csv
+from .reporting import build_receipt_summary, build_team_export, write_html, write_team_csv
 from .scheduler import install_launch_agent, uninstall_launch_agent, write_launch_agent
 
 
