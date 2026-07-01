@@ -29,7 +29,6 @@ from .core import (
 )
 
 
-_PRO_BUY_URL = "https://buy.stripe.com/eVqbJ29JcfWT7nue5R93y0v"
 
 
 def _print_max_gate() -> None:
@@ -137,7 +136,7 @@ def _release_run_lock(handle) -> None:
         fcntl.flock(handle.fileno(), fcntl.LOCK_UN)
     finally:
         handle.close()
-from .reporting import build_receipt_summary, build_team_export, write_html, write_team_csv
+from .reporting import PRO_BUY_URL as _PRO_BUY_URL, build_receipt_summary, build_team_export, write_html, write_team_csv
 from .scheduler import install_launch_agent, uninstall_launch_agent, write_launch_agent
 
 
@@ -430,7 +429,7 @@ def command_license_status(args: Any) -> int:
         print(f"   Tier:         {info.get('tier', 'pro').upper()}")
     else:
         print("ℹ️  Sweep Community (free)")
-        print("   Purchase Sweep Pro at: https://buy.stripe.com/eVqbJ29JcfWT7nue5R93y0v")
+        print(f"   Purchase Sweep Pro at: {_PRO_BUY_URL}")
         print("   Then run: sweep license activate --key SWEEP-... --email you@example.com")
     return 0
 
