@@ -27,9 +27,9 @@ from .core import (
     prune_rotated_logs,
     reclaim_ceiling,
 )
+from .reporting import PRO_BUY_URL as _PRO_BUY_URL
 
 
-_PRO_BUY_URL = "https://buy.stripe.com/eVqbJ29JcfWT7nue5R93y0v"
 
 
 def _print_max_gate() -> None:
@@ -430,7 +430,7 @@ def command_license_status(args: Any) -> int:
         print(f"   Tier:         {info.get('tier', 'pro').upper()}")
     else:
         print("ℹ️  Sweep Community (free)")
-        print("   Purchase Sweep Pro at: https://buy.stripe.com/eVqbJ29JcfWT7nue5R93y0v")
+        print(f"   Purchase Sweep Pro at: {_PRO_BUY_URL}")
         print("   Then run: sweep license activate --key SWEEP-... --email you@example.com")
     return 0
 
