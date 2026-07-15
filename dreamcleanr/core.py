@@ -606,17 +606,6 @@ def classify_process_role(record: ProcessRecord) -> None:
         ),
     ):
         record.family = "updater"
-        # Order: more-specific brands first; `softwareupdate` is a substring
-        # shared by macOS softwareupdate AND GoogleSoftwareUpdate, so google
-        # must precede the generic match. Adding a new updater brand = one tuple.
-        _UPDATER_ROLE_RULES: List[Tuple[Any, str]] = [
-            (lambda a: "google" in a,                           "google_software_update"),
-            (lambda a: "microsoft" in a or "msupdate" in a,    "msupdate"),
-            (lambda a: "brew" in a or "homebrew" in a,         "brew_autoupdate"),
-            (lambda a: "shipit" in a,                           "shipit"),
-            (lambda a: "sparkle" in a,                          "sparkle"),
-            (lambda a: "softwareupdate" in a,                   "macos_softwareupdate"),
-        ]
         record.role = next(
             (role for pred, role in _UPDATER_ROLE_RULES if pred(args)),
             "generic_updater",
@@ -733,6 +722,18 @@ def ancestor_chain(pid: int, by_pid: Dict[int, ProcessRecord]) -> List[ProcessRe
         current = by_pid.get(current.ppid)
     return chain
 
+
+# Order: more-specific brands first; `softwareupdate` is a substring shared by
+# macOS softwareupdate AND GoogleSoftwareUpdate, so google must precede the generic
+# match. Adding a new updater brand = one tuple entry here.
+_UPDATER_ROLE_RULES: List[Tuple[Any, str]] = [
+    (lambda a: "google" in a,                           "google_software_update"),
+    (lambda a: "microsoft" in a or "msupdate" in a,    "msupdate"),
+    (lambda a: "brew" in a or "homebrew" in a,         "brew_autoupdate"),
+    (lambda a: "shipit" in a,                           "shipit"),
+    (lambda a: "sparkle" in a,                          "sparkle"),
+    (lambda a: "softwareupdate" in a,                   "macos_softwareupdate"),
+]
 
 _STRONG_ROLES: Dict[str, frozenset] = {
     "docker": frozenset({"vmnetd", "backend", "backend_service", "virtualization", "sandbox", "docker_helper"}),
