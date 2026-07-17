@@ -606,17 +606,6 @@ def classify_process_role(record: ProcessRecord) -> None:
         ),
     ):
         record.family = "updater"
-        # Order: more-specific brands first; `softwareupdate` is a substring
-        # shared by macOS softwareupdate AND GoogleSoftwareUpdate, so google
-        # must precede the generic match. Adding a new updater brand = one tuple.
-        _UPDATER_ROLE_RULES: List[Tuple[Any, str]] = [
-            (lambda a: "google" in a,                           "google_software_update"),
-            (lambda a: "microsoft" in a or "msupdate" in a,    "msupdate"),
-            (lambda a: "brew" in a or "homebrew" in a,         "brew_autoupdate"),
-            (lambda a: "shipit" in a,                           "shipit"),
-            (lambda a: "sparkle" in a,                          "sparkle"),
-            (lambda a: "softwareupdate" in a,                   "macos_softwareupdate"),
-        ]
         record.role = next(
             (role for pred, role in _UPDATER_ROLE_RULES if pred(args)),
             "generic_updater",
@@ -638,18 +627,10 @@ def classify_process_role(record: ProcessRecord) -> None:
         ),
     ):
         record.family = "docker"
-        if "com.docker.vmnetd" in args:
-            record.role = "vmnetd"
-        elif "com.docker.virtualization" in args or "docker.raw" in args:
-            record.role = "virtualization"
-        elif "com.docker.backend" in args and " services" not in args and " fork" not in args:
-            record.role = "backend"
-        elif "com.docker.backend services" in args:
-            record.role = "backend_service"
-        elif "docker-sandbox daemon" in args:
-            record.role = "sandbox"
-        else:
-            record.role = "docker_helper"
+        record.role = next(
+            (role for pred, role in _DOCKER_ROLE_RULES if pred(args)),
+            "docker_helper",
+        )
         return
     if command == "docker" or args.startswith("docker ") or " docker " in args:
         record.family = "docker"
@@ -676,20 +657,10 @@ def classify_process_role(record: ProcessRecord) -> None:
         ),
     ):
         record.family = "codex"
-        if "crashpad_handler" in args:
-            record.role = "crashpad"
-        elif "/applications/codex.app/contents/macos/codex" in args:
-            record.role = "codex_app"
-        elif "codex helper (renderer)" in args:
-            record.role = "renderer"
-        elif "codex helper" in args:
-            record.role = "helper"
-        elif "/resources/codex app-server" in args or "openai.chatgpt-" in args:
-            record.role = "cli_service"
-        elif "sparkle" in args or "updater" in args:
-            record.role = "updater"
-        else:
-            record.role = "codex_helper"
+        record.role = next(
+            (role for pred, role in _CODEX_ROLE_RULES if pred(args)),
+            "codex_helper",
+        )
         return
 
     if has_any_token(
@@ -708,18 +679,10 @@ def classify_process_role(record: ProcessRecord) -> None:
         ),
     ):
         record.family = "claude"
-        if "crashpad_handler" in args and "claude" in args:
-            record.role = "crashpad"
-        elif "/applications/claude.app/contents/macos/claude" in args:
-            record.role = "claude_app"
-        elif "claude helper (renderer)" in args:
-            record.role = "renderer"
-        elif "claude helper" in args:
-            record.role = "helper"
-        elif "shipit" in args:
-            record.role = "shipit"
-        else:
-            record.role = "vscode_cli"
+        record.role = next(
+            (role for pred, role in _CLAUDE_ROLE_RULES if pred(args)),
+            "vscode_cli",
+        )
         return
 
 
@@ -733,6 +696,46 @@ def ancestor_chain(pid: int, by_pid: Dict[int, ProcessRecord]) -> List[ProcessRe
         current = by_pid.get(current.ppid)
     return chain
 
+
+# Order: more-specific brands first; `softwareupdate` is a substring shared by
+# macOS softwareupdate AND GoogleSoftwareUpdate, so google must precede the generic
+# match. Adding a new updater brand = one tuple entry here.
+_UPDATER_ROLE_RULES: List[Tuple[Any, str]] = [
+    (lambda a: "google" in a,                           "google_software_update"),
+    (lambda a: "microsoft" in a or "msupdate" in a,    "msupdate"),
+    (lambda a: "brew" in a or "homebrew" in a,         "brew_autoupdate"),
+    (lambda a: "shipit" in a,                           "shipit"),
+    (lambda a: "sparkle" in a,                          "sparkle"),
+    (lambda a: "softwareupdate" in a,                   "macos_softwareupdate"),
+]
+
+# Role-assignment rule tables for each app family. Walked in order; first match wins.
+# Adding a new role = one tuple here. Default role appears in classify_process_role.
+# Note: "codex helper (renderer)" must precede "codex helper" (substring containment).
+# Note: "claude helper (renderer)" must precede "claude helper" (substring containment).
+# Note: docker "backend" must precede "backend_service" (more-specific backend guard).
+_DOCKER_ROLE_RULES: List[Tuple[Any, str]] = [
+    (lambda a: "com.docker.vmnetd" in a,                                                       "vmnetd"),
+    (lambda a: "com.docker.virtualization" in a or "docker.raw" in a,                         "virtualization"),
+    (lambda a: "com.docker.backend" in a and " services" not in a and " fork" not in a,       "backend"),
+    (lambda a: "com.docker.backend services" in a,                                             "backend_service"),
+    (lambda a: "docker-sandbox daemon" in a,                                                   "sandbox"),
+]
+_CODEX_ROLE_RULES: List[Tuple[Any, str]] = [
+    (lambda a: "crashpad_handler" in a,                                                        "crashpad"),
+    (lambda a: "/applications/codex.app/contents/macos/codex" in a,                           "codex_app"),
+    (lambda a: "codex helper (renderer)" in a,                                                 "renderer"),
+    (lambda a: "codex helper" in a,                                                            "helper"),
+    (lambda a: "/resources/codex app-server" in a or "openai.chatgpt-" in a,                  "cli_service"),
+    (lambda a: "sparkle" in a or "updater" in a,                                               "updater"),
+]
+_CLAUDE_ROLE_RULES: List[Tuple[Any, str]] = [
+    (lambda a: "crashpad_handler" in a and "claude" in a,                                      "crashpad"),
+    (lambda a: "/applications/claude.app/contents/macos/claude" in a,                         "claude_app"),
+    (lambda a: "claude helper (renderer)" in a,                                                "renderer"),
+    (lambda a: "claude helper" in a,                                                           "helper"),
+    (lambda a: "shipit" in a,                                                                  "shipit"),
+]
 
 _STRONG_ROLES: Dict[str, frozenset] = {
     "docker": frozenset({"vmnetd", "backend", "backend_service", "virtualization", "sandbox", "docker_helper"}),
