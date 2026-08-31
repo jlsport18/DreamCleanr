@@ -13,6 +13,14 @@ from typing import Any, Dict
 
 log = logging.getLogger(__name__)
 
+UPGRADE_MESSAGE = (
+    "\n  Sweep Pro is required to apply changes.\n"
+    "  Your dry-run report above is complete and free to keep.\n\n"
+    "  Unlock cleaning + scheduling — $6.99 once, no subscription:\n"
+    "      https://sweep.jonlynchfinancial.com/#pro\n\n"
+    "  Already bought it?  sweep license activate SWEEP-...\n"
+)
+
 from . import __version__
 from .license import activate as _activate_license, check_pro, get_license_info, deactivate as _deactivate_license
 from .core import (
@@ -183,7 +191,23 @@ def command_export(args: argparse.Namespace) -> int:
     return 0
 
 
+def _requires_pro_or_downgrade(args: argparse.Namespace) -> bool:
+    """True if the privileged action may proceed.
+
+    When unlicensed we deliberately do NOT error: the user keeps the dry-run
+    report they already generated and is shown how to upgrade. Failing here
+    would throw away work they can legitimately have for free.
+    """
+    if check_pro():
+        return True
+    args.apply = False
+    print(UPGRADE_MESSAGE)
+    return False
+
+
 def command_clean(args: argparse.Namespace) -> int:
+    if args.apply:
+        _requires_pro_or_downgrade(args)
     dry_run = not args.apply
     output_dir = Path(args.output_dir) if args.output_dir else default_report_dir()
     output_dir.mkdir(parents=True, exist_ok=True)
@@ -289,6 +313,11 @@ def command_clean(args: argparse.Namespace) -> int:
 
 
 def command_schedule_install(args: argparse.Namespace) -> int:
+    # Unlike clean, there is no useful partial result here — an unlicensed
+    # schedule install would just create an agent that can never apply.
+    if not check_pro():
+        print(UPGRADE_MESSAGE)
+        return 1
     repo_root = Path(__file__).resolve().parent.parent
     output_dir = Path(args.output_dir) if args.output_dir else default_report_dir()
     plist_path = write_launch_agent(

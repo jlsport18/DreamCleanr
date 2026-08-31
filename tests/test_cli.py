@@ -48,6 +48,14 @@ def _apply_args(tmpdir: str, yes: bool, mode: str = "balanced", trash=None) -> N
 
 
 class CliTests(unittest.TestCase):
+    def setUp(self) -> None:
+        # These exercise --apply mechanics, not licensing, so they run as a
+        # licensed user. The Pro gate itself is covered in tests/test_gate.py —
+        # including that an unlicensed --apply is forced back to a dry run.
+        self._pro = patch("dreamcleanr.cli.check_pro", return_value=True)
+        self._pro.start()
+        self.addCleanup(self._pro.stop)
+
     # Issue #8 — _actions_caused_state_change drives the "skip the
     # duplicate after-snapshot" optimization. Contract: returns True iff
     # at least one action actually mutated host state.
