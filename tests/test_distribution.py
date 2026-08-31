@@ -87,3 +87,21 @@ class DistributionSurfaceTests(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+def test_runtime_dependencies_stay_empty():
+    """Sweep must install nothing extra.
+
+    A disk-cleaning tool that pulls a ~10MB compiled crypto wheel just to check
+    a licence undermines its own pitch, and weakens `pip install --user` on
+    machines without build tooling. That is why the Ed25519 verifier is
+    vendored in dreamcleanr/_ed25519.py rather than taken from `cryptography`.
+    """
+    import tomllib
+    from pathlib import Path
+
+    root = Path(__file__).resolve().parent.parent
+    data = tomllib.loads((root / "pyproject.toml").read_text())
+    assert data["project"]["dependencies"] == [], (
+        "runtime dependencies must stay empty — vendor it or do without"
+    )
