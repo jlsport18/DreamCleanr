@@ -4,6 +4,31 @@ All notable DreamCleanr release-facing changes should be tracked here.
 
 ## [Unreleased]
 
+## [0.4.0] - 2026-08-31
+
+### Added
+- Sweep Pro licensing. `clean --apply` and `schedule install` now require a licence.
+  Scanning, dry-run previews and HTML reports remain free.
+- `sweep license activate <KEY>` verifies an Ed25519-signed licence entirely offline —
+  no network call at runtime.
+- Vendored pure-Python Ed25519 verifier (`dreamcleanr/_ed25519.py`), so the package
+  still declares `dependencies = []`.
+
+### Changed
+- **BREAKING:** `license activate` takes the key positionally and no longer accepts
+  `--email`; the purchase email travels inside the signed licence.
+- Unlicensed `clean --apply` degrades to a dry run and exits 0 rather than failing, so
+  the report you generated is still yours.
+
+### Fixed
+- `license status` crashed when rendering `activated_at` (it sliced an int as a string).
+
+### Security
+- **Replaced a forgeable licence scheme.** The previous HMAC signing key derived from a
+  literal shipped in the source, and `generate_key()` was exposed in the same module, so
+  anyone could mint valid licences. Signing is now server-side only and the package
+  carries just the public key.
+
 ## [0.3.6] - 2026-05-25
 
 ### Fixed
