@@ -45,7 +45,7 @@ call is made at runtime.
 
 Rejected: an online key-check endpoint. It requires an always-up Worker plus KV, adds a
 network dependency to a *local disk-cleaning tool*, and its failure mode is paying
-customers being locked out when the endpoint is unavailable. At $4.99 that operating
+customers being locked out when the endpoint is unavailable. At $6.99 that operating
 burden exceeds the revenue it protects.
 
 The threat model at this price is "someone shares a key." That is accepted. Anyone
@@ -59,7 +59,7 @@ document is marked `future incubation track` and states it "does not authorize a
 billing, or hosted entitlements in the current product phase."
 
 **This design intentionally does not follow it.** That stack costs more to build and
-operate than a $4.99 one-time purchase can return. The one element retained is its
+operate than a $6.99 one-time purchase can return. The one element retained is its
 product philosophy — *local-first, GitHub-first, free at the core, one-time Pro.*
 
 This paragraph exists so the decision is not re-litigated in a later session.
@@ -168,8 +168,8 @@ Clock skew is not a factor: `issued_at` is recorded but licences do not expire.
 
 These are required for the product to be honest, and are **not** optional polish:
 
-1. **One price: $4.99.** Remove $24 / $29 / $49 / $29.99 / $49.99. "Buy Sweep Pro — $29
-   one-time" becomes $4.99.
+1. **One price: $6.99.** Remove $24 / $29 / $49 / $29.99 / $49.99. "Buy Sweep Pro — $29
+   one-time" becomes $6.99. See the pricing analysis below for why not $6.99.
 2. **A real checkout link.** The `#pro` anchor must become the Stripe checkout URL.
 3. **"Download free for Mac →"** must stop implying a GUI app. It is a macOS CLI; say so.
    Either ship the DMG the `dreamcleanr-mac-builder` job was built to produce, or change
@@ -178,6 +178,28 @@ These are required for the product to be honest, and are **not** optional polish
    the package is `dreamcleanr`, and the HTML report says "DreamCleanr Cleanup Receipt",
    while the site says Sweep. Renaming the published command is a breaking change for
    existing users and deserves its own decision.
+
+## Pricing (researched 2026-08-31)
+
+**Launch price: $6.99 one-time.**
+
+| comparable | price | model |
+|---|---|---|
+| DaisyDisk | **$9.99** | one-time, 5 Macs — the closest true comparable |
+| CleanMyMac | $39.95/yr | subscription |
+| CleanShot X | $29 + $19/yr | one-time + paid updates |
+| Proxyman | ~$69 | one-time |
+| indie macOS tools | $5–$12 | one-time is the norm under $10 |
+
+Stripe takes 2.9% + a **$0.30 fixed** fee. That fixed component is what rules out
+micro-pricing: it consumes **10.0%** of a $2.99 sale, **6.0%** of $4.99, and **3.0%** of
+$9.99. Net per sale: $4.55 at $4.99, **$6.49 at $6.99**, $9.40 at $9.99 — meaning $100/mo
+needs 22, 15, or 11 sales respectively.
+
+$6.99 was chosen over $4.99 because Sweep is a **developer CLI**, priced against DevUtils
+and Proxyman rather than consumer cleaners, and because DaisyDisk — a decade-polished GUI
+— sits at $9.99; half that price signals "toy". $6.99 sits credibly below the incumbent
+while leaving room to raise to $9.99 once the developer-mode targets ship.
 
 ## Sequencing
 
