@@ -7,6 +7,7 @@ import logging
 import sys
 import traceback
 import webbrowser
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Dict
 
@@ -367,8 +368,9 @@ def build_parser() -> argparse.ArgumentParser:
     license_sub = license_cmd.add_subparsers(dest="license_command", required=True)
 
     activate_cmd = license_sub.add_parser("activate", help="Activate a Sweep Pro license key.")
-    activate_cmd.add_argument("--key", required=True, help="License key from your receipt (SWEEP-...).")
-    activate_cmd.add_argument("--email", required=True, help="Email address used to purchase Sweep Pro.")
+    # The purchase email is carried inside the signed key, so the user no longer
+    # has to supply it (and cannot mistype it).
+    activate_cmd.add_argument("key", help="License key from your receipt (SWEEP-...).")
     activate_cmd.set_defaults(func=command_license_activate)
 
     status_cmd = license_sub.add_parser("status", help="Show current license status.")
@@ -382,9 +384,10 @@ def build_parser() -> argparse.ArgumentParser:
 
 def command_license_activate(args: Any) -> int:
     try:
-        _activate_license(key=args.key, email=args.email)
+        record = _activate_license(args.key)
         print("✅ Sweep Pro activated. Welcome to the Pro tier.")
-        print("   Developer mode, scheduled cleaning, and priority support are now unlocked.")
+        print(f"   Licensed to:  {record['email']}")
+        print("   Cleaning (clean --apply) and scheduled cleaning are now unlocked.")
         return 0
     except ValueError as exc:
         print(f"❌ Activation failed: {exc}", file=sys.stderr)
@@ -394,14 +397,25 @@ def command_license_activate(args: Any) -> int:
 def command_license_status(args: Any) -> int:
     info = get_license_info()
     if info:
-        print(f"✅ Sweep Pro — active")
-        print(f"   Email:        {info.get('email', '?')}")
-        print(f"   Activated:    {info.get('activated_at', '?')[:10]}")
-        print(f"   Tier:         {info.get('tier', 'pro').upper()}")
+        # activated_at is a unix timestamp; render it as a date rather than
+        # slicing, which would raise on an int.
+        activated = info.get("activated_at")
+        when = (
+            datetime.fromtimestamp(activated, tz=timezone.utc).date().isoformat()
+            if isinstance(activated, (int, float))
+            else "?"
+        )
+        print("✅ Sweep Pro — active")
+        print(f"   Licensed to:  {info.get('email', '?')}")
+        print(f"   Activated:    {when}")
+        if info.get("order"):
+            print(f"   Order:        {info['order']}")
     else:
         print("ℹ️  Sweep Community (free)")
-        print("   Purchase Sweep Pro at: https://buy.stripe.com/eVqbJ29JcfWT7nue5R93y0v")
-        print("   Then run: sweep license activate --key SWEEP-... --email you@example.com")
+        print("   Scanning, dry-run previews and reports are free forever.")
+        print("   Sweep Pro unlocks cleaning + scheduling — $6.99 once, no subscription:")
+        print("       https://sweep.jonlynchfinancial.com/#pro")
+        print("   Already bought it?  sweep license activate SWEEP-...")
     return 0
 
 
