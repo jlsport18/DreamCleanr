@@ -762,6 +762,36 @@ _PRIMARY_ROLES: Dict[str, frozenset] = {
 # Flat union used by classify_processes; derived from _PRIMARY_ROLES so both stay in sync.
 _PRIMARY_ROLES_FLAT: frozenset = frozenset().union(*_PRIMARY_ROLES.values())
 
+# Static action policies for (family, state) pairs where all four fields are
+# fully determined without inspecting runtime values (daemon_state, paths_present, etc.).
+# Dynamic cases (docker+active, claude+inactive/residual_data_only) are kept inline.
+_FAMILY_STATE_POLICIES: Dict[Tuple[str, str], Dict[str, Any]] = {
+    ("docker", "residual_data_only"): {
+        "allowed_actions": ["confirm_raw_vm_delete"],
+        "blocked_actions": [],
+        "recommended_action": "confirm_raw_vm_delete",
+        "reason": "VM data exists without active engine processes",
+    },
+    ("claude", "active"): {
+        "allowed_actions": [],
+        "blocked_actions": ["prune_cache", "prune_vm"],
+        "recommended_action": "protect_only",
+        "reason": "Claude desktop or CLI integration is active",
+    },
+    ("codex", "active"): {
+        "allowed_actions": [],
+        "blocked_actions": ["prune_cache", "prune_support_root"],
+        "recommended_action": "protect_only",
+        "reason": "Codex desktop or app-server tree is active",
+    },
+    ("codex", "background_only"): {
+        "allowed_actions": [],
+        "blocked_actions": ["prune_cache", "prune_support_root"],
+        "recommended_action": "protect_only",
+        "reason": "Only updater or crash-style background Codex processes remain",
+    },
+}
+
 
 def summarize_family(
     family: str,
@@ -848,25 +878,21 @@ def summarize_family(
         allowed_actions = ["docker_system_prune"]
         blocked_actions = ["raw_vm_delete"]
         recommended_action = "docker_system_prune" if daemon_state == "reachable" else "protect_only"
-        if active_primary_pids:
-            reason = "backend, virtualization, or daemon-backed engine activity observed"
-        else:
-            reason = "Docker daemon responded even though no primary app process was classified"
-    elif family == "docker" and state == "residual_data_only":
-        allowed_actions = ["confirm_raw_vm_delete"]
-        blocked_actions = []
-        recommended_action = "confirm_raw_vm_delete"
-        reason = "VM data exists without active engine processes"
+        reason = (
+            "backend, virtualization, or daemon-backed engine activity observed"
+            if active_primary_pids
+            else "Docker daemon responded even though no primary app process was classified"
+        )
     elif family == "docker":
         allowed_actions = []
         blocked_actions = ["raw_vm_delete"]
         recommended_action = "protect_only"
         reason = "Only CLI or background Docker evidence was observed"
-    elif family == "claude" and state == "active":
-        allowed_actions = []
-        blocked_actions = ["prune_cache", "prune_vm"]
-        recommended_action = "protect_only"
-        reason = "Claude desktop or CLI integration is active"
+    elif (policy := _FAMILY_STATE_POLICIES.get((family, state))) is not None:
+        allowed_actions = list(policy["allowed_actions"])
+        blocked_actions = list(policy["blocked_actions"])
+        recommended_action = policy["recommended_action"]
+        reason = policy["reason"]
     elif family == "claude" and state in {"inactive", "residual_data_only"}:
         allowed_actions = ["prune_cache"]
         if paths_present.get("vm_bundle"):
@@ -874,16 +900,6 @@ def summarize_family(
         blocked_actions = []
         recommended_action = "prune_cache"
         reason = "Claude state exists without active processes"
-    elif family == "codex" and state == "active":
-        allowed_actions = []
-        blocked_actions = ["prune_cache", "prune_support_root"]
-        recommended_action = "protect_only"
-        reason = "Codex desktop or app-server tree is active"
-    elif family == "codex" and state == "background_only":
-        allowed_actions = []
-        blocked_actions = ["prune_cache", "prune_support_root"]
-        recommended_action = "protect_only"
-        reason = "Only updater or crash-style background Codex processes remain"
     else:
         allowed_actions = []
         blocked_actions = []
