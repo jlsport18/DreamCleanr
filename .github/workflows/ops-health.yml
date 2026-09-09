@@ -88,9 +88,17 @@ jobs:
           out.write_text(json.dumps(payload, indent=2), encoding="utf-8")
           PY
       - name: Upload health artifact
+        # 2026-09-09: this step was turning a green health check red. Every
+        # build, test and GATE step passes, then the upload dies with
+        # "Failed to CreateArtifact: Artifact storage quota has been hit" and
+        # the whole scheduled run reports failure -- which then paged the
+        # operator hourly. The artifact is diagnostic output, not a check: the
+        # health verdict must not depend on whether the summary could be stored.
+        continue-on-error: true
         uses: actions/upload-artifact@v7
         with:
           name: dreamcleanr-ops-health
+          retention-days: 7
           path: |
             ops-health-summary.json
             /tmp/dreamcleanr-sample.html
