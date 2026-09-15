@@ -4,7 +4,7 @@ import json
 import os
 import sys
 from pathlib import Path
-from typing import Any, Callable, Dict, Optional
+from typing import Any, Callable, Dict, Optional, Tuple
 
 from . import __version__
 from .core import build_cleanup_report, capture_snapshot, default_report_dir, plan_cleanup
@@ -30,6 +30,7 @@ class McpProtocolError(Exception):
 
 
 ToolHandler = Callable[[Dict[str, Any]], Dict[str, Any]]
+MethodHandler = Callable[[Dict[str, Any], Any], Optional[Dict[str, Any]]]
 
 
 def _text_result(text: str, structured: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
@@ -284,6 +285,17 @@ TOOL_HANDLERS: Dict[str, ToolHandler] = {
     "schedule_preview": tool_schedule_preview,
 }
 
+# MCP method dispatch — adding a new JSON-RPC method is a single dict entry here,
+# consistent with the TOOL_HANDLERS pattern above.  The "notifications/initialized"
+# method is intentionally absent: it returns None (no response), not a response
+# object, and is handled as a special case in handle_request before this lookup.
+_MCP_METHODS: Dict[str, MethodHandler] = {
+    "ping": lambda params, req_id: _response(req_id, {}),
+    "initialize": lambda params, req_id: _response(req_id, _handle_initialize(params)),
+    "tools/list": lambda params, req_id: _response(req_id, {"tools": _tool_list()}),
+    "tools/call": lambda params, req_id: _response(req_id, _handle_tools_call(params)),
+}
+
 
 def _read_message() -> Optional[Dict[str, Any]]:
     content_length: Optional[int] = None
@@ -365,18 +377,12 @@ def handle_request(message: Dict[str, Any]) -> Optional[Dict[str, Any]]:
     method = message.get("method")
     request_id = message.get("id")
     params = message.get("params") or {}
-
     if method == "notifications/initialized":
         return None
-    if method == "ping":
-        return _response(request_id, {})
-    if method == "initialize":
-        return _response(request_id, _handle_initialize(params))
-    if method == "tools/list":
-        return _response(request_id, {"tools": _tool_list()})
-    if method == "tools/call":
-        return _response(request_id, _handle_tools_call(params))
-    raise McpProtocolError(-32601, f"Method not found: {method}")
+    handler = _MCP_METHODS.get(method)
+    if handler is None:
+        raise McpProtocolError(-32601, f"Method not found: {method}")
+    return handler(params, request_id)
 
 
 def main() -> int:
