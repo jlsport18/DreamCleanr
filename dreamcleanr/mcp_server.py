@@ -361,22 +361,25 @@ def _handle_tools_call(params: Dict[str, Any]) -> Dict[str, Any]:
     return TOOL_HANDLERS[name](arguments)
 
 
+# Adding a new MCP method = one entry here; forgetting to add it → an
+# immediate -32601 error rather than falling through to a stale default.
+_METHOD_HANDLERS: Dict[str, Callable[[Any, Dict[str, Any]], Optional[Dict[str, Any]]]] = {
+    "notifications/initialized": lambda _req_id, _params: None,
+    "ping": lambda req_id, _params: _response(req_id, {}),
+    "initialize": lambda req_id, params: _response(req_id, _handle_initialize(params)),
+    "tools/list": lambda req_id, _params: _response(req_id, {"tools": _tool_list()}),
+    "tools/call": lambda req_id, params: _response(req_id, _handle_tools_call(params)),
+}
+
+
 def handle_request(message: Dict[str, Any]) -> Optional[Dict[str, Any]]:
     method = message.get("method")
     request_id = message.get("id")
     params = message.get("params") or {}
 
-    if method == "notifications/initialized":
-        return None
-    if method == "ping":
-        return _response(request_id, {})
-    if method == "initialize":
-        return _response(request_id, _handle_initialize(params))
-    if method == "tools/list":
-        return _response(request_id, {"tools": _tool_list()})
-    if method == "tools/call":
-        return _response(request_id, _handle_tools_call(params))
-    raise McpProtocolError(-32601, f"Method not found: {method}")
+    if method not in _METHOD_HANDLERS:
+        raise McpProtocolError(-32601, f"Method not found: {method}")
+    return _METHOD_HANDLERS[method](request_id, params)
 
 
 def main() -> int:
