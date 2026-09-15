@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import logging
 import os
 import re
 import shutil
@@ -13,6 +14,8 @@ from dataclasses import asdict
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Dict, Iterable, List, Optional, Tuple
+
+log = logging.getLogger(__name__)
 
 from .models import CleanupAction, CleanupReport, DetectorFinding, DockerInventory, ProcessRecord, ProjectSignal, StorageRecord
 
@@ -325,8 +328,8 @@ def gather_detector_findings(home: Optional[Path] = None) -> List[Dict[str, Any]
             all_paths.append(path)
             try:
                 mtime_map[normalized] = path.stat().st_mtime
-            except OSError:
-                pass
+            except OSError as exc:
+                log.debug("stat() failed for %s: %s", normalized, exc)
         per_detector[key] = items
     size_map = du_bytes_many(all_paths)
     now = time.time()
