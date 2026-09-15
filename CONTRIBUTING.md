@@ -24,3 +24,4 @@ node --check site/app.js
 - Do not auto-delete `~/.codex`, `~/.claude`, Docker raw VM storage, or the Claude VM bundle.
 - Keep scheduled cleanup on balanced-safe defaults.
 - Treat new process classifications conservatively until they have fixture coverage.
+- When a process or path classification is ambiguous, default to `protect_only` and list the item under manual review in the receipt. Never resolve ambiguity toward reclaiming more space.

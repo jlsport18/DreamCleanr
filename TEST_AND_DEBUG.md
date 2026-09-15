@@ -34,6 +34,7 @@ Before merge or release, search public surfaces for drift:
 - no fake testimonials
 - no live backend, auth, or analytics claims
 - no live Python, Node, Ollama, Hugging Face, or LM Studio support claims
+- no competitor pricing, feature, or performance comparison (e.g. `site/compare-cleanmymac.html`) unless it cites a dated source recorded in `MARKET_RESEARCH_MEMO.md` under Sources
 
 Check:
 
