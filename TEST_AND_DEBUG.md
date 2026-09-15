@@ -36,6 +36,8 @@ Before merge or release, search public surfaces for drift:
 - no live Python, Node, Ollama, Hugging Face, or LM Studio support claims
 - no competitor pricing, feature, or performance comparison (e.g. `site/compare-cleanmymac.html`) unless it cites a dated source recorded in `MARKET_RESEARCH_MEMO.md` under Sources
 
+  Known gap as of 2026-09-15: `site/compare-cleanmymac.html` is live today and its on-page Sources list, plus `MARKET_RESEARCH_MEMO.md`'s `## Sources` section, cite the six vendor URLs (CleanMyMac, DaisyDisk, Hazel, OnyX) without a check date on any entry — this check does not yet pass on existing content. Tracked in [#52](https://github.com/jlsport18/DreamCleanr/issues/52); re-check the URLs and date the memo's `## Sources` entries before relying on this rule as a merge gate for that page.
+
 Check:
 
 - `site/`
