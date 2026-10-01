@@ -7,7 +7,7 @@ from pathlib import Path
 from typing import Any, Dict, List
 
 from .core import human_bytes
-from .license import check_pro
+from .license import check_pro, PRO_BUY_URL
 
 _CSS = """
 <style>
@@ -235,9 +235,6 @@ def write_team_csv(export: Dict[str, Any], output_path: Path) -> None:
             )
 
 
-_PRO_BUY_URL = "https://buy.stripe.com/eVqbJ29JcfWT7nue5R93y0v"
-
-
 def _report_footer(pro: bool) -> str:
     """Pro removes the branding line; Community gets an unobtrusive upsell."""
     if pro:
@@ -249,7 +246,7 @@ def _report_footer(pro: bool) -> str:
     return (
         '<footer class="report-footer">'
         'Made with <strong>Sweep Community</strong> · '
-        f'<a href="{_PRO_BUY_URL}">Upgrade to Pro</a> to remove this notice, '
+        f'<a href="{PRO_BUY_URL}">Upgrade to Pro</a> to remove this notice, '
         'unlock developer mode, and schedule cleanups without prompts.'
         '</footer>'
     )

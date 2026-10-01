@@ -53,6 +53,8 @@ _PUBLIC_KEY: bytes = base64.b64decode(_PUBLIC_KEY_B64)
 # The Stripe webhook (B) MUST sign exactly `_SIGN_CONTEXT + lower(email)`.
 _SIGN_CONTEXT = b"sweep-pro-license-v1:"
 
+PRO_BUY_URL: str = "https://buy.stripe.com/eVqbJ29JcfWT7nue5R93y0v"
+
 _KEY_PREFIX = "SWEEP-"
 _LICENSE_FILE = Path.home() / ".sweep_license"
 
