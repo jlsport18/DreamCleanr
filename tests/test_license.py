@@ -161,12 +161,17 @@ class ProBuyUrlTests(unittest.TestCase):
         self.assertTrue(lic.PRO_BUY_URL.startswith("https://buy.stripe.com/"))
 
     def test_buy_url_literal_defined_exactly_once_in_package(self) -> None:
+        import re
+
+        # Count source lines containing a Stripe Payment Link literal (a lint over
+        # our own source, not URL validation).
+        link_literal = re.compile(r"https://buy\.stripe\.com/")
         pkg = Path(lic.__file__).resolve().parent
         hits = [
             (path.name, line)
             for path in sorted(pkg.rglob("*.py"))
             for line in path.read_text(encoding="utf-8").splitlines()
-            if "buy.stripe.com" in line
+            if link_literal.search(line)
         ]
         self.assertEqual(len(hits), 1, hits)
         self.assertEqual(hits[0][0], "license.py")
