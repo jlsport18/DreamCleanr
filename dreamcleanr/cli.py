@@ -13,7 +13,7 @@ from typing import Any, Dict
 log = logging.getLogger(__name__)
 
 from . import __version__
-from .license import activate as _activate_license, check_pro, get_license_info, deactivate as _deactivate_license
+from .license import PRO_BUY_URL, activate as _activate_license, check_pro, get_license_info, deactivate as _deactivate_license
 from .core import (
     DEFAULT_RETENTION_COUNT,
     build_cleanup_report,
@@ -29,15 +29,12 @@ from .core import (
 )
 
 
-_PRO_BUY_URL = "https://buy.stripe.com/eVqbJ29JcfWT7nue5R93y0v"
-
-
 def _print_max_gate() -> None:
     """Developer mode (`--mode max`) is a Pro feature — hard-gated."""
     print(
         "⛔ Developer mode (--mode max) is a Sweep Pro feature.\n"
         "   It targets Xcode DerivedData, node_modules, Docker, and AI model caches.\n"
-        f"   Unlock it: {_PRO_BUY_URL}\n"
+        f"   Unlock it: {PRO_BUY_URL}\n"
         "   Then run: sweep license activate --key SWEEP-... --email you@example.com\n"
         "   Running 'balanced' mode instead.",
         file=sys.stderr,
@@ -48,7 +45,7 @@ def _print_schedule_nag() -> None:
     """Scheduled cleaning works on Community, with an upsell nag."""
     print(
         "💡 Scheduled cleaning installed. Sweep Pro removes this notice and unlocks\n"
-        f"   developer mode. Upgrade: {_PRO_BUY_URL}",
+        f"   developer mode. Upgrade: {PRO_BUY_URL}",
         file=sys.stderr,
     )
 
@@ -430,7 +427,7 @@ def command_license_status(args: Any) -> int:
         print(f"   Tier:         {info.get('tier', 'pro').upper()}")
     else:
         print("ℹ️  Sweep Community (free)")
-        print("   Purchase Sweep Pro at: https://buy.stripe.com/eVqbJ29JcfWT7nue5R93y0v")
+        print(f"   Purchase Sweep Pro at: {PRO_BUY_URL}")
         print("   Then run: sweep license activate --key SWEEP-... --email you@example.com")
     return 0
 

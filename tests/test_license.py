@@ -154,5 +154,37 @@ class EmbeddedKeyTests(unittest.TestCase):
         )
 
 
+class ProBuyUrlTests(unittest.TestCase):
+    """The paid checkout link must have exactly one definition and reach every upsell."""
+
+    def test_buy_url_is_a_stripe_payment_link(self) -> None:
+        self.assertTrue(lic.PRO_BUY_URL.startswith("https://buy.stripe.com/"))
+
+    def test_buy_url_literal_defined_exactly_once_in_package(self) -> None:
+        pkg = Path(lic.__file__).resolve().parent
+        hits = [
+            (path.name, line)
+            for path in sorted(pkg.rglob("*.py"))
+            for line in path.read_text(encoding="utf-8").splitlines()
+            if "buy.stripe.com" in line
+        ]
+        self.assertEqual(len(hits), 1, hits)
+        self.assertEqual(hits[0][0], "license.py")
+
+    def test_every_upsell_surface_uses_the_shared_url(self) -> None:
+        import contextlib
+        import io
+
+        from dreamcleanr import cli, reporting
+
+        self.assertIn(lic.PRO_BUY_URL, reporting._report_footer(pro=False))
+        self.assertNotIn(lic.PRO_BUY_URL, reporting._report_footer(pro=True))
+        for fn in (cli._print_max_gate, cli._print_schedule_nag):
+            err = io.StringIO()
+            with contextlib.redirect_stderr(err):
+                fn()
+            self.assertIn(lic.PRO_BUY_URL, err.getvalue(), fn.__name__)
+
+
 if __name__ == "__main__":
     unittest.main()
