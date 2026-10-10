@@ -6,7 +6,7 @@ from pathlib import Path
 from tempfile import TemporaryDirectory
 from unittest.mock import patch
 
-from dreamcleanr.mcp_server import handle_request
+from dreamcleanr.mcp_server import McpProtocolError, handle_request
 
 
 class McpServerTests(unittest.TestCase):
@@ -126,6 +126,27 @@ class McpServerTests(unittest.TestCase):
             assert response is not None
             self.assertTrue(html_out.exists())
             self.assertIn("DreamCleanr", html_out.read_text(encoding="utf-8"))
+
+    def test_ping_returns_empty_result(self) -> None:
+        response = handle_request({"jsonrpc": "2.0", "id": 5, "method": "ping", "params": {}})
+        assert response is not None
+        self.assertEqual(response["id"], 5)
+        self.assertEqual(response["result"], {})
+
+    def test_notifications_initialized_returns_none(self) -> None:
+        self.assertIsNone(handle_request({"jsonrpc": "2.0", "method": "notifications/initialized"}))
+
+    def test_unknown_method_raises_protocol_error(self) -> None:
+        with self.assertRaises(McpProtocolError) as ctx:
+            handle_request({"jsonrpc": "2.0", "id": 6, "method": "nonexistent/method"})
+        self.assertEqual(ctx.exception.code, -32601)
+
+    def test_non_string_method_is_method_not_found_not_type_error(self) -> None:
+        for bad in (["tools/list"], {"m": 1}, None, 7):
+            with self.subTest(method=bad):
+                with self.assertRaises(McpProtocolError) as ctx:
+                    handle_request({"jsonrpc": "2.0", "id": 7, "method": bad})
+                self.assertEqual(ctx.exception.code, -32601)
 
 
 if __name__ == "__main__":
