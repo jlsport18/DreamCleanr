@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import logging
 import os
 import re
 import shutil
@@ -15,6 +16,8 @@ from pathlib import Path
 from typing import Any, Dict, Iterable, List, Optional, Tuple
 
 from .models import CleanupAction, CleanupReport, DetectorFinding, DockerInventory, ProcessRecord, ProjectSignal, StorageRecord
+
+log = logging.getLogger(__name__)
 
 FAMILIES = ("docker", "claude", "codex", "crashpad", "updater")
 REPORT_ROOT = Path.home() / "Library" / "Logs" / "DreamCleanr" / "reports"
@@ -50,6 +53,30 @@ SAFE_CACHE_PATHS = {
     "npm_cache": Path.home() / ".npm" / "_cacache",
     "npx_cache": Path.home() / ".npm" / "_npx",
 }
+
+# Standard-tier regenerable caches cleared in balanced + max (previewed in safe).
+# Each entry: (SAFE_CACHE_PATHS key, reason). Every key MUST exist in
+# SAFE_CACHE_PATHS — tests/test_core.py enforces this.
+_STANDARD_TIER_CACHES: Tuple[Tuple[str, str], ...] = (
+    ("uv_cache", "Regenerable uv cache."),
+    ("trunk_cache", "Regenerable trunk cache."),
+    ("gradle_cache", "Regenerable Gradle cache."),
+    ("npm_cache", "Regenerable npm cache."),
+    ("npx_cache", "Regenerable npx cache."),
+)
+
+# Protected / review-required paths registered by gather_storage_records, in
+# registration order. Each entry: (PROTECTED_STATE_PATHS key, family,
+# classification, notes). Every key MUST exist in PROTECTED_STATE_PATHS.
+_PROTECTED_STATE_RECORDS: Tuple[Tuple[str, str, str, str], ...] = (
+    ("docker_vm_data", "docker", "REVIEW_VM", "Docker VM storage requires explicit review."),
+    ("docker_raw", "docker", "REVIEW_VM", "Raw Docker disk image should not be auto-deleted."),
+    ("claude_vm_bundle", "claude", "PROTECTED_STATE", "Claude VM bundle stays protected by default."),
+    ("codex_home", "codex", "PROTECTED_STATE", "Codex home state is never auto-deleted."),
+    ("claude_home", "claude", "PROTECTED_STATE", "Claude home state is never auto-deleted."),
+    ("codex_support", "codex", "PROTECTED_STATE", "Codex application support contains sessions and state."),
+    ("claude_support", "claude", "PROTECTED_STATE", "Claude application support contains sessions and state."),
+)
 
 CLAUDE_LIBRARY_CACHE_BASENAMES = [
     "claude-cli-nodejs",
@@ -325,8 +352,8 @@ def gather_detector_findings(home: Optional[Path] = None) -> List[Dict[str, Any]
             all_paths.append(path)
             try:
                 mtime_map[normalized] = path.stat().st_mtime
-            except OSError:
-                pass
+            except OSError as exc:
+                log.debug("stat() failed for %s: %s", normalized, exc)
         per_detector[key] = items
     size_map = du_bytes_many(all_paths)
     now = time.time()
@@ -1015,13 +1042,8 @@ def gather_storage_records(family_summaries: Dict[str, Dict[str, Any]]) -> Tuple
     for label, path in SAFE_CACHE_PATHS.items():
         add_record(label, path, "system", "SAFE_CACHE", "Regenerable cache or developer artifact.")
 
-    add_record("docker_vm_data", PROTECTED_STATE_PATHS["docker_vm_data"], "docker", "REVIEW_VM", "Docker VM storage requires explicit review.")
-    add_record("docker_raw", PROTECTED_STATE_PATHS["docker_raw"], "docker", "REVIEW_VM", "Raw Docker disk image should not be auto-deleted.")
-    add_record("claude_vm_bundle", PROTECTED_STATE_PATHS["claude_vm_bundle"], "claude", "PROTECTED_STATE", "Claude VM bundle stays protected by default.")
-    add_record("codex_home", PROTECTED_STATE_PATHS["codex_home"], "codex", "PROTECTED_STATE", "Codex home state is never auto-deleted.")
-    add_record("claude_home", PROTECTED_STATE_PATHS["claude_home"], "claude", "PROTECTED_STATE", "Claude home state is never auto-deleted.")
-    add_record("codex_support", PROTECTED_STATE_PATHS["codex_support"], "codex", "PROTECTED_STATE", "Codex application support contains sessions and state.")
-    add_record("claude_support", PROTECTED_STATE_PATHS["claude_support"], "claude", "PROTECTED_STATE", "Claude application support contains sessions and state.")
+    for key, family, classification, notes in _PROTECTED_STATE_RECORDS:
+        add_record(key, PROTECTED_STATE_PATHS[key], family, classification, notes)
 
     library_caches = SAFE_CACHE_PATHS["library_caches"]
     for basename in CLAUDE_LIBRARY_CACHE_BASENAMES + CODEX_LIBRARY_CACHE_BASENAMES:
@@ -1364,11 +1386,8 @@ def plan_cleanup(snapshot: Dict[str, Any], mode: str = "balanced") -> List[Clean
 
     # Standard tier — regenerable developer/tool caches (re-download on demand).
     # Present in balanced and max; previewed (never deleted) in safe.
-    safe_delete_action("uv_cache", SAFE_CACHE_PATHS["uv_cache"], "system", "Regenerable uv cache.", apply_allowed=applies)
-    safe_delete_action("trunk_cache", SAFE_CACHE_PATHS["trunk_cache"], "system", "Regenerable trunk cache.", apply_allowed=applies)
-    safe_delete_action("gradle_cache", SAFE_CACHE_PATHS["gradle_cache"], "system", "Regenerable Gradle cache.", apply_allowed=applies)
-    safe_delete_action("npm_cache", SAFE_CACHE_PATHS["npm_cache"], "system", "Regenerable npm cache.", apply_allowed=applies)
-    safe_delete_action("npx_cache", SAFE_CACHE_PATHS["npx_cache"], "system", "Regenerable npx cache.", apply_allowed=applies)
+    for key, reason in _STANDARD_TIER_CACHES:
+        safe_delete_action(key, SAFE_CACHE_PATHS[key], "system", reason, apply_allowed=applies)
 
     process_summary = snapshot["process_summary"]
     if process_summary["docker"]["recommended_action"] == "docker_system_prune":
