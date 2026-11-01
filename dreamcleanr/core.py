@@ -447,7 +447,8 @@ def inspect_project_root(root: Path) -> Dict[str, Any]:
     if gitattributes.exists():
         try:
             text = gitattributes.read_text(encoding="utf-8", errors="ignore")
-        except OSError:
+        except OSError as exc:
+            log.debug("gitattributes read failed for %s: %s", root, exc)
             text = ""
         if "filter=lfs" in text:
             markers.append(".gitattributes:lfs")
@@ -1159,8 +1160,8 @@ def capture_memory_state() -> Dict[str, Any]:
     if sysctl["ok"]:
         try:
             state["total_bytes"] = int(sysctl["stdout"].strip())
-        except ValueError:
-            pass
+        except ValueError as exc:
+            log.debug("hw.memsize parse failed: %s", exc)
     result = run_command(["vm_stat"], timeout=3)
     if not result["ok"]:
         return state
