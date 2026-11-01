@@ -1536,7 +1536,8 @@ def trash_path(path: Path) -> Optional[Path]:
     trash_dir = _trash_dir()
     try:
         trash_dir.mkdir(exist_ok=True)
-    except OSError:
+    except OSError as exc:
+        log.warning("Trash mkdir failed for %s: %s", trash_dir, exc)
         return None
     dest = trash_dir / path.name
     if dest.exists():
