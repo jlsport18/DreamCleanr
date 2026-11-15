@@ -7,7 +7,7 @@ from pathlib import Path
 from typing import Any, Callable, Dict, Optional
 
 from . import __version__
-from .core import build_cleanup_report, capture_snapshot, default_report_dir, plan_cleanup
+from .core import CLEANUP_MODES, build_cleanup_report, capture_snapshot, default_report_dir, plan_cleanup
 from .reporting import write_html
 from .scheduler import LABEL, launch_agent_path
 
@@ -55,7 +55,7 @@ def _tool_schema() -> Dict[str, Dict[str, Any]]:
                 "properties": {
                     "mode": {
                         "type": "string",
-                        "enum": ["safe", "balanced", "max"],
+                        "enum": list(CLEANUP_MODES),
                         "default": "balanced",
                     }
                 },
@@ -74,7 +74,7 @@ def _tool_schema() -> Dict[str, Dict[str, Any]]:
                 "properties": {
                     "mode": {
                         "type": "string",
-                        "enum": ["safe", "balanced", "max"],
+                        "enum": list(CLEANUP_MODES),
                         "default": "balanced",
                     },
                     "scope": {
@@ -129,7 +129,7 @@ def _tool_schema() -> Dict[str, Dict[str, Any]]:
                     "minute": {"type": "integer", "default": 30},
                     "mode": {
                         "type": "string",
-                        "enum": ["safe", "balanced", "max"],
+                        "enum": list(CLEANUP_MODES),
                         "default": "balanced",
                     },
                     "retention_count": {"type": "integer", "default": 21},

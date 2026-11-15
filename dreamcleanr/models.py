@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from dataclasses import asdict, dataclass, field
+from dataclasses import asdict, dataclass, field, fields
 from typing import Any, Dict, List, Optional
 
 from . import __version__
@@ -139,25 +139,8 @@ class CleanupReport:
     tool_version: str = __version__
 
     def to_dict(self) -> Dict[str, Any]:
-        return {
-            "run_id": self.run_id,
-            "tool_version": self.tool_version,
-            "started_at": self.started_at,
-            "finished_at": self.finished_at,
-            "mode": self.mode,
-            "dry_run": self.dry_run,
-            "storage_before_bytes": self.storage_before_bytes,
-            "storage_after_bytes": self.storage_after_bytes,
-            "storage_reclaimed_bytes": self.storage_reclaimed_bytes,
-            "memory_before_estimate_mb": self.memory_before_estimate_mb,
-            "memory_after_estimate_mb": self.memory_after_estimate_mb,
-            "memory_reclaimed_estimate_mb": self.memory_reclaimed_estimate_mb,
-            "processes_scanned": self.processes_scanned,
-            "processes_trimmed": self.processes_trimmed,
-            "objects_pruned": self.objects_pruned,
-            "protected_items": self.protected_items,
-            "manual_review_items": self.manual_review_items,
-            "family_summaries": self.family_summaries,
-            "actions": [action.to_dict() for action in self.actions],
-            "snapshot": self.snapshot,
-        }
+        # Build from dataclass fields so new fields are never silently dropped.
+        # actions contains CleanupAction instances that need their own to_dict().
+        d = {f.name: getattr(self, f.name) for f in fields(self)}
+        d["actions"] = [action.to_dict() for action in self.actions]
+        return d
