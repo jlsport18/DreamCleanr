@@ -20,6 +20,7 @@ from .models import CleanupAction, CleanupReport, DetectorFinding, DockerInvento
 log = logging.getLogger(__name__)
 
 FAMILIES = ("docker", "claude", "codex", "crashpad", "updater")
+CLEANUP_MODES = ("safe", "balanced", "max")
 REPORT_ROOT = Path.home() / "Library" / "Logs" / "DreamCleanr" / "reports"
 DEFAULT_RETENTION_COUNT = 21
 DEFAULT_LOG_RETENTION_COUNT = 5

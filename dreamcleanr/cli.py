@@ -15,6 +15,7 @@ log = logging.getLogger(__name__)
 from . import __version__
 from .license import PRO_BUY_URL, activate as _activate_license, check_pro, get_license_info, deactivate as _deactivate_license
 from .core import (
+    CLEANUP_MODES,
     DEFAULT_RETENTION_COUNT,
     build_cleanup_report,
     capture_snapshot,
@@ -345,7 +346,7 @@ def build_parser() -> argparse.ArgumentParser:
     subparsers = parser.add_subparsers(dest="command", required=True)
 
     scan = subparsers.add_parser("scan", help="Capture a machine-readable process and storage snapshot.")
-    scan.add_argument("--mode", choices=["safe", "balanced", "max"], default="balanced")
+    scan.add_argument("--mode", choices=list(CLEANUP_MODES), default="balanced")
     scan.add_argument("--json-out", help="Write snapshot JSON to a file.")
     scan.set_defaults(func=command_scan)
 
@@ -362,7 +363,7 @@ def build_parser() -> argparse.ArgumentParser:
     export.set_defaults(func=command_export)
 
     clean = subparsers.add_parser("clean", help="Scan, classify, clean, and report.")
-    clean.add_argument("--mode", choices=["safe", "balanced", "max"], default="balanced")
+    clean.add_argument("--mode", choices=list(CLEANUP_MODES), default="balanced")
     clean.add_argument("--scope", choices=["all", "processes", "storage"], default="all")
     clean.add_argument("--apply", action="store_true", help="Apply cleanup actions instead of dry-run preview.")
     clean.add_argument("--yes", "-y", action="store_true", help="Skip the interactive confirmation prompt before --apply.")
@@ -381,7 +382,7 @@ def build_parser() -> argparse.ArgumentParser:
     install = schedule_subparsers.add_parser("install", help="Install the DreamCleanr LaunchAgent.")
     install.add_argument("--hour", type=int, default=4)
     install.add_argument("--minute", type=int, default=30)
-    install.add_argument("--mode", choices=["safe", "balanced", "max"], default="balanced")
+    install.add_argument("--mode", choices=list(CLEANUP_MODES), default="balanced")
     install.add_argument("--output-dir", help="Directory for scheduled JSON and HTML reports.")
     install.add_argument("--retention-count", type=int, default=DEFAULT_RETENTION_COUNT)
     install.set_defaults(func=command_schedule_install)
